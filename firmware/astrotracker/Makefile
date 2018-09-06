@@ -1,7 +1,7 @@
 PROJECT = astrotracker
 BUILD_DIR = bin
 
-CFILES = my-project.c
+CFILES = main.c
 DEVICE=stm32f103c8t6
 
 
