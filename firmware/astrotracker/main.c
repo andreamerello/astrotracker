@@ -1,7 +1,10 @@
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
+#include <stdio.h>
+#include <errno.h>
 
 #include "cdcacm.h"
+#include "tinyprintf.h"
 
 #define RCC_LED RCC_GPIOC
 #define PIN_LED GPIO13
@@ -9,10 +12,27 @@
 
 static usbd_device *usb_dev;
 
-void echo(char *str, int len)
+int _write(int file, char *ptr, int len);
+void _putc(void *a, char c);
+
+
+int _write(int file, char *ptr, int len)
 {
-	gpio_toggle(PORT_LED, PIN_LED);
-	cdcacm_tx(str, len);
+	int i;
+
+	if (file == 1) {
+		cdcacm_tx(ptr, len);
+		return i;
+	}
+
+	errno = EIO;
+	return -1;
+}
+
+void _putc(void *a, char c)
+{
+	(void)a;
+	_write(1, &c, 1);
 }
 
 int main(void) {
@@ -25,7 +45,9 @@ int main(void) {
 
 
 	usb_dev = cdcacm_init();
-	cdcacm_register_rx_cb(echo);
+	/* for tinyprintf */
+	init_printf(NULL, _putc);
+	//cdcacm_register_rx_cb(echo);
 
 	while(1) {
 		usbd_poll(usb_dev);
