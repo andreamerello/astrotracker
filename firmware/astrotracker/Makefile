@@ -1,7 +1,7 @@
 PROJECT = astrotracker
 BUILD_DIR = bin
 
-CFILES = main.c cdcacm.c tinyprintf.c
+CFILES = main.c cdcacm.c tinyprintf.c motor.c
 DEVICE=stm32f103c8t6
 
 
