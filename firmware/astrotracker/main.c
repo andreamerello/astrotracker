@@ -5,6 +5,7 @@
 
 #include "cdcacm.h"
 #include "tinyprintf.h"
+#include "motor.h"
 
 #define RCC_LED RCC_GPIOC
 #define PIN_LED GPIO13
@@ -35,6 +36,11 @@ void _putc(void *a, char c)
 	_write(1, &c, 1);
 }
 
+static void echo(char *str, int len)
+{
+	//motor_test();
+}
+
 int main(void) {
 	rcc_clock_setup_in_hsi_out_48mhz();
 
@@ -43,18 +49,14 @@ int main(void) {
 		      GPIO_CNF_OUTPUT_PUSHPULL, PIN_LED);
 	gpio_set(PORT_LED, PIN_LED);
 
+	motor_init();
 
 	usb_dev = cdcacm_init();
 	/* for tinyprintf */
 	init_printf(NULL, _putc);
-	//cdcacm_register_rx_cb(echo);
+	cdcacm_register_rx_cb(echo);
 
 	while(1) {
 		usbd_poll(usb_dev);
-		/* /\* wait a little bit *\/ */
-		/* for (int i = 0; i < 10000000; i++) { */
-		/* 	__asm__("nop"); */
-		/* } */
-		/* gpio_toggle(PORT_LED, PIN_LED); */
 	}
 }
