@@ -41,6 +41,12 @@ static void echo(char *str, int len)
 	//motor_test();
 }
 
+static void delay(int n)
+{
+	for (int i = 0; i < n; i++)
+		__asm__("nop");
+}
+
 int main(void) {
 	rcc_clock_setup_in_hsi_out_48mhz();
 
@@ -58,5 +64,7 @@ int main(void) {
 
 	while(1) {
 		usbd_poll(usb_dev);
+		//motor_step(-1);
+		//delay(100000);
 	}
 }
