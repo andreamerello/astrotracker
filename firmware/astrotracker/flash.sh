@@ -9,3 +9,4 @@ expect ">"
 send "flash write_image erase astrotracker/astrotracker.elf\n"
 expect ">"
 send "reset\n"
+spawn ./tool/reset_astro
