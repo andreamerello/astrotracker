@@ -25,6 +25,8 @@
 #include "task.h"
 #include "queue.h"
 
+#include "motor.h"
+
 
 
 /*
@@ -36,15 +38,22 @@ static void monitor(void)
 	vTaskDelay(1000 / portTICK_PERIOD_MS);
 }
 
-/*
- * Monitor task:
- */
-static void
-monitor_task(void *arg __attribute((unused))) {
+static void monitor_task(void *arg __attribute((unused))) {
 
 	for (;;)
 		monitor();
 }
+
+
+static void motor_task(void *arg __attribute((unused)))
+{
+	while(1) {
+		//motor_step(-1);
+		vTaskDelay(50 / portTICK_PERIOD_MS);
+	}
+}
+
+
 
 #if 0
 void usb_tapu_strong()
@@ -104,8 +113,10 @@ int main(void)
 
 	rcc_periph_clock_enable(RCC_GPIOC);
 	gpio_set_mode(GPIOC,GPIO_MODE_OUTPUT_50_MHZ,GPIO_CNF_OUTPUT_PUSHPULL,GPIO13);
+	motor_init();
 
 	xTaskCreate(monitor_task,"monitor",350,NULL,1,NULL);
+	xTaskCreate(motor_task,"motor",350,NULL,1,NULL);
 
 	usb_start(1,1);
 	gpio_clear(GPIOC,GPIO13);

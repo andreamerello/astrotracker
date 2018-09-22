@@ -3,7 +3,7 @@
 #include <libopencm3/stm32/gpio.h>
 
 #include "motor.h"
-#include "tinyprintf.h"
+#include "miniprintf.h"
 
 #define ARRAY_SIZE(x) ((int)(sizeof(x) / sizeof((x)[0])))
 
@@ -69,7 +69,7 @@ void motor_test(void)
 {
 	static int motor_i = 0;
 	static int motor_value = 0;
-	printf("setting pin %d to %d\r\n", motor_i, motor_value);
+	std_printf("setting pin %d to %d\r\n", motor_i, motor_value);
 	set_pin(motor_i, motor_value);
 	motor_i += 1;
 	if (motor_i == ARRAY_SIZE(motor_gpio_table)) {
