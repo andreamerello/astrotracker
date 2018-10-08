@@ -384,7 +384,7 @@ int
 usb_gets(char *buf,unsigned maxbuf) {
 	unsigned bx = 0;
 	int ch;
-	
+
 	while ( maxbuf > 0 && bx+1 < maxbuf ) {
 		ch = usb_getc();
 		if ( ch == -1 ) {
@@ -400,11 +400,11 @@ usb_gets(char *buf,unsigned maxbuf) {
 		buf[bx++] = (char)ch;
 		usb_putc(ch);
 	}
-	
+
 	buf[bx] = 0;
 	return bx;
 }
- 					
+
 /*
  * Get an edited line:
  */

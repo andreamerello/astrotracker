@@ -28,35 +28,27 @@
 #include "motor.h"
 
 
-
 /*
- * Monitor routine
+ * There is a bug in the usb layer. If a print is done before the
+ * tty is attached then weird thing happen: printed chars are
+ * echoed back in stdin..
+ * The workaround is not to print before we get an input from tty
  */
-static void monitor(void)
+static void monitor_task(void *arg __attribute((unused)))
 {
-	std_printf("Tick %d\n", xTaskGetTickCount());
-	vTaskDelay(1000 / portTICK_PERIOD_MS);
-}
+	char c;
 
-static void monitor_task(void *arg __attribute((unused))) {
+	vTaskDelay(2000 / portTICK_PERIOD_MS);
+	gpio_set(GPIOC,GPIO13);
 
-	for (;;)
-		monitor();
-}
-
-
-static void motor_task(void *arg __attribute((unused)))
-{
-	while(1) {
-		//motor_step(-1);
-		vTaskDelay(50 / portTICK_PERIOD_MS);
+	while (1) {
+		c = std_getc();
+		motor_cmd(c);
 	}
 }
 
-
-
 #if 0
-void usb_tapu_strong()
+static void usb_tapu_strong()
 {
 	int i;
 
@@ -80,7 +72,7 @@ void usb_tapu_strong()
 }
 #endif
 
-void usb_tapu_polite()
+static void usb_tapu_polite()
 {
 	int i;
 
@@ -115,8 +107,7 @@ int main(void)
 	gpio_set_mode(GPIOC,GPIO_MODE_OUTPUT_50_MHZ,GPIO_CNF_OUTPUT_PUSHPULL,GPIO13);
 	motor_init();
 
-	xTaskCreate(monitor_task,"monitor",350,NULL,1,NULL);
-	xTaskCreate(motor_task,"motor",350,NULL,1,NULL);
+	xTaskCreate(monitor_task,"monitor",512,NULL,1,NULL);
 
 	usb_start(1,1);
 	gpio_clear(GPIOC,GPIO13);

@@ -2,8 +2,27 @@
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 
+#include "FreeRTOS.h"
+#include "queue.h"
 #include "motor.h"
-#include "miniprintf.h"
+#include "task.h"
+
+#include "mcuio.h"
+
+/* seconds */
+#define SIDERAL_DAY 86164
+
+/* degrees/second */
+#define ROTATIONAL_SPEED (360.0 / SIDERAL_DAY)
+
+/* number of steps, measured using transparent angles */
+#define STEPS_FOR_TEN_DEGREES 19955
+#define STEP_FOR_ONE_DEGREE (STEPS_FOR_TEN_DEGREES / 10.0)
+#define DEGREES_PER_STEP (1.0 / STEP_FOR_ONE_DEGREE)
+
+/* seconds */
+#define DELAY_BETWEEN_STEPS (DEGREES_PER_STEP / ROTATIONAL_SPEED)
+
 
 #define ARRAY_SIZE(x) ((int)(sizeof(x) / sizeof((x)[0])))
 
@@ -29,6 +48,10 @@ static uint8_t magic_table[][4] = {
 	{1, 0, 0, 0},
 };
 
+static void motor_task(void *);
+
+static QueueHandle_t motor_queue;
+
 static void set_pin(int i, int value)
 {
 	uint32_t port = motor_gpio_table[i].port;
@@ -48,10 +71,13 @@ void motor_init(void)
 			      GPIO_CNF_OUTPUT_PUSHPULL, motor_gpio_table[i].pin);
 		gpio_clear(motor_gpio_table[i].port, motor_gpio_table[i].pin);
 	}
+
+        motor_queue = xQueueCreate(4, sizeof(char));
+	xTaskCreate(motor_task, "motor",350,NULL,1,NULL);
 }
 
 static int motor_current_index = 0;
-void motor_step(int direction)
+static void motor_step(int direction)
 {
 	motor_current_index += direction;
 	if (motor_current_index == -1)
@@ -59,13 +85,13 @@ void motor_step(int direction)
 	else if (motor_current_index == ARRAY_SIZE(magic_table))
 		motor_current_index = 0;
 
-	for(int i = 0; i < 4; i++) {
+	for (int i = 0; i < 4; i++) {
 		int value = magic_table[motor_current_index][i];
 		set_pin(i, value);
 	}
 }
 
-void motor_test(void)
+static void motor_test(void)
 {
 	static int motor_i = 0;
 	static int motor_value = 0;
@@ -75,5 +101,52 @@ void motor_test(void)
 	if (motor_i == ARRAY_SIZE(motor_gpio_table)) {
 		motor_i = 0;
 		motor_value = !motor_value;
+	}
+}
+
+void motor_cmd(char c)
+{
+	xQueueSend(motor_queue, &c, portMAX_DELAY);
+}
+
+static void motor_task(void *arg __attribute((unused)))
+{
+	char cmd;
+	unsigned int delay;
+	unsigned int period = 0;
+	bool running = false;
+	int direction = 0;
+
+	while(1) {
+		delay = running ? period : portMAX_DELAY;
+		if (pdPASS == xQueueReceive(motor_queue, &cmd, delay)) {
+			switch (cmd) {
+			case 'r':
+				/* rewind */
+				std_printf("Rewinding..\n");
+				direction = 1;
+				period = 50;
+				break;
+			case 's':
+				/* start */
+				std_printf("Starting..\n");
+				direction = -1;
+				period = 51;
+				break;
+			case 't':
+				/* stop */
+				std_printf("Stopping..\n");
+				direction = 0;
+				break;
+			default:
+				std_printf("Have a beer.. %c\n", cmd);
+				break;
+			}
+		}
+
+		running = (direction != 0);
+		if (running) {
+			motor_step(direction);
+		}
 	}
 }
