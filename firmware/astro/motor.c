@@ -8,6 +8,7 @@
 #include "task.h"
 
 #include "mcuio.h"
+#include "rtc.h"
 
 /* seconds */
 #define SIDERAL_DAY 86164
@@ -73,6 +74,7 @@ void motor_init(void)
 	}
 
         motor_queue = xQueueCreate(4, sizeof(char));
+
 	xTaskCreate(motor_task, "motor", 350, NULL, 1, NULL);
 	xTaskCreate(fake_rtc_task, "fake_rtc", 350, NULL, 1, NULL);
 }
@@ -119,6 +121,7 @@ void motor_cmd(char c)
 static void fake_rtc_task(void *arg __attribute((unused)))
 {
 	while(1) {
+
 		vTaskDelay(1);
 		motor_cmd('x');
 	}
@@ -154,6 +157,7 @@ static void motor_task(void *arg __attribute((unused)))
 				/* start */
 				std_printf("Starting..\n");
 				direction = -1;
+				rtc_reset();
 				set_speed(slow_speed);
 				break;
 			case 't':
@@ -173,6 +177,7 @@ static void motor_task(void *arg __attribute((unused)))
 
 		running = (direction != 0);
 		if (running) {
+			std_printf("%lu\n", rtc_get_ticks());
 			if (count == speed) {
 				count = 0;
 				motor_step(direction);
