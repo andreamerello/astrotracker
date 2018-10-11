@@ -92,6 +92,12 @@ static void motor_step(int direction)
 	}
 }
 
+static void motor_stop()
+{
+	for (int i = 0; i < 4; i++)
+		set_pin(i, 0);
+}
+
 static void motor_test(void)
 {
 	static int motor_i = 0;
@@ -154,6 +160,7 @@ static void motor_task(void *arg __attribute((unused)))
 				/* stop */
 				std_printf("Stopping..\n");
 				direction = 0;
+				motor_stop();
 				break;
 			case 'x':
 				count++;
