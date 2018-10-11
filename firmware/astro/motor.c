@@ -49,7 +49,7 @@ static uint8_t magic_table[][4] = {
 };
 
 static void motor_task(void *);
-
+static void fake_rtc_task(void *);
 static QueueHandle_t motor_queue;
 
 static void set_pin(int i, int value)
@@ -73,7 +73,8 @@ void motor_init(void)
 	}
 
         motor_queue = xQueueCreate(4, sizeof(char));
-	xTaskCreate(motor_task, "motor",350,NULL,1,NULL);
+	xTaskCreate(motor_task, "motor", 350, NULL, 1, NULL);
+	xTaskCreate(fake_rtc_task, "fake_rtc", 350, NULL, 1, NULL);
 }
 
 static int motor_current_index = 0;
@@ -109,34 +110,53 @@ void motor_cmd(char c)
 	xQueueSend(motor_queue, &c, portMAX_DELAY);
 }
 
+static void fake_rtc_task(void *arg __attribute((unused)))
+{
+	while(1) {
+		vTaskDelay(1);
+		motor_cmd('x');
+	}
+}
+
+const int slow_speed = 20;
+const int fast_speed = 5;
+
 static void motor_task(void *arg __attribute((unused)))
 {
 	char cmd;
-	unsigned int delay;
-	unsigned int period = 0;
+	int count;
+	int speed;
 	bool running = false;
 	int direction = 0;
 
+	void set_speed(int _speed)
+	{
+		speed = _speed;
+		count = 0;
+	}
+
 	while(1) {
-		delay = running ? period : portMAX_DELAY;
-		if (pdPASS == xQueueReceive(motor_queue, &cmd, delay)) {
+		if (pdPASS == xQueueReceive(motor_queue, &cmd, portMAX_DELAY)) {
 			switch (cmd) {
 			case 'r':
 				/* rewind */
 				std_printf("Rewinding..\n");
 				direction = 1;
-				period = 50;
+				set_speed(fast_speed);
 				break;
 			case 's':
 				/* start */
 				std_printf("Starting..\n");
 				direction = -1;
-				period = 51;
+				set_speed(slow_speed);
 				break;
 			case 't':
 				/* stop */
 				std_printf("Stopping..\n");
 				direction = 0;
+				break;
+			case 'x':
+				count++;
 				break;
 			default:
 				std_printf("Have a beer.. %c\n", cmd);
@@ -146,7 +166,10 @@ static void motor_task(void *arg __attribute((unused)))
 
 		running = (direction != 0);
 		if (running) {
-			motor_step(direction);
+			if (count == speed) {
+				count = 0;
+				motor_step(direction);
+			}
 		}
 	}
 }
