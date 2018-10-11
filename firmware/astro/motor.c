@@ -50,7 +50,7 @@ static uint8_t magic_table[][4] = {
 };
 
 static void motor_task(void *);
-static void fake_rtc_task(void *);
+
 static QueueHandle_t motor_queue;
 
 static void set_pin(int i, int value)
@@ -76,7 +76,6 @@ void motor_init(void)
         motor_queue = xQueueCreate(4, sizeof(char));
 
 	xTaskCreate(motor_task, "motor", 350, NULL, 1, NULL);
-	xTaskCreate(fake_rtc_task, "fake_rtc", 350, NULL, 1, NULL);
 }
 
 static int motor_current_index = 0;
@@ -118,15 +117,6 @@ void motor_cmd(char c)
 	xQueueSend(motor_queue, &c, portMAX_DELAY);
 }
 
-static void fake_rtc_task(void *arg __attribute((unused)))
-{
-	while(1) {
-
-		vTaskDelay(1);
-		motor_cmd('x');
-	}
-}
-
 const int slow_speed = 20;
 const int fast_speed = 5;
 
@@ -135,6 +125,7 @@ static void motor_task(void *arg __attribute((unused)))
 	char cmd;
 	int count;
 	int speed;
+	TickType_t delay;
 	bool running = false;
 	int direction = 0;
 
@@ -145,7 +136,8 @@ static void motor_task(void *arg __attribute((unused)))
 	}
 
 	while(1) {
-		if (pdPASS == xQueueReceive(motor_queue, &cmd, portMAX_DELAY)) {
+		delay = running ? 1 : portMAX_DELAY;
+		if (pdPASS == xQueueReceive(motor_queue, &cmd, delay)) {
 			switch (cmd) {
 			case 'r':
 				/* rewind */
@@ -177,9 +169,7 @@ static void motor_task(void *arg __attribute((unused)))
 
 		running = (direction != 0);
 		if (running) {
-			std_printf("%lu\n", rtc_get_ticks());
-			if (count == speed) {
-				count = 0;
+			if ((rtc_get_ticks() % speed) == 0) {
 				motor_step(direction);
 			}
 		}
