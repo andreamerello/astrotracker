@@ -10,20 +10,18 @@
 #include "mcuio.h"
 #include "rtc.h"
 
-/* seconds */
-#define SIDERAL_DAY 86164
-
-/* degrees/second */
-#define ROTATIONAL_SPEED (360.0 / SIDERAL_DAY)
-
-/* number of steps, measured using transparent angles */
-#define STEPS_FOR_TEN_DEGREES 19955
-#define STEP_FOR_ONE_DEGREE (STEPS_FOR_TEN_DEGREES / 10.0)
-#define DEGREES_PER_STEP (1.0 / STEP_FOR_ONE_DEGREE)
-
-/* seconds */
-#define DELAY_BETWEEN_STEPS (DEGREES_PER_STEP / ROTATIONAL_SPEED)
-
+#define TICKS_PER_SECOND 32768UL
+#define SIDERAL_DAY (86164UL * TICKS_PER_SECOND)
+#define STEPS_FOR_TEN_DEGREES 19955UL
+static uint32_t time_for_step(int step)
+{
+	/*
+	 * We use 64bit arithmetic to ensure that the intermediate results don't
+	 * overflow.
+	 */
+	uint64_t step64 = step;
+	return step64 * SIDERAL_DAY / (36*STEPS_FOR_TEN_DEGREES);
+}
 
 #define ARRAY_SIZE(x) ((int)(sizeof(x) / sizeof((x)[0])))
 
@@ -69,11 +67,11 @@ void motor_init(void)
 	for (i = 0; i < ARRAY_SIZE(motor_gpio_table); i++) {
 		rcc_periph_clock_enable(motor_gpio_table[i].rcc);
 		gpio_set_mode(motor_gpio_table[i].port, GPIO_MODE_OUTPUT_2_MHZ,
-			      GPIO_CNF_OUTPUT_PUSHPULL, motor_gpio_table[i].pin);
+				  GPIO_CNF_OUTPUT_PUSHPULL, motor_gpio_table[i].pin);
 		gpio_clear(motor_gpio_table[i].port, motor_gpio_table[i].pin);
 	}
 
-        motor_queue = xQueueCreate(4, sizeof(char));
+		motor_queue = xQueueCreate(4, sizeof(char));
 
 	xTaskCreate(motor_task, "motor", 350, NULL, 1, NULL);
 }
@@ -117,49 +115,49 @@ void motor_cmd(char c)
 	xQueueSend(motor_queue, &c, portMAX_DELAY);
 }
 
-const int slow_speed = 20;
-const int fast_speed = 5;
+typedef enum { STOPPED, TRACKING, REWINDING } motor_state_t;
 
 static void motor_task(void *arg __attribute((unused)))
 {
-	char cmd;
-	int count;
-	int speed;
-	TickType_t delay;
-	bool running = false;
+	motor_state_t state = STOPPED;
 	int direction = 0;
+	int step_count = 0;
 
-	void set_speed(int _speed)
+	void set_state(int _state, int _direction)
 	{
-		speed = _speed;
-		count = 0;
+		state = _state;
+		direction = _direction;
+		step_count = 0;
+		motor_stop();
+		rtc_reset();
 	}
 
 	while(1) {
-		delay = running ? 1 : portMAX_DELAY;
+		char cmd;
+		TickType_t delay = (state != STOPPED) ? 1 : portMAX_DELAY;
 		if (pdPASS == xQueueReceive(motor_queue, &cmd, delay)) {
 			switch (cmd) {
 			case 'r':
 				/* rewind */
 				std_printf("Rewinding..\n");
-				direction = 1;
-				set_speed(fast_speed);
+				set_state(REWINDING, 1);
 				break;
 			case 's':
 				/* start */
 				std_printf("Starting..\n");
-				direction = -1;
-				rtc_reset();
-				set_speed(slow_speed);
+				set_state(TRACKING, -1);
 				break;
 			case 't':
 				/* stop */
 				std_printf("Stopping..\n");
-				direction = 0;
-				motor_stop();
+				set_state(STOPPED, 0);
 				break;
-			case 'x':
-				count++;
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+				std_printf("set motor pin %d\n", (cmd - '0'));
+				set_pin(cmd - '0', 1);
 				break;
 			default:
 				std_printf("Have a beer.. %c\n", cmd);
@@ -167,10 +165,20 @@ static void motor_task(void *arg __attribute((unused)))
 			}
 		}
 
-		running = (direction != 0);
-		if (running) {
-			if ((rtc_get_ticks() % speed) == 0) {
+		if (state != STOPPED) {
+			uint32_t ticks = rtc_get_ticks();
+			uint32_t tick_for_next_step;
+			if (state == TRACKING)
+				tick_for_next_step = time_for_step(step_count + 1);
+			else
+				// 130 is a magic number which we found by experimenting, it's
+				// the maximum speed the motor can handle
+				tick_for_next_step = step_count * 130;
+
+			if (ticks >= tick_for_next_step) {
+				std_printf("step %lu, motor_index=%d\n", step_count, motor_current_index);
 				motor_step(direction);
+				step_count++;
 			}
 		}
 	}
