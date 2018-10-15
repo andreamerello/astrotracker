@@ -125,6 +125,9 @@ static void motor_task(void *arg __attribute((unused)))
 
 	void set_state(int _state, int _direction)
 	{
+		if (state == _state)
+			return;
+		}
 		state = _state;
 		direction = _direction;
 		step_count = 0;
