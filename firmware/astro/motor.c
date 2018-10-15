@@ -140,12 +140,12 @@ static void motor_task(void *arg __attribute((unused)))
 			case 'r':
 				/* rewind */
 				std_printf("Rewinding..\n");
-				set_state(REWINDING, 1);
+				set_state(REWINDING, -1);
 				break;
 			case 's':
 				/* start */
 				std_printf("Starting..\n");
-				set_state(TRACKING, -1);
+				set_state(TRACKING, 1);
 				break;
 			case 't':
 				/* stop */
