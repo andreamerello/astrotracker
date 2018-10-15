@@ -179,7 +179,7 @@ static void motor_task(void *arg __attribute((unused)))
 				tick_for_next_step = step_count * 130;
 
 			if (ticks >= tick_for_next_step) {
-				std_printf("step %lu, motor_index=%d\n", step_count, motor_current_index);
+				//std_printf("step %lu, motor_index=%d\n", step_count, motor_current_index);
 				motor_step(direction);
 				step_count++;
 			}
