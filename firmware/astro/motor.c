@@ -115,6 +115,11 @@ void motor_cmd(char c)
 	xQueueSend(motor_queue, &c, portMAX_DELAY);
 }
 
+void motor_cmd_from_isr(char c)
+{
+	xQueueSendFromISR(motor_queue, &c, NULL);
+}
+
 typedef enum { STOPPED, TRACKING, REWINDING } motor_state_t;
 
 static void motor_task(void *arg __attribute((unused)))
@@ -127,7 +132,6 @@ static void motor_task(void *arg __attribute((unused)))
 	{
 		if (state == _state)
 			return;
-		}
 		state = _state;
 		direction = _direction;
 		step_count = 0;
