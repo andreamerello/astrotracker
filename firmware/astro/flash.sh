@@ -9,4 +9,4 @@ expect ">"
 send "flash write_image erase main.elf\n"
 expect ">"
 send "reset\n"
-spawn ./tool/reset_astro
+#spawn ./tool/reset_astro
