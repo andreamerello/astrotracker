@@ -27,6 +27,7 @@
 
 #include "motor.h"
 #include "ui.h"
+#include "rtc.h"
 
 
 /*
@@ -49,7 +50,7 @@ static void monitor_task(void *arg __attribute((unused)))
 }
 
 #if 0
-static void usb_tapu_strong()
+static void usb_tapu_strong(void)
 {
 	int i;
 
@@ -73,7 +74,7 @@ static void usb_tapu_strong()
 }
 #endif
 
-static void usb_tapu_polite()
+static void usb_tapu_polite(void)
 {
 	int i;
 
