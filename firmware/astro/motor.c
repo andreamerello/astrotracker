@@ -159,6 +159,11 @@ static void motor_task(void *arg __attribute((unused)))
 				std_printf("Stopping..\n");
 				set_state(STOPPED, 0);
 				break;
+			case 'f':
+				/* fast-forward */
+				std_printf("Fast forwarding..\n");
+				std_printf("WARNING: NOT IMPLEMENTED\n");
+				break;
 			case '0':
 			case '1':
 			case '2':
