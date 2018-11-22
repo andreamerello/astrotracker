@@ -17,7 +17,7 @@ typedef struct {
 } button_t;
 
 static button_t BUTTON_STOP   = { GPIOB, GPIO12, RCC_GPIOB, EXTI12 };
-static button_t BUTTON_TRACK  = { GPIOB, GPIO13, RCC_GPIOB, EXTI13 };
+static button_t BUTTON_PLAY  = { GPIOB, GPIO13, RCC_GPIOB, EXTI13 };
 static button_t BUTTON_REWIND = { GPIOB, GPIO14, RCC_GPIOB, EXTI14 };
 
 static void button_init(button_t btn)
@@ -35,9 +35,9 @@ void exti15_10_isr()
         motor_cmd_from_isr('t');
         exti_reset_request(BUTTON_STOP.exti);
     }
-    if (exti_get_flag_status(BUTTON_TRACK.exti)) {
+    if (exti_get_flag_status(BUTTON_PLAY.exti)) {
         motor_cmd_from_isr('s');
-        exti_reset_request(BUTTON_TRACK.exti);
+        exti_reset_request(BUTTON_PLAY.exti);
     }
     if (exti_get_flag_status(BUTTON_REWIND.exti)) {
         motor_cmd_from_isr('r');
@@ -49,7 +49,7 @@ void exti15_10_isr()
 void ui_init(void)
 {
     button_init(BUTTON_STOP);
-    button_init(BUTTON_TRACK);
+    button_init(BUTTON_PLAY);
     button_init(BUTTON_REWIND);
 	rcc_periph_clock_enable(RCC_AFIO);	 // EXTI
     nvic_enable_irq(NVIC_EXTI15_10_IRQ); // PC14 <- /INT
