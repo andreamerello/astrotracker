@@ -16,9 +16,10 @@ typedef struct {
     uint32_t exti;
 } button_t;
 
-static button_t BUTTON_STOP   = { GPIOB, GPIO12, RCC_GPIOB, EXTI12 };
-static button_t BUTTON_PLAY  = { GPIOB, GPIO13, RCC_GPIOB, EXTI13 };
-static button_t BUTTON_REWIND = { GPIOB, GPIO14, RCC_GPIOB, EXTI14 };
+/* these GPIO have internal pull-downs */
+static button_t BUTTON_STOP   = { GPIOA, GPIO4, RCC_GPIOA, EXTI4 };
+static button_t BUTTON_PLAY  =  { GPIOA, GPIO5, RCC_GPIOA, EXTI5 };
+static button_t BUTTON_REWIND = { GPIOA, GPIO6, RCC_GPIOA, EXTI6 };
 
 static void button_init(button_t btn)
 {
@@ -29,12 +30,16 @@ static void button_init(button_t btn)
 	exti_enable_request(btn.exti);
 }
 
-void exti15_10_isr()
+void exti4_isr(void)
 {
     if (exti_get_flag_status(BUTTON_STOP.exti)) {
         motor_cmd_from_isr('t');
         exti_reset_request(BUTTON_STOP.exti);
     }
+}
+
+void exti9_5_isr(void)
+{
     if (exti_get_flag_status(BUTTON_PLAY.exti)) {
         motor_cmd_from_isr('s');
         exti_reset_request(BUTTON_PLAY.exti);
@@ -52,5 +57,6 @@ void ui_init(void)
     button_init(BUTTON_PLAY);
     button_init(BUTTON_REWIND);
 	rcc_periph_clock_enable(RCC_AFIO);	 // EXTI
-    nvic_enable_irq(NVIC_EXTI15_10_IRQ); // PC14 <- /INT
+    nvic_enable_irq(NVIC_EXTI4_IRQ);
+    nvic_enable_irq(NVIC_EXTI9_5_IRQ);
 }
