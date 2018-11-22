@@ -120,20 +120,32 @@ void motor_cmd_from_isr(char c)
 	xQueueSendFromISR(motor_queue, &c, NULL);
 }
 
-typedef enum { STOPPED, TRACKING, REWINDING } motor_state_t;
+typedef enum { STOP, PLAY, REWIND, FAST_FW } motor_state_t;
 
 static void motor_task(void *arg __attribute((unused)))
 {
-	motor_state_t state = STOPPED;
+	motor_state_t state = STOP;
 	int direction = 0;
 	int step_count = 0;
 
-	void set_state(int _state, int _direction)
+	void set_state(int _state)
 	{
 		if (state == _state)
 			return;
 		state = _state;
-		direction = _direction;
+        switch (state) {
+        case PLAY:
+            /* fallthrough */
+        case FAST_FW:
+            direction = 1;
+            break;
+        case STOP:
+            direction = 0;
+            break;
+        case REWIND:
+            direction = -1;
+            break;
+        }
 		step_count = 0;
 		motor_stop();
 		rtc_reset();
@@ -141,28 +153,24 @@ static void motor_task(void *arg __attribute((unused)))
 
 	while(1) {
 		char cmd;
-		TickType_t delay = (state != STOPPED) ? 1 : portMAX_DELAY;
+		TickType_t delay = (state != STOP) ? 1 : portMAX_DELAY;
 		if (pdPASS == xQueueReceive(motor_queue, &cmd, delay)) {
 			switch (cmd) {
 			case 'r':
-				/* rewind */
-				std_printf("Rewinding..\n");
-				set_state(REWINDING, -1);
+				std_printf("Rewind..\n");
+				set_state(REWIND);
 				break;
 			case 's':
-				/* start */
-				std_printf("Starting..\n");
-				set_state(TRACKING, 1);
+				std_printf("Play..\n");
+				set_state(PLAY);
 				break;
 			case 't':
-				/* stop */
-				std_printf("Stopping..\n");
-				set_state(STOPPED, 0);
+				std_printf("Stop..\n");
+				set_state(STOP);
 				break;
 			case 'f':
-				/* fast-forward */
-				std_printf("Fast forwarding..\n");
-				std_printf("WARNING: NOT IMPLEMENTED\n");
+				std_printf("Fast forward..\n");
+                set_state(FAST_FW);
 				break;
 			case '0':
 			case '1':
@@ -177,10 +185,10 @@ static void motor_task(void *arg __attribute((unused)))
 			}
 		}
 
-		if (state != STOPPED) {
+		if (state != STOP) {
 			uint32_t ticks = rtc_get_ticks();
 			uint32_t tick_for_next_step;
-			if (state == TRACKING)
+			if (state == PLAY)
 				tick_for_next_step = time_for_step(step_count + 1);
 			else
 				// 130 is a magic number which we found by experimenting, it's
