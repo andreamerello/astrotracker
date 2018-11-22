@@ -10,9 +10,22 @@
 #include "mcuio.h"
 #include "rtc.h"
 
+#define STEPS_FOR_TEN_DEGREES 19955UL
+
+/* constants for astro-track velocity */
 #define TICKS_PER_SECOND 32768UL
 #define SIDERAL_DAY (86164UL * TICKS_PER_SECOND)
-#define STEPS_FOR_TEN_DEGREES 19955UL
+
+
+#define MOTOR_MAX_POSITION ((int)STEPS_FOR_TEN_DEGREES * 2)
+#define HOME_QUIT_STEPS ((int)STEPS_FOR_TEN_DEGREES / 10)
+
+#define HOMING_PIN 15
+#define HOMING_PORT GPIOA
+#define HOMING_RCC RCC_GPIOA
+
+static int motor_absolute_position;
+
 static uint32_t time_for_step(int step)
 {
 	/*
@@ -51,6 +64,11 @@ static void motor_task(void *);
 
 static QueueHandle_t motor_queue;
 
+static int homing_switch_pressed(void)
+{
+    return gpio_get(HOMING_PORT, HOMING_PIN);
+}
+
 static void set_pin(int i, int value)
 {
 	uint32_t port = motor_gpio_table[i].port;
@@ -64,6 +82,14 @@ static void set_pin(int i, int value)
 void motor_init(void)
 {
 	int i;
+
+    /* initialize homing switch pin */
+    rcc_periph_clock_enable(HOMING_RCC);
+    gpio_set_mode(HOMING_PORT, GPIO_MODE_INPUT,
+                  GPIO_CNF_INPUT_PULL_UPDOWN, HOMING_PIN);
+
+    
+    /* initialize motor control pins */
 	for (i = 0; i < ARRAY_SIZE(motor_gpio_table); i++) {
 		rcc_periph_clock_enable(motor_gpio_table[i].rcc);
 		gpio_set_mode(motor_gpio_table[i].port, GPIO_MODE_OUTPUT_2_MHZ,
@@ -90,7 +116,7 @@ static void motor_step(int direction)
 	}
 }
 
-static void motor_stop()
+static void motor_stop(void)
 {
 	for (int i = 0; i < 4; i++)
 		set_pin(i, 0);
@@ -119,7 +145,15 @@ void motor_cmd_from_isr(char c)
 	xQueueSendFromISR(motor_queue, &c, NULL);
 }
 
-typedef enum { STOP, PLAY, REWIND, FAST_FW } motor_state_t;
+typedef enum {
+    STOP,
+    PLAY,
+    REWIND,
+    FAST_FW,
+    HOMING_FOUND,
+    HOMING_PRESSED,
+    QUITTING_HOME
+} motor_state_t;
 
 static void motor_task(void *arg __attribute((unused)))
 {
@@ -134,8 +168,10 @@ static void motor_task(void *arg __attribute((unused)))
 		state = _state;
         switch (state) {
         case PLAY:
-            /* fallthrough */
         case FAST_FW:
+        case HOMING_PRESSED:
+        case QUITTING_HOME:
+        case HOMING_FOUND:
             direction = 1;
             break;
         case STOP:
@@ -150,6 +186,11 @@ static void motor_task(void *arg __attribute((unused)))
 		rtc_reset();
 	}
 
+    /* while(1) { */
+    /*     std_printf("button: %d\n", homing_switch_pressed()); */
+    /*     vTaskDelay(100); */
+    /* } */
+    
 	while(1) {
 		char cmd;
 		TickType_t delay = (state != STOP) ? 1 : portMAX_DELAY;
@@ -184,9 +225,39 @@ static void motor_task(void *arg __attribute((unused)))
 			}
 		}
 
+        if (state == REWIND) {
+            /* moving backward looking for switch pressed event */
+            if (homing_switch_pressed()) {
+                std_printf("Homing switch pressed..\n");
+                set_state(HOMING_PRESSED);
+            }
+        }
+        
+        if (state == HOMING_PRESSED) {
+            /* moving forward looking for switch released event */
+            if (!homing_switch_pressed()) {
+                motor_absolute_position = -HOME_QUIT_STEPS;
+                std_printf("Found home, moving slightly away..\n");
+                set_state(QUITTING_HOME);
+            }
+        }
+
+        if (state == QUITTING_HOME) {
+            if (motor_absolute_position == 0) {
+                std_printf("Homing completed..\n");
+                set_state(STOP);
+            }
+        }
+
 		if (state != STOP) {
 			uint32_t ticks = rtc_get_ticks();
 			uint32_t tick_for_next_step;
+
+            if (direction == 1) {
+                if (motor_absolute_position > MOTOR_MAX_POSITION)
+                    set_state(STOP);
+            }                
+           
 			if (state == PLAY)
 				tick_for_next_step = time_for_step(step_count + 1);
 			else
@@ -198,6 +269,7 @@ static void motor_task(void *arg __attribute((unused)))
 				//std_printf("step %lu, motor_index=%d\n", step_count, motor_current_index);
 				motor_step(direction);
 				step_count++;
+                motor_absolute_position += direction;
 			}
 		}
 	}

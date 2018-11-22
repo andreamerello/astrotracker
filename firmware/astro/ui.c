@@ -22,6 +22,8 @@ static button_t BUTTON_PLAY    = { GPIOA, GPIO5, RCC_GPIOA, EXTI5 };
 static button_t BUTTON_REWIND  = { GPIOA, GPIO6, RCC_GPIOA, EXTI6 };
 static button_t BUTTON_FAST_FW = { GPIOA, GPIO8, RCC_GPIOA, EXTI8 };
 
+static button_t BUTTON_HOMING  = { GPIOA, GPIO8, RCC_GPIOA, EXTI8 };
+
 static void button_init(button_t btn)
 {
     rcc_periph_clock_enable(btn.rcc);
@@ -55,7 +57,6 @@ void exti9_5_isr(void)
     }
 }
 
-/* WARNING: you need to have phisical pull-ups to make this working */
 void ui_init(void)
 {
     button_init(BUTTON_STOP);
