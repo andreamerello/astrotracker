@@ -71,8 +71,7 @@ void motor_init(void)
 		gpio_clear(motor_gpio_table[i].port, motor_gpio_table[i].pin);
 	}
 
-		motor_queue = xQueueCreate(4, sizeof(char));
-
+	motor_queue = xQueueCreate(4, sizeof(char));
 	xTaskCreate(motor_task, "motor", 350, NULL, 1, NULL);
 }
 
