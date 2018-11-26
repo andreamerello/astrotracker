@@ -27,7 +27,7 @@ static void button_init(button_t btn)
     rcc_periph_clock_enable(btn.rcc);
     gpio_set_mode(btn.port, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, btn.pin);
 	exti_select_source(btn.exti, btn.port);
-	exti_set_trigger(btn.exti, EXTI_TRIGGER_FALLING);
+	exti_set_trigger(btn.exti, EXTI_TRIGGER_RISING);
 	exti_enable_request(btn.exti);
 }
 
