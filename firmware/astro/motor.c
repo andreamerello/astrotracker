@@ -20,6 +20,7 @@
 #define MOTOR_MAX_POSITION ((int)STEPS_FOR_TEN_DEGREES * 2)
 #define HOME_QUIT_STEPS ((int)STEPS_FOR_TEN_DEGREES / 10)
 
+/* this GPIO has an internal pull-up */
 #define HOMING_PIN GPIO15
 #define HOMING_PORT GPIOA
 #define HOMING_RCC RCC_GPIOA
@@ -185,7 +186,13 @@ static void motor_task(void *arg __attribute((unused)))
 		motor_stop();
 		rtc_reset();
 	}
-    
+
+    /* while(1) { */
+    /*     std_printf("button: %d\n", homing_switch_pressed()); */
+    /*     vTaskDelay(300); */
+    /* } */
+    /* return; */
+
 	while(1) {
 		char cmd;
 		TickType_t delay = (state != STOP) ? 1 : portMAX_DELAY;
