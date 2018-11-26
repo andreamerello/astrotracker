@@ -9,6 +9,7 @@
 
 #include "mcuio.h"
 #include "rtc.h"
+#include "ui.h"
 
 #define STEPS_FOR_TEN_DEGREES 19955UL
 
@@ -173,7 +174,13 @@ static void motor_task(void *arg __attribute((unused)))
 		state = _state;
         switch (state) {
         case PLAY:
+            direction = 1;
+            set_led_blink(20, 2000);
+            break;
         case FAST_FW:
+            direction = 1;
+            set_led_blink(40, 400);
+            break;
         case HOMING_PRESSED:
         case QUITTING_HOME:
         case HOMING_FOUND:
@@ -181,11 +188,14 @@ static void motor_task(void *arg __attribute((unused)))
             break;
         case STOP:
             direction = 0;
+            set_led_on();
             break;
         case REWIND:
             direction = -1;
+            set_led_blink(400, 40);
             break;
         }
+
 		step_count = 0;
 		motor_stop();
 		rtc_reset();

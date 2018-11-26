@@ -39,8 +39,6 @@
 static void monitor_task(void *arg __attribute((unused)))
 {
 	vTaskDelay(2000 / portTICK_PERIOD_MS);
-	gpio_set(GPIOC,GPIO13);
-
 	while (1) {
         // the USB input is not reliable, comment out by default
         /* char c; */
@@ -117,6 +115,8 @@ int main(void)
 	usb_start(1,1);
 	gpio_clear(GPIOC,GPIO13);
 	std_set_device(mcu_usb);			// Use USB for std I/O
+
+	set_led_blink(500, 500);
 
 	vTaskStartScheduler();
 	for (;;);
