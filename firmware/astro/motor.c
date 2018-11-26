@@ -207,13 +207,13 @@ static void motor_task(void *arg __attribute((unused)))
 				std_printf("Fast forward..\n");
                 set_state(FAST_FW);
 				break;
-			case '0':
-			case '1':
-			case '2':
-			case '3':
-				std_printf("set motor pin %d\n", (cmd - '0'));
-				set_pin(cmd - '0', 1);
-				break;
+			/* case '0': */
+			/* case '1': */
+			/* case '2': */
+			/* case '3': */
+			/* 	std_printf("set motor pin %d\n", (cmd - '0')); */
+			/* 	set_pin(cmd - '0', 1); */
+			/* 	break; */
 			default:
 				std_printf("Have a beer.. %c\n", cmd);
 				break;
