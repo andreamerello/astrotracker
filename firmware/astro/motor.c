@@ -20,7 +20,7 @@
 #define MOTOR_MAX_POSITION ((int)STEPS_FOR_TEN_DEGREES * 2)
 #define HOME_QUIT_STEPS ((int)STEPS_FOR_TEN_DEGREES / 10)
 
-#define HOMING_PIN 15
+#define HOMING_PIN GPIO15
 #define HOMING_PORT GPIOA
 #define HOMING_RCC RCC_GPIOA
 
@@ -185,11 +185,6 @@ static void motor_task(void *arg __attribute((unused)))
 		motor_stop();
 		rtc_reset();
 	}
-
-    /* while(1) { */
-    /*     std_printf("button: %d\n", homing_switch_pressed()); */
-    /*     vTaskDelay(100); */
-    /* } */
     
 	while(1) {
 		char cmd;
