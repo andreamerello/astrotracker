@@ -38,14 +38,15 @@
  */
 static void monitor_task(void *arg __attribute((unused)))
 {
-	char c;
-
 	vTaskDelay(2000 / portTICK_PERIOD_MS);
 	gpio_set(GPIOC,GPIO13);
 
 	while (1) {
-		c = std_getc();
-		motor_cmd(c);
+        // the USB input is not reliable, comment out by default
+        /* char c; */
+		/* c = std_getc(); */
+		/* motor_cmd(c); */
+		vTaskDelay(1000);
 	}
 }
 

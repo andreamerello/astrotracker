@@ -193,6 +193,8 @@ static void motor_task(void *arg __attribute((unused)))
     /* } */
     /* return; */
 
+    /* WARNING: if you want to control the motor with the USB keyboard, you
+     * need to uncomment the lines in main.c:monitor_task */
 	while(1) {
 		char cmd;
 		TickType_t delay = (state != STOP) ? 1 : portMAX_DELAY;
