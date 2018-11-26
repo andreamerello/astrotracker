@@ -17,8 +17,8 @@ typedef struct {
 } button_t;
 
 /* these GPIO have internal pull-downs */
-static button_t BUTTON_STOP    = { GPIOA, GPIO4, RCC_GPIOA, EXTI4 };
-static button_t BUTTON_PLAY    = { GPIOA, GPIO5, RCC_GPIOA, EXTI5 };
+static button_t BUTTON_PLAY    = { GPIOA, GPIO4, RCC_GPIOA, EXTI4 };
+static button_t BUTTON_STOP    = { GPIOA, GPIO5, RCC_GPIOA, EXTI5 };
 static button_t BUTTON_REWIND  = { GPIOA, GPIO6, RCC_GPIOA, EXTI6 };
 static button_t BUTTON_FAST_FW = { GPIOA, GPIO8, RCC_GPIOA, EXTI8 };
 
@@ -33,17 +33,17 @@ static void button_init(button_t btn)
 
 void exti4_isr(void)
 {
-    if (exti_get_flag_status(BUTTON_STOP.exti)) {
-        motor_cmd_from_isr('t');
-        exti_reset_request(BUTTON_STOP.exti);
+    if (exti_get_flag_status(BUTTON_PLAY.exti)) {
+        motor_cmd_from_isr('s');
+        exti_reset_request(BUTTON_PLAY.exti);
     }
 }
 
 void exti9_5_isr(void)
 {
-    if (exti_get_flag_status(BUTTON_PLAY.exti)) {
-        motor_cmd_from_isr('s');
-        exti_reset_request(BUTTON_PLAY.exti);
+    if (exti_get_flag_status(BUTTON_STOP.exti)) {
+        motor_cmd_from_isr('t');
+        exti_reset_request(BUTTON_STOP.exti);
     }
     if (exti_get_flag_status(BUTTON_REWIND.exti)) {
         motor_cmd_from_isr('r');

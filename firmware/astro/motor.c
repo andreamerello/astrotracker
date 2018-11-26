@@ -17,7 +17,7 @@
 #define SIDERAL_DAY (86164UL * TICKS_PER_SECOND)
 
 
-#define MOTOR_MAX_POSITION ((int)STEPS_FOR_TEN_DEGREES * 2)
+#define MOTOR_MAX_POSITION ((int)STEPS_FOR_TEN_DEGREES * 1.5)
 #define HOME_QUIT_STEPS ((int)STEPS_FOR_TEN_DEGREES / 10)
 
 /* this GPIO has an internal pull-up */
@@ -162,10 +162,14 @@ static void motor_task(void *arg __attribute((unused)))
 	int direction = 0;
 	int step_count = 0;
 
-	void set_state(int _state)
+    void print_state(const char* msg) {
+        std_printf("%s... [abs position: %d]\n", msg, motor_absolute_position);
+    }
+
+	bool set_state(int _state)
 	{
 		if (state == _state)
-			return;
+			return false;
 		state = _state;
         switch (state) {
         case PLAY:
@@ -185,6 +189,7 @@ static void motor_task(void *arg __attribute((unused)))
 		step_count = 0;
 		motor_stop();
 		rtc_reset();
+        return true;
 	}
 
     /* while(1) { */
@@ -201,20 +206,20 @@ static void motor_task(void *arg __attribute((unused)))
 		if (pdPASS == xQueueReceive(motor_queue, &cmd, delay)) {
 			switch (cmd) {
 			case 'r':
-				std_printf("Rewind..\n");
-				set_state(REWIND);
+				if (set_state(REWIND))
+                    print_state("Rewind");
 				break;
 			case 's':
-				std_printf("Play..\n");
-				set_state(PLAY);
+				if (set_state(PLAY))
+                    print_state("Play");
 				break;
 			case 't':
-				std_printf("Stop..\n");
-				set_state(STOP);
+				if (set_state(STOP))
+                    print_state("Stop");
 				break;
 			case 'f':
-				std_printf("Fast forward..\n");
-                set_state(FAST_FW);
+                if (set_state(FAST_FW))
+                    print_state("Fast forward");
 				break;
 			/* case '0': */
 			/* case '1': */
@@ -224,7 +229,7 @@ static void motor_task(void *arg __attribute((unused)))
 			/* 	set_pin(cmd - '0', 1); */
 			/* 	break; */
 			default:
-				std_printf("Have a beer.. %c\n", cmd);
+				std_printf("Invalid command: %c\n", cmd);
 				break;
 			}
 		}
@@ -232,7 +237,7 @@ static void motor_task(void *arg __attribute((unused)))
         if (state == REWIND) {
             /* moving backward looking for switch pressed event */
             if (homing_switch_pressed()) {
-                std_printf("Homing switch pressed..\n");
+                print_state("Homing Pressed");
                 set_state(HOMING_PRESSED);
             }
         }
@@ -241,14 +246,14 @@ static void motor_task(void *arg __attribute((unused)))
             /* moving forward looking for switch released event */
             if (!homing_switch_pressed()) {
                 motor_absolute_position = -HOME_QUIT_STEPS;
-                std_printf("Found home, moving slightly away..\n");
+                print_state("Quitting Home");
                 set_state(QUITTING_HOME);
             }
         }
 
         if (state == QUITTING_HOME) {
             if (motor_absolute_position == 0) {
-                std_printf("Homing completed..\n");
+                print_state("Homing completed");
                 set_state(STOP);
             }
         }
