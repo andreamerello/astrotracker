@@ -101,7 +101,7 @@ void motor_init(void)
 
 	motor_queue = xQueueCreate(4, sizeof(char));
 #warning FIXME_prio
-	xTaskCreate(motor_task, "motor", 350, NULL, 1, NULL);
+	xTaskCreate(motor_task, "motor", 350, NULL, 2, NULL);
 }
 
 static int motor_current_index = 0;
@@ -129,7 +129,7 @@ static void motor_test(void)
 {
 	static int motor_i = 0;
 	static int motor_value = 0;
-	std_printf("setting pin %d to %d\r\n", motor_i, motor_value);
+	my_printf("setting pin %d to %d\r\n", motor_i, motor_value);
 	set_pin(motor_i, motor_value);
 	motor_i += 1;
 	if (motor_i == ARRAY_SIZE(motor_gpio_table)) {
@@ -165,7 +165,7 @@ static void motor_task(void *arg __attribute((unused)))
 	int step_count = 0;
 
 	void print_state(const char* msg) {
-		std_printf("%s... [abs position: %d]\n", msg, motor_absolute_position);
+		my_printf("%s... [abs position: %d]\n", msg, motor_absolute_position);
 	}
 
 	bool set_state(int _state)
@@ -204,7 +204,7 @@ static void motor_task(void *arg __attribute((unused)))
 	}
 
 	/* while(1) { */
-	/*     std_printf("button: %d\n", homing_switch_pressed()); */
+	/*     my_printf("button: %d\n", homing_switch_pressed()); */
 	/*     vTaskDelay(300); */
 	/* } */
 	/* return; */
@@ -236,11 +236,11 @@ static void motor_task(void *arg __attribute((unused)))
 				/* case '1': */
 				/* case '2': */
 				/* case '3': */
-				/* 	std_printf("set motor pin %d\n", (cmd - '0')); */
+				/* 	my_printf("set motor pin %d\n", (cmd - '0')); */
 				/* 	set_pin(cmd - '0', 1); */
 				/* 	break; */
 			default:
-				std_printf("Invalid command: %c\n", cmd);
+				my_printf("Invalid command: %c\n", cmd);
 				break;
 			}
 		}
@@ -286,7 +286,6 @@ static void motor_task(void *arg __attribute((unused)))
 				tick_for_next_step = step_count * 130;
 
 			if (ticks >= tick_for_next_step) {
-				//std_printf("step %lu, motor_index=%d\n", step_count, motor_current_index);
 				motor_step(direction);
 				step_count++;
 				motor_absolute_position += direction;

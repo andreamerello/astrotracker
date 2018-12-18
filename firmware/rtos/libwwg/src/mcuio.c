@@ -1,4 +1,4 @@
-/* MCU I/O: UART or USB on STM32 
+/* MCU I/O: UART or USB on STM32
  * Warren W. Gay VE3WWG
  * Sun Apr 30 16:46:11 2017
  */
