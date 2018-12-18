@@ -9,6 +9,7 @@
 #include "ui.h"
 #include "motor.h"
 #include "task.h"
+#include "mcuio.h"
 
 typedef struct {
 	uint32_t port;
@@ -105,12 +106,20 @@ static void led_task(void *arg __attribute((unused)))
 			set_ticks();
 			continue;
 		}
+
 	}
 }
 
+void led_init(void)
+{
+	rcc_periph_clock_enable(RCC_GPIOC);
+	gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_OPENDRAIN, GPIO13);
+	gpio_clear(GPIOC, GPIO13);
+}
 
 void ui_init(void)
 {
+	led_init();
 	button_init(BUTTON_STOP);
 	button_init(BUTTON_PLAY);
 	button_init(BUTTON_REWIND);

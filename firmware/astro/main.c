@@ -103,9 +103,6 @@ int main(void)
 {
 	usb_tapu_polite();
 	rcc_clock_setup_in_hse_8mhz_out_72mhz();	// Use this for "blue pill"
-
-	rcc_periph_clock_enable(RCC_GPIOC);
-	gpio_set_mode(GPIOC,GPIO_MODE_OUTPUT_50_MHZ,GPIO_CNF_OUTPUT_PUSHPULL,GPIO13);
 	rtc_init();
 	motor_init();
 	ui_init();
@@ -113,11 +110,9 @@ int main(void)
 	xTaskCreate(monitor_task,"monitor",512,NULL,1,NULL);
 
 	usb_start(1,1);
-	gpio_clear(GPIOC,GPIO13);
 	std_set_device(mcu_usb);			// Use USB for std I/O
 
 	set_led_blink(500, 500);
-
 	vTaskStartScheduler();
 	for (;;);
 }
