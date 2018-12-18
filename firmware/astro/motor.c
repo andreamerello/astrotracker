@@ -68,7 +68,7 @@ static QueueHandle_t motor_queue;
 
 static int homing_switch_pressed(void)
 {
-    return gpio_get(HOMING_PORT, HOMING_PIN);
+	return gpio_get(HOMING_PORT, HOMING_PIN);
 }
 
 static void set_pin(int i, int value)
@@ -85,17 +85,17 @@ void motor_init(void)
 {
 	int i;
 
-    /* initialize homing switch pin */
-    rcc_periph_clock_enable(HOMING_RCC);
-    gpio_set_mode(HOMING_PORT, GPIO_MODE_INPUT,
-                  GPIO_CNF_INPUT_PULL_UPDOWN, HOMING_PIN);
+	/* initialize homing switch pin */
+	rcc_periph_clock_enable(HOMING_RCC);
+	gpio_set_mode(HOMING_PORT, GPIO_MODE_INPUT,
+		      GPIO_CNF_INPUT_PULL_UPDOWN, HOMING_PIN);
 
-    
-    /* initialize motor control pins */
+
+	/* initialize motor control pins */
 	for (i = 0; i < ARRAY_SIZE(motor_gpio_table); i++) {
 		rcc_periph_clock_enable(motor_gpio_table[i].rcc);
 		gpio_set_mode(motor_gpio_table[i].port, GPIO_MODE_OUTPUT_2_MHZ,
-				  GPIO_CNF_OUTPUT_PUSHPULL, motor_gpio_table[i].pin);
+			      GPIO_CNF_OUTPUT_PUSHPULL, motor_gpio_table[i].pin);
 		gpio_clear(motor_gpio_table[i].port, motor_gpio_table[i].pin);
 	}
 
@@ -148,13 +148,13 @@ void motor_cmd_from_isr(char c)
 }
 
 typedef enum {
-    STOP,
-    PLAY,
-    REWIND,
-    FAST_FW,
-    HOMING_FOUND,
-    HOMING_PRESSED,
-    QUITTING_HOME
+	STOP,
+	PLAY,
+	REWIND,
+	FAST_FW,
+	HOMING_FOUND,
+	HOMING_PRESSED,
+	QUITTING_HOME
 } motor_state_t;
 
 static void motor_task(void *arg __attribute((unused)))
@@ -163,53 +163,53 @@ static void motor_task(void *arg __attribute((unused)))
 	int direction = 0;
 	int step_count = 0;
 
-    void print_state(const char* msg) {
-        std_printf("%s... [abs position: %d]\n", msg, motor_absolute_position);
-    }
+	void print_state(const char* msg) {
+		std_printf("%s... [abs position: %d]\n", msg, motor_absolute_position);
+	}
 
 	bool set_state(int _state)
 	{
 		if (state == _state)
 			return false;
 		state = _state;
-        switch (state) {
-        case PLAY:
-            direction = 1;
-            set_led_blink(20, 2000);
-            break;
-        case FAST_FW:
-            direction = 1;
-            set_led_blink(40, 400);
-            break;
-        case HOMING_PRESSED:
-        case QUITTING_HOME:
-        case HOMING_FOUND:
-            direction = 1;
-            break;
-        case STOP:
-            direction = 0;
-            set_led_on();
-            break;
-        case REWIND:
-            direction = -1;
-            set_led_blink(400, 40);
-            break;
-        }
+		switch (state) {
+		case PLAY:
+			direction = 1;
+			set_led_blink(20, 2000);
+			break;
+		case FAST_FW:
+			direction = 1;
+			set_led_blink(40, 400);
+			break;
+		case HOMING_PRESSED:
+		case QUITTING_HOME:
+		case HOMING_FOUND:
+			direction = 1;
+			break;
+		case STOP:
+			direction = 0;
+			set_led_on();
+			break;
+		case REWIND:
+			direction = -1;
+			set_led_blink(400, 40);
+			break;
+		}
 
 		step_count = 0;
 		motor_stop();
 		rtc_reset();
-        return true;
+		return true;
 	}
 
-    /* while(1) { */
-    /*     std_printf("button: %d\n", homing_switch_pressed()); */
-    /*     vTaskDelay(300); */
-    /* } */
-    /* return; */
+	/* while(1) { */
+	/*     std_printf("button: %d\n", homing_switch_pressed()); */
+	/*     vTaskDelay(300); */
+	/* } */
+	/* return; */
 
-    /* WARNING: if you want to control the motor with the USB keyboard, you
-     * need to uncomment the lines in main.c:monitor_task */
+	/* WARNING: if you want to control the motor with the USB keyboard, you
+	 * need to uncomment the lines in main.c:monitor_task */
 	while(1) {
 		char cmd;
 		TickType_t delay = (state != STOP) ? 1 : portMAX_DELAY;
@@ -217,66 +217,66 @@ static void motor_task(void *arg __attribute((unused)))
 			switch (cmd) {
 			case 'r':
 				if (set_state(REWIND))
-                    print_state("Rewind");
+					print_state("Rewind");
 				break;
 			case 's':
 				if (set_state(PLAY))
-                    print_state("Play");
+					print_state("Play");
 				break;
 			case 't':
 				if (set_state(STOP))
-                    print_state("Stop");
+					print_state("Stop");
 				break;
 			case 'f':
-                if (set_state(FAST_FW))
-                    print_state("Fast forward");
+				if (set_state(FAST_FW))
+					print_state("Fast forward");
 				break;
-			/* case '0': */
-			/* case '1': */
-			/* case '2': */
-			/* case '3': */
-			/* 	std_printf("set motor pin %d\n", (cmd - '0')); */
-			/* 	set_pin(cmd - '0', 1); */
-			/* 	break; */
+				/* case '0': */
+				/* case '1': */
+				/* case '2': */
+				/* case '3': */
+				/* 	std_printf("set motor pin %d\n", (cmd - '0')); */
+				/* 	set_pin(cmd - '0', 1); */
+				/* 	break; */
 			default:
 				std_printf("Invalid command: %c\n", cmd);
 				break;
 			}
 		}
 
-        if (state == REWIND) {
-            /* moving backward looking for switch pressed event */
-            if (homing_switch_pressed()) {
-                print_state("Homing Pressed");
-                set_state(HOMING_PRESSED);
-            }
-        }
-        
-        if (state == HOMING_PRESSED) {
-            /* moving forward looking for switch released event */
-            if (!homing_switch_pressed()) {
-                motor_absolute_position = -HOME_QUIT_STEPS;
-                print_state("Quitting Home");
-                set_state(QUITTING_HOME);
-            }
-        }
+		if (state == REWIND) {
+			/* moving backward looking for switch pressed event */
+			if (homing_switch_pressed()) {
+				print_state("Homing Pressed");
+				set_state(HOMING_PRESSED);
+			}
+		}
 
-        if (state == QUITTING_HOME) {
-            if (motor_absolute_position == 0) {
-                print_state("Homing completed");
-                set_state(STOP);
-            }
-        }
+		if (state == HOMING_PRESSED) {
+			/* moving forward looking for switch released event */
+			if (!homing_switch_pressed()) {
+				motor_absolute_position = -HOME_QUIT_STEPS;
+				print_state("Quitting Home");
+				set_state(QUITTING_HOME);
+			}
+		}
+
+		if (state == QUITTING_HOME) {
+			if (motor_absolute_position == 0) {
+				print_state("Homing completed");
+				set_state(STOP);
+			}
+		}
 
 		if (state != STOP) {
 			uint32_t ticks = rtc_get_ticks();
 			uint32_t tick_for_next_step;
 
-            if (direction == 1) {
-                if (motor_absolute_position > MOTOR_MAX_POSITION)
-                    set_state(STOP);
-            }                
-           
+			if (direction == 1) {
+				if (motor_absolute_position > MOTOR_MAX_POSITION)
+					set_state(STOP);
+			}
+
 			if (state == PLAY)
 				tick_for_next_step = time_for_step(step_count + 1);
 			else
@@ -288,7 +288,7 @@ static void motor_task(void *arg __attribute((unused)))
 				//std_printf("step %lu, motor_index=%d\n", step_count, motor_current_index);
 				motor_step(direction);
 				step_count++;
-                motor_absolute_position += direction;
+				motor_absolute_position += direction;
 			}
 		}
 	}
