@@ -145,6 +145,7 @@ void motor_cmd(char c)
 
 void motor_cmd_from_isr(char c)
 {
+	ui_beep(30, -1);
 	xQueueSendFromISR(motor_queue, &c, NULL);
 }
 
