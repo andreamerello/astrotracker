@@ -29,9 +29,9 @@ static button_t BUTTON_STOP    = { GPIOA, GPIO5, RCC_GPIOA, EXTI5 };
 static button_t BUTTON_REWIND  = { GPIOA, GPIO6, RCC_GPIOA, EXTI6 };
 static button_t BUTTON_FAST_FW = { GPIOA, GPIO8, RCC_GPIOA, EXTI8 };
 
-#define LED_PORT GPIOA
-#define LED_PIN GPIO9
-#define LED_RCC RCC_GPIOA
+#define LED_PORT GPIOC
+#define LED_PIN GPIO13
+#define LED_RCC RCC_GPIOC
 
 static QueueHandle_t led_queue;
 
@@ -98,13 +98,13 @@ static void led_task(void *arg __attribute((unused)))
 	set_ticks();
 
 	while (1) {
-		gpio_clear(LED_PORT, LED_PIN);
+		gpio_set(LED_PORT, LED_PIN);
 		if (pdPASS == xQueueReceive(led_queue, &periods, on_ticks)) {
 			/* someone set a blink command, reset&continue */
 			set_ticks();
 			continue;
 		}
-		gpio_set(LED_PORT, LED_PIN);
+		gpio_clear(LED_PORT, LED_PIN);
 		if (pdPASS == xQueueReceive(led_queue, &periods, off_ticks)) {
 			/* someone set a blink command, reset&continue */
 			set_ticks();
@@ -121,30 +121,9 @@ static void led_init(void)
 	gpio_clear(LED_PORT, LED_PIN);
 }
 
-static void debug_led_init(void)
-{
-	rcc_periph_clock_enable(RCC_GPIOC);
-	gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_OPENDRAIN, GPIO13);
-	gpio_clear(GPIOC, GPIO13);
-}
-
-static void set_debug_led(int val)
-{
-	if (val)
-		gpio_clear(GPIOC, GPIO13);
-	else
-		gpio_set(GPIOC, GPIO13);
-}
-
 void ui_init(void)
 {
 	led_init();
-	debug_led_init();
-#ifdef DEBUG
-	set_debug_led(1);
-#else
-	set_debug_led(0);
-#endif
 	button_init(BUTTON_STOP);
 	button_init(BUTTON_PLAY);
 	button_init(BUTTON_REWIND);
