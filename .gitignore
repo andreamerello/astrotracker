@@ -3,3 +3,7 @@ bin/
 *.elf
 *.bin
 generated.*.ld
+*.o
+*.so
+*.pyc
+mpu_demo

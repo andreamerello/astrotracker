@@ -25,7 +25,7 @@
 #include <math.h>
 #include "inv_mpu.h"
 
-#define MPU6050
+#define MPU9250
 
 /* The following functions must be defined for this platform:
  * i2c_write(unsigned char slave_addr, unsigned char reg_addr,
