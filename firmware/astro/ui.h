@@ -1,6 +1,10 @@
 #ifndef __UI__H__
 #define __UI__H__
 
+#ifndef __maybe_unused
+# define __maybe_unused		__attribute__((unused))
+#endif
+
 //#define DEBUG
 #undef DEBUG
 

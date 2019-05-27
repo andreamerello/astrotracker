@@ -125,7 +125,7 @@ static void motor_stop(void)
 		set_pin(i, 0);
 }
 
-static void motor_test(void)
+__maybe_unused static void motor_test(void)
 {
 	static int motor_i = 0;
 	static int motor_value = 0;
@@ -165,7 +165,7 @@ static void motor_task(void *arg __attribute((unused)))
 	int direction = 0;
 	int step_count = 0;
 
-	void print_state(const char* msg) {
+	void print_state(__maybe_unused const char* msg) {
 		my_printf("%s... [abs position: %d]\n", msg, motor_absolute_position);
 	}
 
