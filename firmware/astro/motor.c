@@ -100,7 +100,6 @@ void motor_init(void)
 	}
 
 	motor_queue = xQueueCreate(4, sizeof(char));
-#warning FIXME_prio
 	xTaskCreate(motor_task, "motor", 350, NULL, 2, NULL);
 }
 
