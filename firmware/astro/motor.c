@@ -276,8 +276,10 @@ static void motor_task(void *arg __attribute((unused)))
 			uint32_t tick_for_next_step;
 
 			if (direction == 1) {
-				if (motor_absolute_position > MOTOR_MAX_POSITION)
+				if (motor_absolute_position > MOTOR_MAX_POSITION) {
+					ui_beep(3000, 150);
 					set_state(STOP);
+				}
 			}
 
 			if (state == PLAY)
