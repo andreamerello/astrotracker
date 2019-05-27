@@ -266,6 +266,7 @@ static void motor_task(void *arg __attribute((unused)))
 		if (state == QUITTING_HOME) {
 			if (motor_absolute_position == 0) {
 				print_state("Homing completed");
+				ui_beep(1000, 500);
 				set_state(STOP);
 			}
 		}
