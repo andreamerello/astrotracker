@@ -22,6 +22,7 @@ typedef struct {
 typedef struct {
 	int on_ms;
 	int off_ms;
+	int beep_rate;
 } led_blinking_t;
 
 typedef struct {
@@ -104,49 +105,58 @@ void exti9_5_isr(void)
 	}
 }
 
-void set_led_blink(int on_ms, int off_ms)
+/* every beep_rate blinks, we do a beep. If beep_rate == 0, no beeps */
+void set_led_blink(int on_ms, int off_ms, int beep_rate)
 {
-	led_blinking_t c = {on_ms, off_ms};
+	led_blinking_t c = {on_ms, off_ms, beep_rate};
 	xQueueOverwrite(led_queue, &c);
 }
 
 void set_led_on(void)
 {
-	set_led_blink(1000, 0);
+	set_led_blink(1000, 0, 0);
 }
 
 void set_led_off(void)
 {
-	set_led_blink(0, 1000);
+	set_led_blink(0, 1000, 0);
 }
 
 static void led_task(void *arg __attribute((unused)))
 {
 	TickType_t on_ticks;
 	TickType_t off_ticks;
-	led_blinking_t periods = {0, 1000}; /* by default the led is off */
+	int beep_rate;
+	int blink_count = 0;
+	led_blinking_t periods = {0, 1000, 0}; /* by default the led is off */
 
-	void set_ticks(void)
+	void reinit(void)
 	{
 		on_ticks = periods.on_ms / portTICK_PERIOD_MS;
 		off_ticks = periods.off_ms / portTICK_PERIOD_MS;
+		beep_rate = periods.beep_rate;
+		blink_count = 0;
 	}
-	set_ticks();
+	reinit();
 
 	while (1) {
 		gpio_set(LED_PORT, LED_PIN);
 		if (pdPASS == xQueueReceive(led_queue, &periods, on_ticks)) {
 			/* someone set a blink command, reset&continue */
-			set_ticks();
+			reinit();
 			continue;
 		}
 		gpio_clear(LED_PORT, LED_PIN);
 		if (pdPASS == xQueueReceive(led_queue, &periods, off_ticks)) {
 			/* someone set a blink command, reset&continue */
-			set_ticks();
+			reinit();
 			continue;
 		}
-
+		blink_count++;
+		if (blink_count == beep_rate) {
+			blink_count = 0;
+			ui_beep(5, 500);
+		}
 	}
 }
 

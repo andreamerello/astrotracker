@@ -177,11 +177,11 @@ static void motor_task(void *arg __attribute((unused)))
 		switch (state) {
 		case PLAY:
 			direction = 1;
-			set_led_blink(20, 2000);
+			set_led_blink(20, 2000, 5);
 			break;
 		case FAST_FW:
 			direction = 1;
-			set_led_blink(40, 400);
+			set_led_blink(40, 400, 0);
 			break;
 		case HOMING_PRESSED:
 		case QUITTING_HOME:
@@ -194,7 +194,7 @@ static void motor_task(void *arg __attribute((unused)))
 			break;
 		case REWIND:
 			direction = -1;
-			set_led_blink(400, 40);
+			set_led_blink(400, 40, 0);
 			break;
 		}
 

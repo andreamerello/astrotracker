@@ -112,7 +112,7 @@ int main(void)
 	usb_start(1,1);
 	std_set_device(mcu_usb);			// Use USB for std I/O
 
-	set_led_blink(500, 500);
+	set_led_blink(500, 500, 0);
 	vTaskStartScheduler();
 	for (;;);
 }
