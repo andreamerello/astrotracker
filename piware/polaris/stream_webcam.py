@@ -3,10 +3,7 @@ import logging
 import SocketServer
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 import time
-
-print 'Loading cv2...'
-import cv2
-print 'DONE'
+from mycamera import MyCamera
 
 PAGE="""\
 <html>
@@ -20,26 +17,19 @@ PAGE="""\
 </html>
 """
 
+
 def stream_camera(server):
-    camera = cv2.VideoCapture(0)  # init the camera
+    cap = MyCamera(0)
     while True:
-
-        retval, frame = camera.read()  # grab the current frame
-        assert retval
-        #frame = cv2.resize(frame, (640, 480))  # resize the frame
-        retval, jpg = cv2.imencode('.jpg', frame)
-        assert retval
-        ## with open('frame.jpg', 'wb') as f:
-        ##     f.write(jpg)
+        jpg_array = cap.read_jpg()
+        frame = buffer(jpg_array)[:]
         ## with open('frame.jpg') as f:
-        ##     tosend = f.read()
-
-        tosend = buffer(jpg)[:]
+        ##     frame = f.read()
         server.wfile.write(b'--FRAME\r\n')
         server.send_header('Content-Type', 'image/jpeg')
-        server.send_header('Content-Length', len(tosend))
+        server.send_header('Content-Length', len(frame))
         server.end_headers()
-        server.wfile.write(tosend)
+        server.wfile.write(frame)
         server.wfile.write(b'\r\n')
 
 
