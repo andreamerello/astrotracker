@@ -1,11 +1,6 @@
 from __future__ import print_function
-
 import sys
 import threading, time
-try:
-    from Queue import Queue
-except ImportError:
-    from queue import Queue
 
 print('Loading cv2...', end='')
 sys.stdout.flush()
@@ -20,39 +15,37 @@ print(cv2.__version__)
 class MyCamera:
 
     def __init__(self, videoname):
-        self.videoname = videoname
+        self._videoname = videoname
         self.cap = None
-        self.q = Queue()
-        self.t = None
-        self._running = False
+        self._lastframe = None
+        self._newframe = threading.Event()
+        self._t = None
 
     def _start(self):
         self.cap = cap = cv2.VideoCapture()
-        cap.open(self.videoname, apiPreference=cv2.CAP_V4L2)
+        cap.open(self._videoname, apiPreference=cv2.CAP_V4L2)
         cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
         ## cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         ## cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         ## cap.set(cv2.CAP_PROP_FPS, 30.0)
-        self.t = threading.Thread(target=self._reader)
-        self.t.daemon = True
-        self.t.start()
+        self._t = threading.Thread(target=self._reader)
+        self._t.daemon = True
+        self._t.start()
 
     # read frames as soon as they are available, keeping only most recent one
     def _reader(self):
-        self._running = True
-        while self._running:
+        while self.cap:
             ret, frame = self.cap.read()
             if not ret:
+                print("Cannot read from self.cap, exiting")
                 break
-            if not self.q.empty():
-                try:
-                    self.q.get_nowait()   # discard previous (unprocessed) frame
-                except Queue.Empty:
-                    pass
-            self.q.put(frame)
+            self._lastframe = frame
+            self._newframe.set()
 
     def read(self):
-        return self.q.get()
+        self._newframe.wait()
+        self._newframe.clear()
+        return self._lastframe
 
     def read_jpg(self):
         frame = self.read()
@@ -67,7 +60,6 @@ class MyCamera:
 
     def __exit__(self, etype, evalue, tb):
         print('release')
-        self._running = False
         self.cap.release()
         self.cap = None
 
