@@ -14,8 +14,9 @@ print(cv2.__version__)
 # https://stackoverflow.com/questions/43665208/how-to-get-the-latest-frame-from-capture-device-camera-in-opencv-python
 class MyCamera:
 
-    def __init__(self, videoname):
+    def __init__(self, videoname, rot180=False):
         self._videoname = videoname
+        self._rot180 = rot180
         self.cap = None
         self._lastframe = None
         self._newframe = threading.Event()
@@ -45,7 +46,10 @@ class MyCamera:
     def read(self):
         self._newframe.wait()
         self._newframe.clear()
-        return self._lastframe
+        frame = self._lastframe
+        if self._rot180:
+            frame = cv2.rotate(frame, cv2.ROTATE_180)
+        return frame
 
     def read_jpg(self):
         frame = self.read()

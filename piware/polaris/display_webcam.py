@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 
+import sys
 import cv2
 from mycamera import MyCamera
 
 def main():
-    with MyCamera(0) as cam:
+    with MyCamera(1, rot180=True) as cam:
         while(True):
             frame = cam.read()
             #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)

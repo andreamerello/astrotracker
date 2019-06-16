@@ -27,7 +27,7 @@ PAGE="""\
 """
 
 def stream_camera(server):
-    with MyCamera(0) as cap:
+    with MyCamera(0, rot180=True) as cap:
         while True:
             jpg_array = cap.read_jpg()
             if PY3:
