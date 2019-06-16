@@ -1,18 +1,34 @@
+from __future__ import print_function
+
 import sys
-import Queue, threading, time
-print 'Loading cv2...',
+import threading, time
+try:
+    from Queue import Queue
+except ImportError:
+    from queue import Queue
+
+print('Loading cv2...', end='')
 sys.stdout.flush()
 import cv2
-print 'DONE'
+print(cv2.__version__)
 
+# try also this
+#v4l2-ctl -d /dev/video1 -c exposure_auto=1 -c exposure_auto_priority=0 -c exposure_absolute=10
 
 # bufferless VideoCapture, inspired by
 # https://stackoverflow.com/questions/43665208/how-to-get-the-latest-frame-from-capture-device-camera-in-opencv-python
 class MyCamera:
 
     def __init__(self, name):
-        self.cap = cv2.VideoCapture(name)
-        self.q = Queue.Queue()
+        self.cap = cv2.VideoCapture()
+        self.cap.open(name, apiPreference=cv2.CAP_V4L2)
+
+        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        self.cap.set(cv2.CAP_PROP_FPS, 30.0)
+
+        self.q = Queue()
         t = threading.Thread(target=self._reader)
         t.daemon = True
         t.start()

@@ -1,8 +1,15 @@
+from __future__ import print_function
+import sys
+PY3 = sys.version_info[0] == 3
 import io
 import logging
-import SocketServer
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-import time
+if PY3:
+    import socketserver
+    from http.server import BaseHTTPRequestHandler,HTTPServer
+else:
+    import SocketServer as socketserver
+    from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
+
 from mycamera import MyCamera
 
 PAGE="""\
@@ -12,17 +19,20 @@ PAGE="""\
 </head>
 <body>
 <center><h1>Raspberry Pi - Camera</h1></center>
-<center><img src="stream.mjpg" width="640" height="480"></center>
+<center><img src="stream.mjpg" width="1920" height="1080"></center>
 </body>
 </html>
 """
-
 
 def stream_camera(server):
     cap = MyCamera(0)
     while True:
         jpg_array = cap.read_jpg()
-        frame = buffer(jpg_array)[:]
+        if PY3:
+            frame = jpg_array
+        else:
+            # not sure why this is needed on Py2
+            frame = buffer(jpg_array)[:]
         ## with open('frame.jpg') as f:
         ##     frame = f.read()
         server.wfile.write(b'--FRAME\r\n')
@@ -56,19 +66,19 @@ class StreamingHandler(BaseHTTPRequestHandler):
             try:
                 stream_camera(self)
             except Exception as e:
-                logging.warning(
+                logging.exception(
                     'Removed streaming client %s: %s',
                     self.client_address, str(e))
         else:
             self.send_error(404)
             self.end_headers()
 
-class StreamingServer(SocketServer.ThreadingMixIn, HTTPServer):
+class StreamingServer(socketserver.ThreadingMixIn, HTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
 if __name__ == '__main__':
     address = ('', 8000)
     server = StreamingServer(address, StreamingHandler)
-    print 'Server Started'
+    print('Server Started')
     server.serve_forever()
