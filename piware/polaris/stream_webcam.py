@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from __future__ import print_function
 import sys
 PY3 = sys.version_info[0] == 3
@@ -19,28 +21,28 @@ PAGE="""\
 </head>
 <body>
 <center><h1>Raspberry Pi - Camera</h1></center>
-<center><img src="stream.mjpg" width="1920" height="1080"></center>
+<center><a href="stream.mjpg"><img src="stream.mjpg"></a></center>
 </body>
 </html>
 """
 
 def stream_camera(server):
-    cap = MyCamera(0)
-    while True:
-        jpg_array = cap.read_jpg()
-        if PY3:
-            frame = jpg_array
-        else:
-            # not sure why this is needed on Py2
-            frame = buffer(jpg_array)[:]
-        ## with open('frame.jpg') as f:
-        ##     frame = f.read()
-        server.wfile.write(b'--FRAME\r\n')
-        server.send_header('Content-Type', 'image/jpeg')
-        server.send_header('Content-Length', len(frame))
-        server.end_headers()
-        server.wfile.write(frame)
-        server.wfile.write(b'\r\n')
+    with MyCamera(0) as cap:
+        while True:
+            jpg_array = cap.read_jpg()
+            if PY3:
+                frame = jpg_array
+            else:
+                # not sure why this is needed on Py2
+                frame = buffer(jpg_array)[:]
+            ## with open('frame.jpg') as f:
+            ##     frame = f.read()
+            server.wfile.write(b'--FRAME\r\n')
+            server.send_header('Content-Type', 'image/jpeg')
+            server.send_header('Content-Length', len(frame))
+            server.end_headers()
+            server.wfile.write(frame)
+            server.wfile.write(b'\r\n')
 
 
 class StreamingHandler(BaseHTTPRequestHandler):

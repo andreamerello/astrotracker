@@ -19,23 +19,28 @@ print(cv2.__version__)
 # https://stackoverflow.com/questions/43665208/how-to-get-the-latest-frame-from-capture-device-camera-in-opencv-python
 class MyCamera:
 
-    def __init__(self, name):
-        self.cap = cv2.VideoCapture()
-        self.cap.open(name, apiPreference=cv2.CAP_V4L2)
-
-        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
-        self.cap.set(cv2.CAP_PROP_FPS, 30.0)
-
+    def __init__(self, videoname):
+        self.videoname = videoname
+        self.cap = None
         self.q = Queue()
-        t = threading.Thread(target=self._reader)
-        t.daemon = True
-        t.start()
+        self.t = None
+        self._running = False
+
+    def _start(self):
+        self.cap = cap = cv2.VideoCapture()
+        cap.open(self.videoname, apiPreference=cv2.CAP_V4L2)
+        cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
+        ## cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        ## cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        ## cap.set(cv2.CAP_PROP_FPS, 30.0)
+        self.t = threading.Thread(target=self._reader)
+        self.t.daemon = True
+        self.t.start()
 
     # read frames as soon as they are available, keeping only most recent one
     def _reader(self):
-        while True:
+        self._running = True
+        while self._running:
             ret, frame = self.cap.read()
             if not ret:
                 break
@@ -55,6 +60,17 @@ class MyCamera:
         if not retval:
             raise Exception("imencode failed")
         return jpg
+
+    def __enter__(self):
+        self._start()
+        return self
+
+    def __exit__(self, etype, evalue, tb):
+        print('release')
+        self._running = False
+        self.cap.release()
+        self.cap = None
+
 
 if __name__ == '__main__':
     cap = VideoCapture(0)
