@@ -40,6 +40,22 @@
         size_hint: None, None
         allow_stretch: True
 
+    Image:
+        id: stars
+        source: "stars.png"
+        pos: 0, 0
+        size: root.size
+        size_hint: None, None
+        allow_stretch: True
+        canvas.before:
+            PushMatrix
+            Rotate:
+                angle: root.stars_angle
+                origin: self.center
+        canvas.after:
+            PopMatrix
+
+
     Label:
         text: "No frame received yet"
         font_size: '50sp'
@@ -51,3 +67,17 @@
         size_hint: None, None
         text: "fakeimg"
         on_release: root.fakeimg()
+
+    Button:
+        pos: 120, 100
+        size: 20, 20
+        size_hint: None, None
+        text: "-"
+        on_release: root.stars_angle -= 1
+
+    Button:
+        pos: 140, 100
+        size: 20, 20
+        size_hint: None, None
+        text: "+"
+        on_release: root.stars_angle += 1
