@@ -1,0 +1,6 @@
+Per attivare venv
+source venv/bin/activate
+
+
+Per installare i requirement in un nuovo venv
+pip install -r requirements.txt

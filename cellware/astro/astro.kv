@@ -1,0 +1,32 @@
+#:kivy 1.0
+#:import kivy kivy
+#:import win kivy.core.window
+
+<Widget>:
+    # default: transparent
+    border_color: (1, 1, 1, 0)
+
+    canvas.after:
+        Color:
+            rgba: self.border_color
+
+        Line:
+            rectangle: self.x+1,self.y+1,self.width-1,self.height-1
+            dash_offset: 5
+            dash_length: 3
+
+<MainMenuScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        Button:
+            text: "Polar alignment"
+            on_release: app.open_polar()
+        Button:
+            text: "Camera control"
+            on_release: app.open_camera()
+        Button:
+            text: "Upgrade version"
+            on_release: app.upgrade_from_github()
+        Button:
+            text: "Quit"
+            on_release: app.stop()
