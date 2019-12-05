@@ -11,6 +11,7 @@ from kivy.core.window import Window
 from kivy.uix.screenmanager import Screen
 from kivy.utils import platform
 from kivy.logger import Logger
+from astro.polarscreen import PolarScreen
 from astro.manager import Manager
 from astro.error import MyExceptionHandler, MessageBox
 from astro.smart_requests import SmartRequests
@@ -31,6 +32,7 @@ class AstroApp(App):
         return 3
 
     def build(self):
+        Window.bind(on_keyboard=self.on_keyboard)
         self.exception_handler = MyExceptionHandler()
         self.requests = SmartRequests(self)
         self.manager = Manager()
@@ -40,8 +42,13 @@ class AstroApp(App):
     def on_pause(self):
         return True
 
+    def on_keyboard(self, window, keycode, scancode, text, modifiers):
+        if keycode == 27: # ESC
+            return self.root.go_back()
+
     def open_polar(self):
-        print "TODO"
+        polar_screen = PolarScreen(name='polarsceen')
+        self.manager.open(polar_screen)
 
     def open_camera(self):
         print "TODO"
