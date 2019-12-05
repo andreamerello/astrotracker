@@ -1,0 +1,3 @@
+title=AstroTracker
+author=Antonio Cuni, Andrea Merello
+orientation=landscape
