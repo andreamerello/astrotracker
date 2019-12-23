@@ -57,26 +57,33 @@
 
 
     Label:
-        text: "No frame received yet"
+        text: "Frame %d" % root.camera.frame_no
         font_size: '50sp'
         color: (1, 0, 0, 1) if root.ids.piframe.texture is None else (0, 0, 0, 0)
 
     Button:
         pos: 100, 100
-        size: 20, 20
+        size: 50, 20
         size_hint: None, None
-        text: "fakeimg"
-        on_release: root.fakeimg()
+        text: "start"
+        on_release: root.camera.start()
 
     Button:
-        pos: 120, 100
+        pos: 150, 100
+        size: 50, 20
+        size_hint: None, None
+        text: "stop"
+        on_release: root.camera.stop()
+
+    Button:
+        pos: 200, 100
         size: 20, 20
         size_hint: None, None
         text: "-"
         on_release: root.stars_angle -= 1
 
     Button:
-        pos: 140, 100
+        pos: 220, 100
         size: 20, 20
         size_hint: None, None
         text: "+"
