@@ -7,3 +7,5 @@ generated.*.ld
 *.so
 *.pyc
 mpu_demo
+venv
+*.d
