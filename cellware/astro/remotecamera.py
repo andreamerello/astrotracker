@@ -9,6 +9,7 @@ from kivy.clock import Clock, mainthread
 class RemoteCamera(EventDispatcher):
     url = StringProperty()
     frame_no = NumericProperty(0)
+    status = StringProperty('Stopped')
 
     # ==============================
     # Main thread
@@ -43,8 +44,13 @@ class RemoteCamera(EventDispatcher):
 
     def run(self):
         Logger.info('RemoteCamera: thread started')
+        self.set_status('Connecting...')
+        time.sleep(1)
+        self.set_status('Connected')
+
         while self.running:
             print 'hello, frame', self.frame_no
-            time.sleep(1)
+            time.sleep(0.3)
             self.frame_no += 1
+        self.set_status('Stopped')
         Logger.info('RemoteCamera: stop')

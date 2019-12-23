@@ -57,7 +57,7 @@
 
 
     Label:
-        text: "Frame %d" % root.camera.frame_no
+        text: "%s\nFrame %d" % (root.camera.status, root.camera.frame_no)
         font_size: '50sp'
         color: (1, 0, 0, 1) if root.ids.piframe.texture is None else (0, 0, 0, 0)
 
