@@ -1,3 +1,4 @@
+import io
 import time
 import threading
 import requests
@@ -5,11 +6,13 @@ from kivy.event import EventDispatcher
 from kivy.properties import (StringProperty, ObjectProperty, NumericProperty)
 from kivy.logger import Logger
 from kivy.clock import Clock, mainthread
+from kivy.core.image import Image as CoreImage
 
 class RemoteCamera(EventDispatcher):
     url = StringProperty()
     frame_no = NumericProperty(0)
     status = StringProperty('Stopped')
+    frame_texture = ObjectProperty(None)
 
     # ==============================
     # Main thread
@@ -38,19 +41,49 @@ class RemoteCamera(EventDispatcher):
     def set_status(self, status):
         self.status = status
 
+    @mainthread
+    def set_jpg(self, jpg):
+        # create a texture from the jpg data. This needs to be done in the main
+        # thread, else it seems that kivy cannot display the texture, don't know
+        # why.
+        stream = io.BytesIO(jpg)
+        img = CoreImage(stream, ext="jpg")
+        self.frame_texture = img.texture
+
+
     # ==============================
     # RemoteCamera thread
     # ==============================
 
+
     def run(self):
+        CHUNK_SIZE = 1024
         Logger.info('RemoteCamera: thread started')
         self.set_status('Connecting...')
-        time.sleep(1)
+        resp = requests.get(self.url, stream=True)
+        resp.raise_for_status() # XXX: handle this
         self.set_status('Connected')
 
+        data = ''
         while self.running:
-            print 'hello, frame', self.frame_no
-            time.sleep(0.3)
-            self.frame_no += 1
+            data += resp.raw.read(CHUNK_SIZE)
+            a = data.find('\xff\xd8') # jpg_start
+            b = data.find('\xff\xd9') # jpg_end
+            if a != -1 and b != -1:
+                # found a new frame!
+                jpg_data = data[a:b+2]
+                data = data[b+2:]
+                # with open('/tmp/foo%d.jpg' % self.frame_no, 'wb') as f:
+                #     f.write(jpg_data)
+                self.set_jpg(jpg_data)
+                self.frame_no += 1
+
+                # sleep a bit: for the polaris stream this is not an issue since
+                # it will be at a very low fps. However, if you try to display a
+                # MJPG with an unbounded framerate, if you don't put the sleep
+                # you put too many tasks into kivy's @mainthread and things
+                # seems to hang.
+                time.sleep(0.01)
+
         self.set_status('Stopped')
         Logger.info('RemoteCamera: stop')
