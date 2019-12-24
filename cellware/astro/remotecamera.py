@@ -1,6 +1,7 @@
 import io
 import time
 import threading
+from urlparse import urljoin
 import requests
 from kivy.event import EventDispatcher
 from kivy.properties import (StringProperty, ObjectProperty, NumericProperty)
@@ -9,7 +10,7 @@ from kivy.clock import Clock, mainthread
 from kivy.core.image import Image as CoreImage
 
 class RemoteCamera(EventDispatcher):
-    url = StringProperty()
+    app = ObjectProperty()
     frame_no = NumericProperty(0)
     status = StringProperty('Stopped')
     frame_texture = ObjectProperty(None)
@@ -21,6 +22,12 @@ class RemoteCamera(EventDispatcher):
     def __init__(self, **kwargs):
         super(RemoteCamera, self).__init__(**kwargs)
         self.running = False
+
+    def url(self, path):
+        host = self.app.config.get('server', 'host')
+        port = self.app.config.get('server', 'port')
+        base = 'http://%s:%s' % (host, port)
+        return urljoin(base, path)
 
     def start(self):
         if self.running:
@@ -60,7 +67,7 @@ class RemoteCamera(EventDispatcher):
         CHUNK_SIZE = 1024
         Logger.info('RemoteCamera: thread started')
         self.set_status('Connecting...')
-        resp = requests.get(self.url, stream=True)
+        resp = requests.get(self.url('sky.mjpg'), stream=True)
         resp.raise_for_status() # XXX: handle this
         self.set_status('Connected')
 

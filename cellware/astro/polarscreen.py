@@ -5,7 +5,7 @@ from astro.remotecamera import RemoteCamera
 
 class PolarScreen(Screen):
     stars_angle = NumericProperty(0)
-    camera = RemoteCamera(url='http://localhost:8000/foo.mjpg')
+    camera = ObjectProperty(RemoteCamera())
 
     # def fakeimg(self):
     #     with open("fakeimg.png", "rb") as f:

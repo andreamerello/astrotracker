@@ -7,6 +7,7 @@ FILES=(android.txt
        main.py
        astro
        libs
+       data
       )
 
 rm -rf $TMPDIR
