@@ -13,7 +13,7 @@ from kivy.utils import platform
 from kivy.logger import Logger
 from astro.polarscreen import PolarScreen
 from astro.manager import Manager
-from astro.error import MyExceptionHandler, MessageBox
+from astro.error import MyExceptionHandler, MessageBox, ErrorMessage
 from astro.smart_requests import SmartRequests
 
 GITHUB_URL = 'https://github.com/andreamerello/astrotracker/archive/master.zip'
@@ -54,6 +54,7 @@ class AstroApp(App):
         print "TODO"
 
     def upgrade_from_github(self):
+        raise ErrorMessage("FIX ME")
         if platform == 'android':
             dest = '/sdcard/kivy'
         else:
