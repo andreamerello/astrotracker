@@ -65,6 +65,7 @@ class RemoteCamera(EventDispatcher):
         self.set_status('Connected')
 
         data = ''
+        t1 = time.time()
         while self.running:
             data += resp.raw.read(CHUNK_SIZE)
             a = data.find('\xff\xd8') # jpg_start
@@ -77,6 +78,8 @@ class RemoteCamera(EventDispatcher):
                 #     f.write(jpg_data)
                 self.set_jpg(jpg_data)
                 self.frame_no += 1
+                t2 = time.time()
+                #Logger.info('RemoteCamera: %.2f fps' % (self.frame_no / (t2-t1)))
 
                 # sleep a bit: for the polaris stream this is not an issue since
                 # it will be at a very low fps. However, if you try to display a
