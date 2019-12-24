@@ -7,6 +7,7 @@ import sys
 from zipfile import ZipFile
 from cStringIO import StringIO
 from kivy.app import App
+from kivy.resources import resource_find
 from kivy.core.window import Window
 from kivy.uix.screenmanager import Screen
 from kivy.utils import platform
@@ -30,6 +31,17 @@ class AstroApp(App):
 
     def get_timeout(self):
         return 3
+
+    def build_config(self, config):
+        config.setdefaults('server', {
+            'host': '192.168.1.3',
+            'port': '8000'
+        })
+
+    def build_settings(self, settings):
+        from kivy.config import Config
+        settings.add_json_panel('App', self.config,
+                                filename=resource_find('data/settings.json'))
 
     def build(self):
         Window.bind(on_keyboard=self.on_keyboard)

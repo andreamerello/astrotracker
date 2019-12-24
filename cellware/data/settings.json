@@ -1,0 +1,14 @@
+[
+    { "title": "Camera Server", "type": "title"},
+    { "title": "Address",
+      "type": "string",
+      "desc": "Server Address",
+      "section": "server",
+      "key": "host"
+    },
+    { "title": "Port",
+      "type": "string",
+      "section": "server",
+      "key": "port"
+    }
+]
