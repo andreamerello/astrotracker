@@ -14,7 +14,7 @@ class StarAnalyzer(PiRGBAnalysis):
         fps = 1.0 / (now - self.last_frame)
         exposure = self.camera.exposure_speed / 1000
         shutter = self.camera.shutter_speed / 1000
-        print 'fps=%.2f iso=%s  analog=%s  digital=%s   exposure=%dms   shutter=%dms' % (fps, self.camera.iso, self.camera.analog_gain, self.camera.digital_gain, exposure, shutter)
+        print('fps=%.2f iso=%s  analog=%.2f  digital=%.2f   exposure=%dms   shutter=%dms' % (fps, self.camera.iso, self.camera.analog_gain, self.camera.digital_gain, exposure, shutter))
         self.last_frame = now
 
 
@@ -41,11 +41,11 @@ class StarCamera(object):
             #
             if recording:
                 self._start_recording()
-        except Exception, e:
-            print 'Exception inside set_shutter_speed'
+        except Exception as e:
+            print('Exception inside set_shutter_speed')
             traceback.print_exc()
-            print
-            print
+            print()
+            print()
 
     def _start_recording(self):
         self.camera.start_recording(self.analyzer, 'rgb')
@@ -65,7 +65,7 @@ class StarCamera(object):
                         i += 1
                         self.camera.wait_recording(1)
                         if i == 5:
-                            print 'changing the shutter speed on the fly'
+                            print('changing the shutter speed on the fly')
                             self.set_shutter_speed(1)
                 finally:
                     self.camera.stop_recording()
