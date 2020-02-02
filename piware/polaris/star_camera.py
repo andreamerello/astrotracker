@@ -1,31 +1,35 @@
 import time
 import traceback
+import io
+import threading
 import picamera
-import numpy as np
-from picamera.array import PiRGBAnalysis
 
-class StarAnalyzer(PiRGBAnalysis):
-    def __init__(self, camera):
-        super(StarAnalyzer, self).__init__(camera)
-        self.last_frame = time.time()
 
-    def analyze(self, frame):
-        now = time.time()
-        fps = 1.0 / (now - self.last_frame)
-        exposure = self.camera.exposure_speed / 1000
-        shutter = self.camera.shutter_speed / 1000
-        print('fps=%.2f iso=%s  analog=%.2f  digital=%.2f   exposure=%dms   shutter=%dms' % (fps, self.camera.iso, self.camera.analog_gain, self.camera.digital_gain, exposure, shutter))
-        self.last_frame = now
+class StreamingOutput(object):
+    def __init__(self):
+        self.frame = None
+        self.buffer = io.BytesIO()
+        self.condition = threading.Condition()
 
+    def write(self, buf):
+        if buf.startswith(b'\xff\xd8'):
+            # New frame, copy the existing buffer's content and notify all
+            # clients it's available
+            self.buffer.truncate()
+            with self.condition:
+                self.frame = self.buffer.getvalue()
+                self.condition.notify_all()
+            self.buffer.seek(0)
+        return self.buffer.write(buf)
 
 
 class StarCamera(object):
 
-    def __init__(self):
+    def __init__(self, shutter_speed=1):
         self.camera = picamera.PiCamera(resolution='2592x1952')
-        self.camera.ISO = 800
-        self.analyzer = StarAnalyzer(self.camera)
-        self.set_shutter_speed(0.5)
+        #self.camera.ISO = 800
+        self.output = StreamingOutput()
+        self.set_shutter_speed(shutter_speed)
 
     def set_shutter_speed(self, speed):
         """
@@ -48,14 +52,31 @@ class StarCamera(object):
             print()
 
     def _start_recording(self):
-        self.camera.start_recording(self.analyzer, 'rgb')
+        #self.camera.start_recording(self.analyzer, 'rgb')
+        self.camera.start_recording(self.output, format='mjpeg')
 
-    def start(self):
+    def read_frames(self):
+        with self.camera:
+            self.camera.start_preview()
+            self._start_recording()
+            time.sleep(3)
+            last_frame = time.time()
+            while True:
+                with self.output.condition:
+                    self.output.condition.wait()
+                    frame = self.output.frame
+                now = time.time()
+                fps = 1.0 / (now - last_frame)
+                exposure = self.camera.exposure_speed / 1000
+                shutter = self.camera.shutter_speed / 1000
+                print('fps=%.2f iso=%s  analog=%.2f  digital=%.2f   exposure=%dms   shutter=%dms' % (fps, self.camera.iso, self.camera.analog_gain, self.camera.digital_gain, exposure, shutter))
+                yield frame
+
+    def example(self):
         with self.camera:
             # TODO: think about awb gains
             ## camera.awb_mode = 'off'
             ## camera.awb_gains = (1.4, 1.5)
-
             self.camera.start_preview()
             with self.analyzer:
                 self._start_recording()
@@ -72,7 +93,7 @@ class StarCamera(object):
 
 def main():
     star_camera = StarCamera()
-    star_camera.start()
+    star_camera.example()
 
 if __name__ == '__main__':
     main()
