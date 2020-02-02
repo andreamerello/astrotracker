@@ -1,6 +1,6 @@
 import time
 from flask import Flask, Response
-from star_camera import StarCamera
+from polaris.star_camera import StarCamera
 app = Flask(__name__)
 
 @app.route('/')
@@ -41,9 +41,11 @@ def camera(speed):
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
-
-if __name__ == '__main__':
+def main():
     import logging
     logging.basicConfig()
     logging.getLogger('werkzeug').setLevel(logging.INFO)
     app.run(host='0.0.0.0', debug=True)
+
+if __name__ == '__main__':
+    main()
