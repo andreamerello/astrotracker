@@ -89,7 +89,10 @@ class PolarisApp:
                     '-ss', str(shutter * 10**6)
                     ]
             p = subprocess.Popen(cmd, bufsize=Y_LEN+UV_LEN, stdout=subprocess.PIPE)
-            yield from getframes(p.stdout)
+            try:
+                yield from getframes(p.stdout)
+            finally:
+                self.terminate(p)
 
         def getframes(f):
             while True:
@@ -107,7 +110,19 @@ class PolarisApp:
         return fromcamera()
         #return fromfile('/home/pi/video.yuv')
 
-
+    def terminate(self, p, timeout=1):
+        """
+        Terminate gracefully the given process, or kill
+        """
+        print('Sending SIGTERM...')
+        try:
+            p.terminate()
+            p.wait(timeout)
+        except subprocess.TimeoutExpired:
+            print('Timeout :(, killing the process')
+            p.kill()
+        else:
+            print('Process successully terminated')
 
 def main():
     from wsgiref.simple_server import make_server
