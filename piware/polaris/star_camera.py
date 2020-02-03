@@ -57,19 +57,25 @@ class StarCamera(object):
 
     def read_frames(self):
         with self.camera:
+            speed = self.camera.shutter_speed / 10**6
             self.camera.start_preview()
             self._start_recording()
-            time.sleep(3)
+            #
+            # empirically, we need to wait 6 frames before we can see anything
+            wait_time = (self.camera.shutter_speed / 10**6) * 6
+            wait_time = max(wait_time, 2) # at least to seconds
+            print('Waiting %.2fs for camera to warm up...' % wait_time)
+            time.sleep(wait_time)
             last_frame = time.time()
             while True:
                 with self.output.condition:
                     self.output.condition.wait()
                     frame = self.output.frame
-                now = time.time()
-                fps = 1.0 / (now - last_frame)
-                exposure = self.camera.exposure_speed / 1000
-                shutter = self.camera.shutter_speed / 1000
-                print('fps=%.2f iso=%s  analog=%.2f  digital=%.2f   exposure=%dms   shutter=%dms' % (fps, self.camera.iso, self.camera.analog_gain, self.camera.digital_gain, exposure, shutter))
+                ## now = time.time()
+                ## fps = 1.0 / (now - last_frame)
+                ## exposure = self.camera.exposure_speed / 1000
+                ## shutter = self.camera.shutter_speed / 1000
+                ## print('fps=%.2f iso=%s  analog=%.2f  digital=%.2f   exposure=%dms   shutter=%dms' % (fps, self.camera.iso, self.camera.analog_gain, self.camera.digital_gain, exposure, shutter))
                 yield frame
 
     def example(self):
