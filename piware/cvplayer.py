@@ -2,6 +2,7 @@
 An opencv-based player for the polaris app
 """
 
+import time
 import cv2
 import numpy as np
 import requests
@@ -27,20 +28,22 @@ def raw_resolution(width, height, splitter=False):
 
 
 def main():
-    ## W, H = 320, 240
-    ## fps = 10
-
-    W, H = 640, 480
-    fps = 5
+    W, H, fps = 320, 240, 2
+    ## W, H, fps = 640, 480,  5
+    ## W, H, fps = 2592, 1944, 1
 
     W, H = raw_resolution(W, H)
     URL = 'http://polaris.local:8000/camera?'
     URL += 'w=%s&h=%s&fps=%s' % (W, H, fps)
+    #URL += '&shutter=5'
+
+    ## URL = 'http://localhost:8000/camera?w=640&h=480'
 
     ylen = W*H
     resp = requests.get(URL, stream=True)
+    tstart = time.time()
     for i, data in enumerate(resp.iter_content(ylen)):
-        print('Got frame: %d' % i)
+        print('[%5.2f] got frame: %d' % (time.time()-tstart, i))
         frame = np.frombuffer(data, dtype=np.uint8).reshape(H, W)
         cv2.imshow("frame", frame)
         ch = chr(cv2.waitKey(1) & 0xFF)
@@ -48,5 +51,30 @@ def main():
             break
 
 
+def raw_connection():
+    import socket
+    conn = socket.create_connection(('polaris.local', 8000))
+    conn.send(b'GET /camera?w=320&h=240&fps=2 HTTP/1.0\r\n')
+    conn.send(b'\r\n')
+    data = conn.recv(200)
+    print(data.decode('utf-8'))
+    print(len(data))
+    print()
+    Y_LEN = 320*240
+    bytes_read = 0
+    i = 0
+    tstart = time.time()
+    while True:
+        data = conn.recv(Y_LEN)
+        bytes_read += len(data)
+        if bytes_read > Y_LEN:
+            # got a full frame
+            print('[%5.2f] got frame: %d' % (time.time()-tstart, i))
+            i += 1
+            bytes_read -= Y_LEN
+
+
+
 if __name__ == '__main__':
-    main()
+    #main()
+    raw_connection()
