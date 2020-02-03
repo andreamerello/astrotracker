@@ -70,18 +70,14 @@ class PolarisApp:
         fps = self.qs.get('fps', 1)
         shutter = self.qs.get('shutter', None) # shutter speed, in seconds
         #
-        def getframes():
-            ylen = w*h
-            uvlen = (w//2) * (h//2) * 2
-            print('ylen: %d' % ylen)
-            ## # read from file
-            ## with open('/home/pi/video.yuv', 'rb') as f:
-            ##     while True:
-            ##         ydata = f.read(ylen)
-            ##         uvdata = f.read(uvlen)
-            ##         yield ydata
+        Y_LEN = w*h
+        UV_LEN = (w//2) * (h//2) * 2
 
-            # read from camera
+        def fromfile(fname):
+            with open(fname, 'rb') as f:
+                yield from getframes(f)
+
+        def fromcamera():
             cmd = ['raspividyuv',
                    '-t', '0', # no timeout, record forever
                    '-w', str(w),
@@ -92,24 +88,24 @@ class PolarisApp:
                 cmd += [
                     '-ss', str(shutter * 10**6)
                     ]
-            p = subprocess.Popen(cmd, bufsize=ylen+uvlen, stdout=subprocess.PIPE)
-            i = 0
+            p = subprocess.Popen(cmd, bufsize=Y_LEN+UV_LEN, stdout=subprocess.PIPE)
+            yield from getframes(p.stdout)
+
+        def getframes(f):
             while True:
-                i += 1
-                ydata = p.stdout.read(ylen)
+                ydata = f.read(Y_LEN) # read luminance
                 if ydata == '':
                     break
-                assert len(ydata) == ylen
-                print('%d: got ydata' % i)
-                uvdata = p.stdout.read(uvlen)
-                assert len(uvdata) == uvlen
-                print('%d: got uvdata' % i)
+                assert len(ydata) == Y_LEN
+                uvdata = f.read(UV_LEN) # read and discard chrominance
+                assert len(uvdata) == UV_LEN
                 yield ydata
 
         http_status = '200 OK'
         headers = [('Content-Type', 'application/octet-stream')]
         self.start_response(http_status, headers)
-        return getframes()
+        return fromcamera()
+        #return fromfile('/home/pi/video.yuv')
 
 
 
