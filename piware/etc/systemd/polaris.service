@@ -1,0 +1,8 @@
+[Unit]
+Description=polaris uwsgi service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/uwsgi --ini /home/pi/astrotracker/piware/uwsgi.ini
+Restart=on-failure
+RestartSec=5s
