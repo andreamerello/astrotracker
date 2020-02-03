@@ -90,18 +90,24 @@ class PolarisApp:
                     '-ss', str(shutter)
                     ]
             print('Executing: %s' % ' '.join(cmd))
-            p = subprocess.Popen(cmd, bufsize=Y_LEN, stdout=subprocess.PIPE)
+            p = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE)
             try:
                 yield from getframes(p.stdout)
             finally:
                 self.terminate(p)
 
         def getframes(f):
+            tstart = time.time()
+            i = 0
+            bytes_read = 0
             while True:
                 ydata = f.read(Y_LEN) # read luminance
-                if ydata == '':
-                    break
-                assert len(ydata) == Y_LEN
+                bytes_read += len(ydata)
+                if bytes_read > Y_LEN:
+                    # got a full frame
+                    print('[%5.2f] got frame: %d' % (time.time()-tstart, i))
+                    i += 1
+                    bytes_read -= Y_LEN
                 yield ydata
 
         http_status = '200 OK'
