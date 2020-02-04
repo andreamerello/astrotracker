@@ -78,54 +78,55 @@ class PolarisApp:
         if shutter:
             shutter = int(float(shutter) * 10**6)
         #
-        def fromfile(fname):
-            with open(fname, 'rb') as f:
-                yield from getframes(f)
-
-        def fromcamera():
-            if fmt == 'yuv':
-                cmd = ['raspividyuv', '--luma'] # stream only the Y (luminance) data
-                frame_size = w*h
-            elif fmt == 'jpg':
-                cmd = ['raspivid', '-cd', 'MJPEG']
-                # we don't have a fixed frame size, stream the data in chunks of 1k
-                frame_size = 1024
-
-            cmd += ['-t', '0', # no timeout, record forever
-                    '-w', str(w),
-                    '-h', str(h),
-                    '-fps', fps,
-                    '-o', '-']
-            if shutter:
-                cmd += [
-                    '-ss', str(shutter)
-                    ]
-            print('Executing: %s' % ' '.join(cmd))
-            p = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE)
-            try:
-                yield from getframes(p.stdout, frame_size)
-            finally:
-                self.terminate(p)
-
-        def getframes(f, frame_size):
-            tstart = time.time()
-            i = 0
-            bytes_read = 0
-            while True:
-                data = f.read(frame_size)
-                bytes_read += len(data)
-                if fmt == 'yuv' and bytes_read > frame_size:
-                    # got a full frame
-                    print('[%5.2f %s] got frame: %d' % (time.time()-tstart, now(), i))
-                    i += 1
-                    bytes_read -= frame_size
-                yield data
-
         http_status = '200 OK'
         headers = [('Content-Type', 'application/octet-stream')]
         self.start_response(http_status, headers)
-        return fromcamera()
-        #return fromfile('/home/pi/video.yuv')
+        return self.frames_fromcamera(fmt, w, h, fps, shutter)
+        #return fromfile('/home/pi/video.yuv', 'yuv', w*h)
+
+    def frames_fromfile(self, fname, fmt, frame_size):
+        with open(fname, 'rb') as f:
+            yield from self.getframes(f, fmt, frame_size)
+
+    def frames_fromcamera(self, fmt, w, h, fps, shutter):
+        if fmt == 'yuv':
+            cmd = ['raspividyuv', '--luma'] # stream only the Y (luminance) data
+            frame_size = w*h
+        elif fmt == 'jpg':
+            cmd = ['raspivid', '-cd', 'MJPEG']
+            # we don't have a fixed frame size, stream the data in chunks of 1k
+            frame_size = 1024
+
+        cmd += ['-t', '0', # no timeout, record forever
+                '-w', str(w),
+                '-h', str(h),
+                '-fps', fps,
+                '-o', '-']
+        if shutter:
+            cmd += [
+                '-ss', str(shutter)
+                ]
+        print('Executing: %s' % ' '.join(cmd))
+        p = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE)
+        try:
+            yield from self.getframes(p.stdout, fmt, frame_size)
+        finally:
+            self.terminate(p)
+
+    def getframes(self, f, fmt, frame_size):
+        tstart = time.time()
+        i = 0
+        bytes_read = 0
+        while True:
+            data = f.read(frame_size)
+            bytes_read += len(data)
+            if fmt == 'yuv' and bytes_read > frame_size:
+                # got a full frame
+                print('[%5.2f %s] got frame: %d' % (time.time()-tstart, now(), i))
+                i += 1
+                bytes_read -= frame_size
+            yield data
+
 
     def terminate(self, p, timeout=1):
         """
