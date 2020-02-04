@@ -70,7 +70,7 @@ def main():
     ## W, H, fps = 2592, 1944, 1
 
     W, H = raw_resolution(W, H)
-    URL = 'http://polaris.local:8000/camera?'
+    URL = 'http://polaris.local:8000/camera/yuv/?'
     URL += 'w=%s&h=%s&fps=%s' % (W, H, fps)
     #URL += '&shutter=5'
 

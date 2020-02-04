@@ -79,12 +79,11 @@ class RemoteCamera(EventDispatcher):
     ##     ## W, H, fps = 640, 480,  5
     ##     ## W, H, fps = 2592, 1944, 1
     ##     ## W, H = raw_resolution(W, H) # XXX
-    ##     path = 'camera?w=%s&h=%s&fps=%s' % (W, H, fps)
+    ##     path = 'camera/yuv/?w=%s&h=%s&fps=%s' % (W, H, fps)
     ##     return self.url(path), W, H
 
     def get_url(self):
-        #return self.url('sky.mjpg'), None, None
-        return 'http://localhost:8000/sky.mjpg', None, None
+        return self.url('camera/jpg/?w=320&h=240'), None, None
 
     def run(self):
         Logger.info('RemoteCamera: thread started')
@@ -123,9 +122,6 @@ class RemoteCamera(EventDispatcher):
                     data = data[b+2:]
                     self.got_frame(tstart)
                     self.set_jpg(jpg_data)
-
-            else:
-                assert False, 'Unknown format: %s' % fmt
 
         self.set_status('Stopped')
         Logger.info('RemoteCamera: stop')
