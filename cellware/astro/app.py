@@ -12,6 +12,7 @@ from kivy.core.window import Window
 from kivy.uix.screenmanager import Screen
 from kivy.utils import platform
 from kivy.logger import Logger
+from astro import iconfonts
 from astro.polarscreen import PolarScreen
 from astro.manager import Manager
 from astro.error import MyExceptionHandler, MessageBox, ErrorMessage
@@ -90,4 +91,5 @@ class AstroApp(App):
 
 
 def main(argv):
+    iconfonts.init()
     AstroApp(argv).run()

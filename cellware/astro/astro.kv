@@ -1,6 +1,7 @@
 #:kivy 1.0
 #:import kivy kivy
 #:import win kivy.core.window
+#:import icon kivy.garden.iconfonts.icon
 
 <Widget>:
     # default: transparent
@@ -76,27 +77,30 @@
         Button:
             text: "start"
             on_release: root.camera.start()
-            #on_release: root.xxx()
 
         Button:
             text: "stop"
             on_release: root.camera.stop()
 
         BoxLayout:
-            orientation: 'vertical'
-            BoxLayout:
-                orientation: 'horizontal'
-                Button:
-                    text: "++"
-                    on_release: root.stars_angle += 1
-                Button:
-                    text: "--"
-                    on_release: root.stars_angle -= 1
-            BoxLayout:
-                orientation: 'horizontal'
-                Button:
-                    text: "+"
-                    on_release: root.stars_angle += 0.1
-                Button:
-                    text: "-"
-                    on_release: root.stars_angle -= 0.1
+            orientation: 'horizontal'
+            Button:
+                markup: True
+                text: icon("fa-minus")
+                font_size: "20sp"
+                on_release: root.stars_angle -= 1
+            Button:
+                markup: True
+                text: icon("fa-minus")
+                font_size: "12sp"
+                on_release: root.stars_angle -= 0.1
+            Button:
+                markup: True
+                text: icon("fa-plus")
+                font_size: "12sp"
+                on_release: root.stars_angle += 0.1
+            Button:
+                markup: True
+                text: icon("fa-plus")
+                font_size: "20sp"
+                on_release: root.stars_angle += 1
