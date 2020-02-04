@@ -15,34 +15,23 @@ def counter():
     for chunk in resp.iter_content(10):
         print(chunk)
 
-# stolen from picamera
-def raw_resolution(width, height, splitter=False):
-    """
-    Round a (width, height) tuple up to the nearest multiple of 32 horizontally
-    and 16 vertically (as this is what the Pi's camera module does for
-    unencoded output).
-    """
-    if splitter:
-        fwidth = (width + 15) & ~15
-    else:
-        fwidth = (width + 31) & ~31
-    fheight = (height + 15) & ~15
-    return fwidth, fheight
 
 def now():
     return datetime.datetime.now().time()
 
-def get_frames_requests(url, chunk_size):
+def get_frames_requests(url):
     resp = requests.get(url, stream=True)
+    w = int(resp.headers['X-Width'])
+    h = int(resp.headers['X-Height'])
+    frame_size = w*h
     data = b''
     while True:
         chunk = resp.raw.read(1024)
         data += chunk
-        if len(data) > chunk_size:
+        if len(data) > frame_size:
             # got a full frame
-            yield data[:chunk_size]
-            data = data[chunk_size:]
-    ## yield from resp.iter_content(chunk_size)
+            yield data[:frame_size], w, h
+            data = data[frame_size:]
 
 
 def get_frames_raw_connection(url, chunk_size):
@@ -65,26 +54,25 @@ def get_frames_raw_connection(url, chunk_size):
 
 
 def main():
-    W, H, fps = 320, 240, 2
+    W, H, fps = 320, 240, 10
     ## W, H, fps = 640, 480,  5
     ## W, H, fps = 2592, 1944, 1
 
-    W, H = raw_resolution(W, H)
     URL = 'http://polaris.local:8000/camera/yuv/?'
     URL += 'w=%s&h=%s&fps=%s' % (W, H, fps)
     #URL += '&shutter=5'
 
     ## URL = 'http://localhost:8000/camera?w=640&h=480'
 
-    frames = get_frames_requests(URL, chunk_size=W*H)
+    frames = get_frames_requests(URL)
     #frames = get_frames_raw_connection(URL, chunk_size=W*H)
 
     tstart = time.time()
-    for i, data in enumerate(frames):
+    for i, (data, w, h) in enumerate(frames):
         ## with open('frame.yuv', 'wb') as f:
         ##     f.write(data)
         print('[%5.2f %s] got frame: %d' % (time.time()-tstart, now(), i))
-        frame = np.frombuffer(data, dtype=np.uint8).reshape(H, W)
+        frame = np.frombuffer(data, dtype=np.uint8).reshape(h, w)
         cv2.imshow("frame", frame)
         ch = chr(cv2.waitKey(1) & 0xFF)
         if ch == 'q':
