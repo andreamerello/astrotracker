@@ -74,33 +74,33 @@ class RemoteCamera(EventDispatcher):
     # RemoteCamera thread
     # ==============================
 
-    ## def get_url(self):
-    ##     W, H, fps = 320, 240, 10
-    ##     ## W, H, fps = 640, 480,  5
-    ##     ## W, H, fps = 2592, 1944, 1
-    ##     ## W, H = raw_resolution(W, H) # XXX
-    ##     path = 'camera/yuv/?w=%s&h=%s&fps=%s' % (W, H, fps)
-    ##     return self.url(path), W, H
-
     def get_url(self):
-        return self.url('camera/jpg/?w=320&h=240'), None, None
+        path = 'camera/yuv/?w=320&h=240&fps=10'
+        #path = 'camera/jpg/?w=320&h=240&fps=10'
+        return self.url(path)
 
     def run(self):
         Logger.info('RemoteCamera: thread started')
         self.set_status('Connecting...')
-        url, width, height = self.get_url()
+        url = self.get_url()
         resp = requests.get(url, stream=True)
         resp.raise_for_status() # XXX: handle this
-        self.set_status('Connected')
 
-        if width and height:
-            # assume it's yuv
+        ct = resp.headers['Content-Type']
+        if ct == 'video/x-raw':
             fmt = 'yuv'
+            width = int(resp.headers['X-Width'])
+            height = int(resp.headers['X-Height'])
             frame_size = width * height
-        else:
-            # assume it's jpg
+        elif ct == 'video/x-motion-jpeg':
             fmt = 'jpg'
+            width = 0
+            height = 0
             frame_size = 0
+        else:
+            raise ValueError('Unsupported Content-Type: %s' % ct)
+
+        self.set_status('Connected')
 
         data = ''
         tstart = time.time()
