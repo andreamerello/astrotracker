@@ -74,42 +74,58 @@ class RemoteCamera(EventDispatcher):
     # RemoteCamera thread
     # ==============================
 
+    ## def get_url(self):
+    ##     W, H, fps = 320, 240, 10
+    ##     ## W, H, fps = 640, 480,  5
+    ##     ## W, H, fps = 2592, 1944, 1
+    ##     ## W, H = raw_resolution(W, H) # XXX
+    ##     path = 'camera?w=%s&h=%s&fps=%s' % (W, H, fps)
+    ##     return self.url(path), W, H
+
+    def get_url(self):
+        #return self.url('sky.mjpg'), None, None
+        return 'http://localhost:8000/sky.mjpg', None, None
+
     def run(self):
-        CHUNK_SIZE = 1024
-        W, H, fps = 320, 240, 10
-        ## W, H, fps = 640, 480,  5
-        ## W, H, fps = 2592, 1944, 1
-
-        #W, H = raw_resolution(W, H) # XXX
-        path = 'camera?w=%s&h=%s&fps=%s' % (W, H, fps)
-        FRAME_SIZE = W*H # XXX: "raw_resolution"?
-
         Logger.info('RemoteCamera: thread started')
         self.set_status('Connecting...')
-        resp = requests.get(self.url(path), stream=True)
-        #resp = requests.get(self.url('sky.mjpg'), stream=True)
+        url, width, height = self.get_url()
+        resp = requests.get(url, stream=True)
         resp.raise_for_status() # XXX: handle this
         self.set_status('Connected')
+
+        if width and height:
+            # assume it's yuv
+            fmt = 'yuv'
+            frame_size = width * height
+        else:
+            # assume it's jpg
+            fmt = 'jpg'
+            frame_size = 0
 
         data = ''
         tstart = time.time()
         while self.running:
-            data += resp.raw.read(CHUNK_SIZE)
-            if len(data) > FRAME_SIZE:
+            data += resp.raw.read(1024)
+            if fmt == 'yuv' and len(data) > frame_size:
                 # got a full frame
-                yuv_data = data[:FRAME_SIZE]
-                data = data[FRAME_SIZE:]
+                yuv_data = data[:frame_size]
+                data = data[frame_size:]
                 self.got_frame(tstart)
-                self.set_yuv(yuv_data, W, H)
+                self.set_yuv(yuv_data, width, height)
 
-            ## a = data.find('\xff\xd8') # jpg_start
-            ## b = data.find('\xff\xd9') # jpg_end
-            ## if a != -1 and b != -1:
-            ##     # found a new frame!
-            ##     jpg_data = data[a:b+2]
-            ##     data = data[b+2:]
-            ##     # with open('/tmp/foo%d.jpg' % self.frame_no, 'wb') as f:
-            ##     #     f.write(jpg_data)
+            elif fmt == 'jpg':
+                a = data.find('\xff\xd8') # jpg_start
+                b = data.find('\xff\xd9') # jpg_end
+                if a != -1 and b != -1:
+                    # found a new frame!
+                    jpg_data = data[a:b+2]
+                    data = data[b+2:]
+                    self.got_frame(tstart)
+                    self.set_jpg(jpg_data)
+
+            else:
+                assert False, 'Unknown format: %s' % fmt
 
         self.set_status('Stopped')
         Logger.info('RemoteCamera: stop')
