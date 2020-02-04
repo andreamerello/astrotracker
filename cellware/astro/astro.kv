@@ -82,10 +82,21 @@
             text: "stop"
             on_release: root.camera.stop()
 
-        Button:
-            text: "-"
-            on_release: root.stars_angle -= 1
-
-        Button:
-            text: "+"
-            on_release: root.stars_angle += 1
+        BoxLayout:
+            orientation: 'vertical'
+            BoxLayout:
+                orientation: 'horizontal'
+                Button:
+                    text: "++"
+                    on_release: root.stars_angle += 1
+                Button:
+                    text: "--"
+                    on_release: root.stars_angle -= 1
+            BoxLayout:
+                orientation: 'horizontal'
+                Button:
+                    text: "+"
+                    on_release: root.stars_angle += 0.1
+                Button:
+                    text: "-"
+                    on_release: root.stars_angle -= 0.1
