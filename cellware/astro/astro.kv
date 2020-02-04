@@ -2,6 +2,8 @@
 #:import kivy kivy
 #:import win kivy.core.window
 #:import icon kivy.garden.iconfonts.icon
+#:import Theme astro.uix.Theme
+#:import darker astro.uix.darker
 
 <Widget>:
     # default: transparent
@@ -19,19 +21,19 @@
 <MainMenuScreen>:
     BoxLayout:
         orientation: 'vertical'
-        Button:
+        FlatButton:
             text: "Polar alignment"
             on_release: app.open_polar()
-        Button:
+        FlatButton:
             text: "Camera control"
             on_release: app.open_camera()
-        Button:
+        FlatButton:
             text: "Upgrade version"
             on_release: app.upgrade_from_github()
-        Button:
+        FlatButton:
             text: "Settings"
             on_release: app.open_settings()
-        Button:
+        FlatButton:
             text: "Quit"
             on_release: app.stop()
 
@@ -74,32 +76,32 @@
             text: "Frame %d" % root.camera.frame_no
             color: (1, 0, 0, 1) #if root.ids.piframe.texture is None else (0, 0, 0, 0)
 
-        Button:
+        FlatButton:
             text: "start"
             on_release: root.camera.start()
 
-        Button:
+        FlatButton:
             text: "stop"
             on_release: root.camera.stop()
 
         BoxLayout:
             orientation: 'horizontal'
-            Button:
+            FlatButton:
                 markup: True
                 text: icon("fa-minus")
                 font_size: "20sp"
                 on_release: root.stars_angle -= 1
-            Button:
+            FlatButton:
                 markup: True
                 text: icon("fa-minus")
                 font_size: "12sp"
                 on_release: root.stars_angle -= 0.1
-            Button:
+            FlatButton:
                 markup: True
                 text: icon("fa-plus")
                 font_size: "12sp"
                 on_release: root.stars_angle += 0.1
-            Button:
+            FlatButton:
                 markup: True
                 text: icon("fa-plus")
                 font_size: "20sp"

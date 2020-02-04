@@ -12,15 +12,17 @@ from kivy.core.window import Window
 from kivy.uix.screenmanager import Screen
 from kivy.utils import platform
 from kivy.logger import Logger
+import astro.uix
 from astro import iconfonts
 from astro.polarscreen import PolarScreen
 from astro.manager import Manager
 from astro.error import MyExceptionHandler, MessageBox, ErrorMessage
 from astro.smart_requests import SmartRequests
+from astro.uix import MyScreen
 
 GITHUB_URL = 'https://github.com/andreamerello/astrotracker/archive/master.zip'
 
-class MainMenuScreen(Screen):
+class MainMenuScreen(MyScreen):
     pass
 
 class AstroApp(App):
