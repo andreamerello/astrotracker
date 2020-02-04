@@ -67,12 +67,12 @@ class PolarisApp:
         h = int(self.qs.get('h', 1944))
         w, h = raw_resolution(w, h)
         #
-        fps = self.qs.get('fps', 1)
+        fps = self.qs.get('fps', 10)
         shutter = self.qs.get('shutter', None) # shutter speed, in seconds
+        if shutter:
+            shutter = int(float(shutter) * 10**6)
         #
         Y_LEN = w*h
-        UV_LEN = (w//2) * (h//2) * 2
-
         def fromfile(fname):
             with open(fname, 'rb') as f:
                 yield from getframes(f)
@@ -80,28 +80,34 @@ class PolarisApp:
         def fromcamera():
             cmd = ['raspividyuv',
                    '-t', '0', # no timeout, record forever
+                   '--luma',  # stream only the Y (luminance) data
                    '-w', str(w),
                    '-h', str(h),
                    '-fps', fps,
                    '-o', '-']
             if shutter:
                 cmd += [
-                    '-ss', str(shutter * 10**6)
+                    '-ss', str(shutter)
                     ]
-            p = subprocess.Popen(cmd, bufsize=Y_LEN+UV_LEN, stdout=subprocess.PIPE)
+            print('Executing: %s' % ' '.join(cmd))
+            p = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE)
             try:
                 yield from getframes(p.stdout)
             finally:
                 self.terminate(p)
 
         def getframes(f):
+            tstart = time.time()
+            i = 0
+            bytes_read = 0
             while True:
                 ydata = f.read(Y_LEN) # read luminance
-                if ydata == '':
-                    break
-                assert len(ydata) == Y_LEN
-                uvdata = f.read(UV_LEN) # read and discard chrominance
-                assert len(uvdata) == UV_LEN
+                bytes_read += len(ydata)
+                if bytes_read > Y_LEN:
+                    # got a full frame
+                    print('[%5.2f] got frame: %d' % (time.time()-tstart, i))
+                    i += 1
+                    bytes_read -= Y_LEN
                 yield ydata
 
         http_status = '200 OK'
