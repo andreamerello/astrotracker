@@ -49,6 +49,8 @@ class AstroApp(App):
         self.requests = SmartRequests(self)
         self.manager = Manager()
         self.manager.open(MainMenuScreen())
+        ## self.open_polar()
+        ## self.manager.current_view.test()
         return self.manager
 
     def on_pause(self):

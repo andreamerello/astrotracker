@@ -7,11 +7,9 @@ class PolarScreen(Screen):
     stars_angle = NumericProperty(0)
     camera = ObjectProperty(RemoteCamera())
 
-    ## def xxx(self):
-    ##     from kivy.graphics.texture import Texture
-    ##     with open('frame.yuv', 'rb') as f:
-    ##         data = f.read()
-    ##     data = data[::-1]
-    ##     texture = Texture.create(size=(320, 240))
-    ##     texture.blit_buffer(data, colorfmt='luminance', bufferfmt='ubyte')
-    ##     self.camera.frame_texture = texture
+    def test(self):
+        from astro.remotecamera import yuv_to_texture
+        with open('frame.yuv', 'rb') as f:
+            data = f.read()
+        texture = yuv_to_texture(data, 320, 240)
+        self.camera.frame_texture = texture
