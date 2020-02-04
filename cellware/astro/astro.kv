@@ -86,23 +86,21 @@
 
         BoxLayout:
             orientation: 'horizontal'
-            FlatButton:
-                markup: True
-                text: icon("fa-minus")
-                font_size: "20sp"
+            size_hint_y: None
+            height: "25dp"
+            IconButton:
+                icon: 'fa-minus'
+                font_size: "24sp"
                 on_release: root.stars_angle -= 1
-            FlatButton:
-                markup: True
-                text: icon("fa-minus")
+            IconButton:
+                icon: "fa-minus"
                 font_size: "12sp"
                 on_release: root.stars_angle -= 0.1
-            FlatButton:
-                markup: True
-                text: icon("fa-plus")
+            IconButton:
+                icon: "fa-plus"
                 font_size: "12sp"
                 on_release: root.stars_angle += 0.1
-            FlatButton:
-                markup: True
-                text: icon("fa-plus")
-                font_size: "20sp"
+            IconButton:
+                icon: "fa-plus"
+                font_size: "24sp"
                 on_release: root.stars_angle += 1
