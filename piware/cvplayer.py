@@ -27,6 +27,29 @@ def raw_resolution(width, height, splitter=False):
     return fwidth, fheight
 
 
+def get_frames_requests(url, chunk_size):
+    resp = requests.get(url, stream=True)
+    yield from resp.iter_content(chunk_size)
+
+
+def get_frames_raw_connection(url, chunk_size):
+    import socket
+    conn = socket.create_connection(('polaris.local', 8000))
+    conn.send(b'GET /camera?w=320&h=240&fps=2 HTTP/1.0\r\n')
+    conn.send(b'\r\n')
+    data = conn.recv(200) # XXX: we should read until we find the empty
+                          # newline, check the status, parse the headers, etc.
+
+    data = b''
+    while True:
+        chunk = conn.recv(chunk_size)
+        data += chunk
+        if len(data) > chunk_size:
+            # got a full frame
+            yield data[:chunk_size]
+            data = data[chunk_size:]
+
+
 def main():
     W, H, fps = 320, 240, 2
     ## W, H, fps = 640, 480,  5
@@ -39,10 +62,11 @@ def main():
 
     ## URL = 'http://localhost:8000/camera?w=640&h=480'
 
-    ylen = W*H
-    resp = requests.get(URL, stream=True)
+    #frames = get_frames_requests(URL, chunk_size=W*H)
+    frames = get_frames_raw_connection(URL, chunk_size=W*H)
+
     tstart = time.time()
-    for i, data in enumerate(resp.iter_content(ylen)):
+    for i, data in enumerate(frames):
         print('[%5.2f] got frame: %d' % (time.time()-tstart, i))
         frame = np.frombuffer(data, dtype=np.uint8).reshape(H, W)
         cv2.imshow("frame", frame)
@@ -76,5 +100,5 @@ def raw_connection():
 
 
 if __name__ == '__main__':
-    #main()
-    raw_connection()
+    main()
+    #raw_connection()
