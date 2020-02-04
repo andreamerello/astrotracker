@@ -3,6 +3,9 @@ An opencv-based player for the polaris app
 """
 
 import time
+import datetime
+import socket
+import urllib.parse
 import cv2
 import numpy as np
 import requests
@@ -26,6 +29,8 @@ def raw_resolution(width, height, splitter=False):
     fheight = (height + 15) & ~15
     return fwidth, fheight
 
+def now():
+    return datetime.datetime.now().time()
 
 def get_frames_requests(url, chunk_size):
     resp = requests.get(url, stream=True)
@@ -33,9 +38,10 @@ def get_frames_requests(url, chunk_size):
 
 
 def get_frames_raw_connection(url, chunk_size):
-    import socket
-    conn = socket.create_connection(('polaris.local', 8000))
-    conn.send(b'GET /camera?w=320&h=240&fps=2 HTTP/1.0\r\n')
+    parsed_url = urllib.parse.urlparse(url)
+    path = parsed_url._replace(scheme='', netloc='').geturl()
+    conn = socket.create_connection((parsed_url.hostname, parsed_url.port))
+    conn.send(b'GET %s HTTP/1.0\r\n' % path.encode('ascii'))
     conn.send(b'\r\n')
     data = conn.recv(200) # XXX: we should read until we find the empty
                           # newline, check the status, parse the headers, etc.
@@ -51,7 +57,7 @@ def get_frames_raw_connection(url, chunk_size):
 
 
 def main():
-    W, H, fps = 320, 240, 2
+    W, H, fps = 320, 240, 10
     ## W, H, fps = 640, 480,  5
     ## W, H, fps = 2592, 1944, 1
 
@@ -67,7 +73,7 @@ def main():
 
     tstart = time.time()
     for i, data in enumerate(frames):
-        print('[%5.2f] got frame: %d' % (time.time()-tstart, i))
+        print('[%5.2f %s] got frame: %d' % (time.time()-tstart, now(), i))
         frame = np.frombuffer(data, dtype=np.uint8).reshape(H, W)
         cv2.imshow("frame", frame)
         ch = chr(cv2.waitKey(1) & 0xFF)
