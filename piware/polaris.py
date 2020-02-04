@@ -1,4 +1,5 @@
 import time
+import datetime
 import subprocess
 from urllib.parse import parse_qs
 
@@ -16,6 +17,9 @@ def raw_resolution(width, height, splitter=False):
     fheight = (height + 15) & ~15
     return fwidth, fheight
 
+
+def now():
+    return datetime.datetime.now().time()
 
 class PolarisApp:
 
@@ -105,7 +109,7 @@ class PolarisApp:
                 bytes_read += len(ydata)
                 if bytes_read > Y_LEN:
                     # got a full frame
-                    print('[%5.2f] got frame: %d' % (time.time()-tstart, i))
+                    print('[%5.2f %s] got frame: %d' % (time.time()-tstart, now(), i))
                     i += 1
                     bytes_read -= Y_LEN
                 yield ydata
