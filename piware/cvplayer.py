@@ -34,7 +34,15 @@ def now():
 
 def get_frames_requests(url, chunk_size):
     resp = requests.get(url, stream=True)
-    yield from resp.iter_content(chunk_size)
+    data = b''
+    while True:
+        chunk = resp.raw.read(1024)
+        data += chunk
+        if len(data) > chunk_size:
+            # got a full frame
+            yield data[:chunk_size]
+            data = data[chunk_size:]
+    ## yield from resp.iter_content(chunk_size)
 
 
 def get_frames_raw_connection(url, chunk_size):
@@ -57,7 +65,7 @@ def get_frames_raw_connection(url, chunk_size):
 
 
 def main():
-    W, H, fps = 320, 240, 10
+    W, H, fps = 320, 240, 2
     ## W, H, fps = 640, 480,  5
     ## W, H, fps = 2592, 1944, 1
 
@@ -68,11 +76,13 @@ def main():
 
     ## URL = 'http://localhost:8000/camera?w=640&h=480'
 
-    #frames = get_frames_requests(URL, chunk_size=W*H)
-    frames = get_frames_raw_connection(URL, chunk_size=W*H)
+    frames = get_frames_requests(URL, chunk_size=W*H)
+    #frames = get_frames_raw_connection(URL, chunk_size=W*H)
 
     tstart = time.time()
     for i, data in enumerate(frames):
+        ## with open('frame.yuv', 'wb') as f:
+        ##     f.write(data)
         print('[%5.2f %s] got frame: %d' % (time.time()-tstart, now(), i))
         frame = np.frombuffer(data, dtype=np.uint8).reshape(H, W)
         cv2.imshow("frame", frame)
