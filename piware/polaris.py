@@ -69,6 +69,7 @@ class PolarisApp:
         return lines()
 
     def camera(self, fmt):
+        assert fmt in ('yuv', 'jpg')
         w = int(self.qs.get('w', 2592))
         h = int(self.qs.get('h', 1944))
         w, h = raw_resolution(w, h)
@@ -78,9 +79,17 @@ class PolarisApp:
         if shutter:
             shutter = int(float(shutter) * 10**6)
         #
-        http_status = '200 OK'
-        headers = [('Content-Type', 'application/octet-stream')]
-        self.start_response(http_status, headers)
+        if fmt == 'yuv':
+            headers = [
+                ('Content-Type', 'video/x-raw'),
+                ('X-Width', str(w)),
+                ('X-Height', str(h)),
+            ]
+        elif fmt == 'jpg':
+            headers = [
+                ('Content-Type', 'video/x-motion-jpeg'),
+            ]
+        self.start_response('200 OK', headers)
         return self.frames_fromcamera(fmt, w, h, fps, shutter)
         #return fromfile('/home/pi/video.yuv', 'yuv', w*h)
 
