@@ -76,6 +76,21 @@
             text: "Frame %d" % root.camera.frame_no
             color: (1, 0, 0, 1) #if root.ids.piframe.texture is None else (0, 0, 0, 0)
 
+        Spinner:
+            id: format
+            text: 'RAW'
+            values: 'RAW', 'MJPG'
+
+        Spinner:
+            id: resolution
+            text: '640x480'
+            values: '2592x1944', '1296x972', '640x480', '320x240'
+
+        Spinner:
+            id: shutter
+            text: 'auto'
+            values: 'auto', '0.5"', '1"', '1.5"', '2"', '2.5"', '3"', '4"', '5"', '6"'
+
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: None
@@ -84,7 +99,7 @@
             IconButton:
                 icon: 'fa-play'
                 font_size: "24sp"
-                on_release: root.camera.start()
+                on_release: root.start_camera()
 
             IconButton:
                 icon: 'fa-stop'
@@ -95,7 +110,7 @@
                 icon: 'fa-circle'
                 font_size: "24sp"
                 color: (1, 0, 0, 1)
-                on_release: root.camera.start(recording=True)
+                on_release: root.start_camera(recording=True)
 
         BoxLayout:
             orientation: 'horizontal'

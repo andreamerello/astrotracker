@@ -32,7 +32,6 @@ class RemoteCamera(EventDispatcher):
     def __init__(self, **kwargs):
         super(RemoteCamera, self).__init__(**kwargs)
         self.running = False
-        self.recording = False
 
     def url(self, path):
         host = self.app.config.get('server', 'host')
@@ -40,13 +39,13 @@ class RemoteCamera(EventDispatcher):
         base = 'http://%s:%s' % (host, port)
         return urljoin(base, path)
 
-    def start(self, recording=False):
+    def start(self, params, recording=False):
         if self.running:
             Logger.info('RemoteCamera: WARNING: called start(), but camera already running')
             return
         self.running = True
-        self.recording = recording
-        self.thread = threading.Thread(target=self.run, name='RemoteCamera')
+        self.thread = threading.Thread(target=self.run, args=(params, recording),
+                                       name='RemoteCamera')
         self.thread.daemon = True
         self.thread.start()
 
@@ -77,20 +76,11 @@ class RemoteCamera(EventDispatcher):
     # RemoteCamera thread
     # ==============================
 
-    def get_url(self):
-        # XXX: investigate resolution 1296x972: this is binned, so we might
-        # capture more light, but it seems we can't go slower than 1fps
-        #path = 'camera/yuv/?w=320&h=240&fps=10'
-        #path = 'camera/yuv/?shutter=1'
-        #path = 'camera/jpg/?shutter=1'
-        path = 'camera/jpg/?w=320&h=240&fps=10'
-        #path = 'camera/yuv/?w=1296&h=972&fps=1'
-        return self.url(path)
-
-    def run(self):
+    def run(self, params, recording):
         Logger.info('RemoteCamera: thread started')
+        url = self.url(params)
+        Logger.info('RemoteCamera: connecting to %s' % url)
         self.set_status('Connecting...')
-        url = self.get_url()
         resp = requests.get(url, stream=True)
         resp.raise_for_status() # XXX: handle this
 
@@ -110,7 +100,7 @@ class RemoteCamera(EventDispatcher):
         else:
             raise ValueError('Unsupported Content-Type: %s' % ct)
 
-        if self.recording:
+        if recording:
             self.set_status('Recording')
             now = datetime.datetime.now()
             fname = self.app.storage.join(now.strftime('polaris %Y-%m-%d %H.%M') + ext)
