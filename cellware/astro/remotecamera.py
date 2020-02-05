@@ -2,6 +2,7 @@ import io
 import time
 import threading
 from urlparse import urljoin
+import datetime
 import requests
 from kivy.event import EventDispatcher
 from kivy.properties import (StringProperty, ObjectProperty, NumericProperty)
@@ -31,6 +32,7 @@ class RemoteCamera(EventDispatcher):
     def __init__(self, **kwargs):
         super(RemoteCamera, self).__init__(**kwargs)
         self.running = False
+        self.recording = False
 
     def url(self, path):
         host = self.app.config.get('server', 'host')
@@ -38,11 +40,12 @@ class RemoteCamera(EventDispatcher):
         base = 'http://%s:%s' % (host, port)
         return urljoin(base, path)
 
-    def start(self):
+    def start(self, recording=False):
         if self.running:
             Logger.info('RemoteCamera: WARNING: called start(), but camera already running')
             return
         self.running = True
+        self.recording = recording
         self.thread = threading.Thread(target=self.run, name='RemoteCamera')
         self.thread.daemon = True
         self.thread.start()
@@ -77,10 +80,10 @@ class RemoteCamera(EventDispatcher):
     def get_url(self):
         # XXX: investigate resolution 1296x972: this is binned, so we might
         # capture more light, but it seems we can't go slower than 1fps
-        path = 'camera/yuv/?w=320&h=240&fps=10'
+        #path = 'camera/yuv/?w=320&h=240&fps=10'
         #path = 'camera/yuv/?shutter=1'
         #path = 'camera/jpg/?shutter=1'
-        #path = 'camera/jpg/?w=320&h=240&fps=10'
+        path = 'camera/jpg/?w=320&h=240&fps=10'
         #path = 'camera/yuv/?w=1296&h=972&fps=1'
         return self.url(path)
 
@@ -97,20 +100,33 @@ class RemoteCamera(EventDispatcher):
             width = int(resp.headers['X-Width'])
             height = int(resp.headers['X-Height'])
             frame_size = width * height
+            ext = '.%dx%d.yuv' % (width, height)
         elif ct == 'video/x-motion-jpeg':
             fmt = 'jpg'
             width = 0
             height = 0
             frame_size = 0
+            ext = '.mjpg'
         else:
             raise ValueError('Unsupported Content-Type: %s' % ct)
 
-        self.set_status('Connected')
+        if self.recording:
+            self.set_status('Recording')
+            now = datetime.datetime.now()
+            fname = self.app.storage.join(now.strftime('polaris %Y-%m-%d %H.%M') + ext)
+            Logger.info('RemoteCamera: recording to %s' % fname)
+            outfile = fname.open('wb')
+        else:
+            self.set_status('Playing')
+            outfile = None
 
         data = ''
         tstart = time.time()
         while self.running:
-            data += resp.raw.read(1024)
+            chunk = resp.raw.read(1024)
+            if outfile:
+                outfile.write(chunk)
+            data += chunk
             if fmt == 'yuv' and len(data) > frame_size:
                 # got a full frame
                 yuv_data = data[:frame_size]
@@ -128,6 +144,8 @@ class RemoteCamera(EventDispatcher):
                     self.got_frame(tstart)
                     self.set_jpg(jpg_data)
 
+        if outfile:
+            outfile.close()
         self.set_status('Stopped')
         Logger.info('RemoteCamera: stop')
 

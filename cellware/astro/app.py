@@ -12,6 +12,7 @@ from kivy.core.window import Window
 from kivy.uix.screenmanager import Screen
 from kivy.utils import platform
 from kivy.logger import Logger
+import pypath
 import astro.uix
 from astro import iconfonts
 from astro.polarscreen import PolarScreen
@@ -41,6 +42,14 @@ class AstroApp(App):
             'host': '192.168.1.3',
             'port': '8000'
         })
+
+    @property
+    def storage(self):
+        if platform == 'android':
+            path = '/sdcard'
+        else:
+            path = '/tmp'
+        return pypath.local(path)
 
     def build_settings(self, settings):
         from kivy.config import Config
