@@ -59,36 +59,44 @@
             PopMatrix
 
 
-    Label:
-        text: "%s\nFrame %d" % (root.camera.status, root.camera.frame_no)
-        font_size: '50sp'
-        color: (1, 0, 0, 1) #if root.ids.piframe.texture is None else (0, 0, 0, 0)
+    BoxLayout:
+        right: root.right
+        orientation: 'vertical'
+        size_hint_x: None
+        width: '100dp'
 
-    Button:
-        pos: 100, 100
-        size: 50, 20
-        size_hint: None, None
-        text: "start"
-        on_release: root.camera.start()
-        #on_release: root.xxx()
+        Label:
+            text: root.camera.status
+            color: (1, 0, 0, 1) #if root.ids.piframe.texture is None else (0, 0, 0, 0)
 
-    Button:
-        pos: 150, 100
-        size: 50, 20
-        size_hint: None, None
-        text: "stop"
-        on_release: root.camera.stop()
+        Label:
+            text: "Frame %d" % root.camera.frame_no
+            color: (1, 0, 0, 1) #if root.ids.piframe.texture is None else (0, 0, 0, 0)
 
-    Button:
-        pos: 200, 100
-        size: 20, 20
-        size_hint: None, None
-        text: "-"
-        on_release: root.stars_angle -= 1
+        Button:
+            text: "start"
+            on_release: root.camera.start()
+            #on_release: root.xxx()
 
-    Button:
-        pos: 220, 100
-        size: 20, 20
-        size_hint: None, None
-        text: "+"
-        on_release: root.stars_angle += 1
+        Button:
+            text: "stop"
+            on_release: root.camera.stop()
+
+        BoxLayout:
+            orientation: 'vertical'
+            BoxLayout:
+                orientation: 'horizontal'
+                Button:
+                    text: "++"
+                    on_release: root.stars_angle += 1
+                Button:
+                    text: "--"
+                    on_release: root.stars_angle -= 1
+            BoxLayout:
+                orientation: 'horizontal'
+                Button:
+                    text: "+"
+                    on_release: root.stars_angle += 0.1
+                Button:
+                    text: "-"
+                    on_release: root.stars_angle -= 0.1

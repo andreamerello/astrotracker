@@ -26,7 +26,8 @@ class AstroApp(App):
     font_size = 15.0
     std_height = font_size * 2
 
-    def __init__(self, **kwargs):
+    def __init__(self, argv, **kwargs):
+        self.argv = argv
         super(AstroApp, self).__init__(**kwargs)
 
     def get_timeout(self):
@@ -49,6 +50,9 @@ class AstroApp(App):
         self.requests = SmartRequests(self)
         self.manager = Manager()
         self.manager.open(MainMenuScreen())
+        if '--polar' in self.argv:
+            self.open_polar()
+            ## self.manager.current_view.test()
         return self.manager
 
     def on_pause(self):
@@ -85,5 +89,5 @@ class AstroApp(App):
         box.open()
 
 
-def main():
-    AstroApp().run()
+def main(argv):
+    AstroApp(argv).run()

@@ -14,7 +14,7 @@ def yuv_to_texture(data, width, height):
     # it seems that the pixel sequence coming from picamera is
     # updside-down compared to the one expected by Texture. Fix it!
     data = data[::-1]
-    texture = Texture.create(size=(width, height))
+    texture = Texture.create(size=(width, height), colorfmt='luminance')
     texture.blit_buffer(data, colorfmt='luminance', bufferfmt='ubyte')
     return texture
 
@@ -75,8 +75,13 @@ class RemoteCamera(EventDispatcher):
     # ==============================
 
     def get_url(self):
+        # XXX: investigate resolution 1296x972: this is binned, so we might
+        # capture more light, but it seems we can't go slower than 1fps
         path = 'camera/yuv/?w=320&h=240&fps=10'
+        #path = 'camera/yuv/?shutter=1'
+        #path = 'camera/jpg/?shutter=1'
         #path = 'camera/jpg/?w=320&h=240&fps=10'
+        #path = 'camera/yuv/?w=1296&h=972&fps=1'
         return self.url(path)
 
     def run(self):
