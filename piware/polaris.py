@@ -34,10 +34,8 @@ class PolarisApp:
         if path[-1] != '/':
             path += '/'
         print('Handling', path)
-        if path == '/camera/yuv/':
-            return self.camera('yuv')
-        if path == '/camera/jpg/':
-            return self.camera('jpg')
+        if path.startswith('/camera/'):
+            return self.camera(path)
         elif path == '/counter/':
             return self.counter()
         else:
@@ -68,40 +66,51 @@ class PolarisApp:
         self.start_response(http_status, headers)
         return lines()
 
-    def camera(self, fmt):
-        assert fmt in ('yuv', 'jpg')
-        w = int(self.qs.get('w', 2592))
-        h = int(self.qs.get('h', 1944))
-        w, h = raw_resolution(w, h)
-        #
+    def parse_camera(self, path):
+        # XXX: we should handle errors somehow
+        # path is something like '/camera/raw/640x480/'
+        parts = path.split('/')
+        assert len(parts) == 5
+        root, camera, fmt, resolution, trail = parts
+        assert root == ''
+        assert camera == 'camera'
+        assert trail == ''
+        assert fmt in ('raw', 'mjpg')
+        w, h = resolution.split('x')
+        w = int(w)
+        h = int(h)
         fps = self.qs.get('fps', '10')
         shutter = self.qs.get('shutter', None) # shutter speed, in seconds
         if shutter:
             shutter = int(float(shutter) * 10**6)
-        #
-        if fmt == 'yuv':
+        return fmt, w, h, fps, shutter
+
+    def camera(self, path):
+        fmt, w, h, fps, shutter = self.parse_camera(path)
+        w, h = raw_resolution(w, h)
+        if fmt == 'raw':
             headers = [
                 ('Content-Type', 'video/x-raw'),
                 ('X-Width', str(w)),
                 ('X-Height', str(h)),
             ]
-        elif fmt == 'jpg':
+        elif fmt == 'mjpg':
             headers = [
                 ('Content-Type', 'video/x-motion-jpeg'),
             ]
         self.start_response('200 OK', headers)
         return self.frames_fromcamera(fmt, w, h, fps, shutter)
-        #return fromfile('/home/pi/video.yuv', 'yuv', w*h)
+        #return fromfile('/home/pi/video.yuv', 'raw', w*h)
 
     def frames_fromfile(self, fname, fmt, frame_size):
         with open(fname, 'rb') as f:
             yield from self.getframes(f, fmt, frame_size)
 
     def frames_fromcamera(self, fmt, w, h, fps, shutter):
-        if fmt == 'yuv':
+        if fmt == 'raw':
             cmd = ['raspividyuv', '--luma'] # stream only the Y (luminance) data
             frame_size = w*h
-        elif fmt == 'jpg':
+        elif fmt == 'mjpg':
             cmd = ['raspivid', '-cd', 'MJPEG']
             # we don't have a fixed frame size, stream the data in chunks of 1k
             frame_size = 1024
@@ -129,7 +138,7 @@ class PolarisApp:
         while True:
             data = f.read(frame_size)
             bytes_read += len(data)
-            if fmt == 'yuv' and bytes_read > frame_size:
+            if fmt == 'raw' and bytes_read > frame_size:
                 # got a full frame
                 print('[%5.2f %s] got frame: %d' % (time.time()-tstart, now(), i))
                 i += 1
