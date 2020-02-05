@@ -54,15 +54,9 @@ def get_frames_raw_connection(url, chunk_size):
 
 
 def main():
-    W, H, fps = 320, 240, 10
-    ## W, H, fps = 640, 480,  5
-    ## W, H, fps = 2592, 1944, 1
-
-    URL = 'http://polaris.local:8000/camera/yuv/?'
-    URL += 'w=%s&h=%s&fps=%s' % (W, H, fps)
+    URL = 'http://polaris.local:8000/camera/raw/320x240/?fps=10'
+    URL = 'http://polaris.local:8000/camera/raw/640x480/'
     #URL += '&shutter=5'
-
-    ## URL = 'http://localhost:8000/camera?w=640&h=480'
 
     frames = get_frames_requests(URL)
     #frames = get_frames_raw_connection(URL, chunk_size=W*H)
@@ -82,7 +76,7 @@ def main():
 def raw_connection():
     import socket
     conn = socket.create_connection(('polaris.local', 8000))
-    conn.send(b'GET /camera?w=320&h=240&fps=2 HTTP/1.0\r\n')
+    conn.send(b'GET /camera/raw/320x240&fps=2 HTTP/1.0\r\n')
     conn.send(b'\r\n')
     data = conn.recv(200)
     print(data.decode('utf-8'))
