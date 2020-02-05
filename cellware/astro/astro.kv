@@ -4,6 +4,7 @@
 #:import icon kivy.garden.iconfonts.icon
 #:import Theme astro.uix.Theme
 #:import darker astro.uix.darker
+#:import RangeSlider astro.rangeslider.RangeSlider
 
 <Widget>:
     # default: transparent
@@ -61,8 +62,33 @@
         canvas.after:
             PopMatrix
 
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: None, None
+        height: '50dp'
+        width: root.width - dp(100)
+
+        Label:
+            text: 'Shadows: %d' % (root.ids.slider.value1)
+            color: Theme.PRIMARY
+            width: self.texture_size[0] + dp(10)
+            size_hint_x: None
+            border_color: (1, 1, 1, 1)
+        RangeSlider:
+            id: slider
+            min: 0
+            max: 255
+            value1: 0
+            value2: 255
+        Label:
+            text: 'Highlights: %d' % (root.ids.slider.value2)
+            color: Theme.PRIMARY
+            width: self.texture_size[0] + dp(10)
+            size_hint_x: None
+            border_color: (1, 1, 1, 1)
 
     BoxLayout:
+        # right toolbar
         right: root.right
         orientation: 'vertical'
         size_hint_x: None
