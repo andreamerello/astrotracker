@@ -76,13 +76,26 @@
             text: "Frame %d" % root.camera.frame_no
             color: (1, 0, 0, 1) #if root.ids.piframe.texture is None else (0, 0, 0, 0)
 
-        FlatButton:
-            text: "start"
-            on_release: root.camera.start()
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: "33dp"
 
-        FlatButton:
-            text: "stop"
-            on_release: root.camera.stop()
+            IconButton:
+                icon: 'fa-play'
+                font_size: "24sp"
+                on_release: root.camera.start()
+
+            IconButton:
+                icon: 'fa-stop'
+                font_size: "24sp"
+                on_release: root.camera.stop()
+
+            IconButton:
+                icon: 'fa-circle'
+                font_size: "24sp"
+                color: (1, 0, 0, 1)
+                #on_release: root.camera.start()
 
         BoxLayout:
             orientation: 'horizontal'
