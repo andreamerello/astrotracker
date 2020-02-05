@@ -23,6 +23,7 @@ class RemoteCamera(EventDispatcher):
     app = ObjectProperty()
     frame_no = NumericProperty(0)
     status = StringProperty('Stopped')
+    fps = NumericProperty(0)
     frame_texture = ObjectProperty(None)
 
     # ==============================
@@ -111,6 +112,7 @@ class RemoteCamera(EventDispatcher):
             outfile = None
 
         data = ''
+        self.frame_no = 0
         tstart = time.time()
         while self.running:
             chunk = resp.raw.read(1024)
@@ -142,8 +144,8 @@ class RemoteCamera(EventDispatcher):
     def got_frame(self, tstart):
         self.frame_no += 1
         t = time.time()
-        fps = self.frame_no / (t-tstart)
-        Logger.info('RemoteCamera: %.2f fps' % fps)
+        self.fps = self.frame_no / (t-tstart)
+        Logger.info('RemoteCamera: %.2f fps' % self.fps)
         # sleep a bit: for the polaris stream this is not an issue since
         # it will be at a very low fps. However, if you try to display a
         # MJPG with an unbounded framerate, if you don't put the sleep

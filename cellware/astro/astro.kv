@@ -100,11 +100,15 @@
 
         Label:
             text: root.camera.status
-            color: (1, 0, 0, 1) #if root.ids.piframe.texture is None else (0, 0, 0, 0)
+            color: (1, 0, 0, 1)
 
         Label:
             text: "Frame %d" % root.camera.frame_no
-            color: (1, 0, 0, 1) #if root.ids.piframe.texture is None else (0, 0, 0, 0)
+            color: (1, 0, 0, 1)
+
+        Label:
+            text: "%.2f fps" % root.camera.fps
+            color: (1, 0, 0, 1)
 
         Spinner:
             id: format
@@ -120,6 +124,9 @@
             id: shutter
             text: 'auto'
             values: 'auto', '0.5"', '1"', '1.5"', '2"', '2.5"', '3"', '4"', '5"', '6"'
+
+        TextInput:
+            hint_text: 'fps'
 
         BoxLayout:
             orientation: 'horizontal'
