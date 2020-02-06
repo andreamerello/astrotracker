@@ -38,7 +38,7 @@ float clip(float x)
 {
     if (x <= black) return 0.0;
     if (x >= white) return 1.0;
-    return x;
+    return x * (white-black);
 }
 
 vec4 effect(vec4 color, sampler2D texture, vec2 tex_coords, vec2 coords)
