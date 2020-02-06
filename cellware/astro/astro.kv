@@ -53,6 +53,8 @@
 
     Image:
         id: stars
+        visible: True
+        opacity: 1 if self.visible else 0
         source: "stars.png"
         pos: 0, 0
         size: root.size
@@ -125,8 +127,6 @@
             text: 'auto'
             values: 'auto', '0.5"', '1"', '1.5"', '2"', '2.5"', '3"', '4"', '5"', '6"'
 
-        TextInput:
-            hint_text: 'fps'
 
         BoxLayout:
             orientation: 'horizontal'
@@ -152,7 +152,7 @@
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: None
-            height: "25dp"
+            height: "20dp"
             IconButton:
                 icon: 'fa-minus'
                 font_size: "24sp"
@@ -161,6 +161,10 @@
                 icon: "fa-minus"
                 font_size: "12sp"
                 on_release: root.stars_angle -= 0.1
+            IconButton:
+                icon: "fa-star" if stars.visible else "fa-star-o"
+                on_release: stars.visible = not stars.visible
+
             IconButton:
                 icon: "fa-plus"
                 font_size: "12sp"
