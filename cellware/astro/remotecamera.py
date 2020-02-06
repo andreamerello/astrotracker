@@ -12,11 +12,11 @@ from kivy.core.image import Image as CoreImage
 from kivy.graphics.texture import Texture
 
 def yuv_to_texture(data, width, height):
-    # it seems that the pixel sequence coming from picamera is
-    # updside-down compared to the one expected by Texture. Fix it!
-    data = data[::-1]
     texture = Texture.create(size=(width, height), colorfmt='luminance')
     texture.blit_buffer(data, colorfmt='luminance', bufferfmt='ubyte')
+    # it seems that the pixel sequence coming from picamera is
+    # updside-down compared to the one expected by Texture. Fix it!
+    texture.flip_vertical()
     return texture
 
 class RemoteCamera(EventDispatcher):
