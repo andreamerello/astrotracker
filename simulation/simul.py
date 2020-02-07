@@ -14,6 +14,8 @@ class Sky(object):
     def __init__(self, width, dec_width=np.pi/2):
         self.width = width
         self.dec_width = dec_width
+        self.time = 0
+        self.angular_speed = np.pi*2 / (24*60*60) # 360 deg in 24hrs
         self.img = np.zeros(shape=[self.width, self.width, 3], dtype=np.uint8)
         self.clear()
 
@@ -24,7 +26,9 @@ class Sky(object):
         else:
             dec -= np.pi/2
         rho = dec / self.dec_width # scale to the appropriate declination width
-        phi = -ra
+        #
+        t_angle = self.time * self.angular_speed
+        phi = -ra + t_angle
         return pol2cart(rho, phi)
 
     def clear(self):
@@ -79,6 +83,7 @@ class Simulation(object):
         cv2.namedWindow("sky")
         self.ready = False
         self.zoom = CvTrackbar('zoom', 'sky', 1, 10, self.update)
+        self.time = CvTrackbar('time', 'sky', 0, 60*60*24, self.update)
         self.sky = Sky(1000)
         self.ready = True
 
@@ -89,6 +94,7 @@ class Simulation(object):
             self.zoom.value = 1
             return
         self.sky.dec_width = np.pi/2 / self.zoom.value
+        self.sky.time = self.time.value
 
         self.sky.clear()
         self.sky.set(SkyPoint(0, 0), color=[0, 0, 255])
