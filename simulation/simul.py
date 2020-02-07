@@ -3,6 +3,14 @@ import cv2
 import numpy as np
 from stars import STARS, SkyPoint
 
+def find_star(n):
+    for s in STARS:
+        if s.hipparcos == n:
+            return s
+    raise KeyError(n)
+
+KOCHAB = find_star(72607)
+
 def pol2cart(rho, phi):
     x = rho * np.cos(phi)
     y = rho * np.sin(phi)
@@ -93,6 +101,7 @@ class Camera:
         p2 = int(x+w/2), int(y+h/2)
         cv2.rectangle(sky.img, p1, p2, [0, 255, 0])
 
+NORTH_POLE = SkyPoint(0, np.pi/2)
 
 class Simulation:
 
@@ -102,7 +111,7 @@ class Simulation:
         self.zoom = CvTrackbar('zoom', 'sky', 1, 10, self.update)
         self.time = CvTrackbar('time', 'sky', 0, 60*60*24, self.update)
         self.sky = Sky(1000)
-        self.camera = Camera(0, np.pi/2)
+        self.camera = Camera(KOCHAB.ra, KOCHAB.dec)
         self.ready = True
 
     def update(self, value=None):
@@ -115,7 +124,7 @@ class Simulation:
         self.sky.time = self.time.value
 
         self.sky.clear()
-        self.sky.set(SkyPoint(0, 0), color=[0, 0, 255])
+        self.sky.set(NORTH_POLE, color=[0, 0, 255])
         self.sky.draw_parallel(np.deg2rad(85))
         self.sky.draw_parallel(np.deg2rad(80))
         self.sky.draw_parallel(np.deg2rad(75))
