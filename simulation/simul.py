@@ -8,7 +8,7 @@ def pol2cart(rho, phi):
     y = rho * np.sin(phi)
     return x, y
 
-class Sky(object):
+class Sky:
 
     # by default, show the sky from -45 to +45
     def __init__(self, width, dec_width=np.pi/2):
@@ -29,7 +29,12 @@ class Sky(object):
         #
         t_angle = self.time * self.angular_speed
         phi = -ra + t_angle
-        return pol2cart(rho, phi)
+        x, y = pol2cart(rho, phi)
+        #
+        # x, y are in range -1..1. Tranform to image coordinates
+        x = (x+1) * (self.width/2)
+        y = (y+1) * (self.width/2)
+        return int(x), int(y)
 
     def clear(self):
         self.img.fill(0)
@@ -39,11 +44,6 @@ class Sky(object):
         self.set_cartesian(x, y, color)
 
     def set_cartesian(self, x, y, color):
-        # x, y are in range -1..1. Tranform to image coordinates
-        x = (x+1) * (self.width/2)
-        y = (y+1) * (self.width/2)
-        x = int(x)
-        y = int(y)
         if 0 <= x < self.width and 0 <= y < self.width:
             self.img[x, y] = color
 
@@ -59,7 +59,7 @@ class Sky(object):
 
 
 
-class CvTrackbar(object):
+class CvTrackbar:
 
     def __init__(self, name, win, min, max, callback, default=None):
         self.name = name
@@ -77,7 +77,24 @@ class CvTrackbar(object):
         cv2.setTrackbarPos(self.name, self.win, v)
 
 
-class Simulation(object):
+class Camera:
+
+    def __init__(self, ra, dec):
+        self.ra = ra
+        self.dec = dec
+        self.horiz_angle = np.deg2rad(4.24)   # angle of view of APS-C @ 300mm
+        self.vert_angle = np.deg2rad(2.83)
+
+    def draw(self, sky):
+        w = sky.width / sky.dec_width * self.horiz_angle / 2
+        h = sky.width / sky.dec_width * self.vert_angle  / 2
+        x, y = sky.radec2xy(self.ra, self.dec)
+        p1 = int(x-w/2), int(y-h/2)
+        p2 = int(x+w/2), int(y+h/2)
+        cv2.rectangle(sky.img, p1, p2, [0, 255, 0])
+
+
+class Simulation:
 
     def __init__(self):
         cv2.namedWindow("sky")
@@ -85,6 +102,7 @@ class Simulation(object):
         self.zoom = CvTrackbar('zoom', 'sky', 1, 10, self.update)
         self.time = CvTrackbar('time', 'sky', 0, 60*60*24, self.update)
         self.sky = Sky(1000)
+        self.camera = Camera(0, np.pi/2)
         self.ready = True
 
     def update(self, value=None):
@@ -108,6 +126,8 @@ class Simulation(object):
         ## self.sky.draw_meridian(np.deg2rad(15)) # 1h
         for star in STARS:
             self.sky.set(star, color=[0, 255, 255])
+
+        self.camera.draw(self.sky)
         cv2.imshow('sky', self.sky.img)
 
     def is_window_visible(self):
