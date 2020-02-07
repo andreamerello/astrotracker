@@ -18,9 +18,13 @@ class Sky(object):
         self.clear()
 
     def radec2xy(self, ra, dec):
-        dec -= np.pi/2    # center on the north pole
-        rho = dec / self.dec_width
-        phi = ra
+        # center on the north pole
+        if dec < 0:
+            dec += np.pi/2
+        else:
+            dec -= np.pi/2
+        rho = dec / self.dec_width # scale to the appropriate declination width
+        phi = -ra
         return pol2cart(rho, phi)
 
     def clear(self):
@@ -43,6 +47,11 @@ class Sky(object):
             p = SkyPoint(ra=ra, dec=dec)
             self.set(p, [255, 120, 120])
 
+    def draw_meridian(self, ra, step=0.01):
+        for dec in np.arange(-self.dec_width/2, self.dec_width/2, step):
+            p = SkyPoint(ra=ra, dec=dec)
+            self.set(p, [255, 120, 120])
+
 
 class Simulation(object):
 
@@ -57,6 +66,8 @@ class Simulation(object):
         self.sky.draw_parallel(np.deg2rad(80))
         self.sky.draw_parallel(np.deg2rad(75))
         self.sky.draw_parallel(np.deg2rad(70))
+        ## self.sky.draw_meridian(0)
+        ## self.sky.draw_meridian(np.deg2rad(15)) # 1h
         for star in STARS:
             self.sky.set(star, color=[0, 255, 255])
         cv2.imshow('sky', self.sky.img)
