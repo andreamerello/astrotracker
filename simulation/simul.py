@@ -9,7 +9,7 @@ def find_star(n):
             return s
     raise KeyError(n)
 
-KOCHAB = find_star(72607)
+MIZAR = find_star(65378)
 
 def pol2cart(rho, phi):
     x = rho * np.cos(phi)
@@ -53,17 +53,17 @@ class Sky:
 
     def set_cartesian(self, x, y, color):
         if 0 <= x < self.width and 0 <= y < self.width:
-            self.img[x, y] = color
+            self.img[y, x] = color
 
     def draw_parallel(self, dec, step=0.1):
         for ra in np.arange(0, np.pi*2, step):
             p = SkyPoint(ra=ra, dec=dec)
             self.set(p, [255, 120, 120])
 
-    def draw_meridian(self, ra, step=0.01):
+    def draw_meridian(self, ra, step=0.05):
         for dec in np.arange(-self.dec_width/2, self.dec_width/2, step):
             p = SkyPoint(ra=ra, dec=dec)
-            self.set(p, [255, 120, 120])
+            self.set(p, [255, 50, 50])
 
 
 
@@ -101,6 +101,7 @@ class Camera:
         p2 = int(x+w/2), int(y+h/2)
         cv2.rectangle(sky.img, p1, p2, [0, 255, 0])
 
+
 NORTH_POLE = SkyPoint(0, np.pi/2)
 
 class Simulation:
@@ -111,7 +112,7 @@ class Simulation:
         self.zoom = CvTrackbar('zoom', 'sky', 1, 10, self.update)
         self.time = CvTrackbar('time', 'sky', 0, 60*60*24, self.update)
         self.sky = Sky(1000)
-        self.camera = Camera(KOCHAB.ra, KOCHAB.dec)
+        self.camera = Camera(MIZAR.ra, MIZAR.dec)
         self.ready = True
 
     def update(self, value=None):
@@ -125,12 +126,12 @@ class Simulation:
 
         self.sky.clear()
         self.sky.set(NORTH_POLE, color=[0, 0, 255])
-        self.sky.draw_parallel(np.deg2rad(85))
-        self.sky.draw_parallel(np.deg2rad(80))
-        self.sky.draw_parallel(np.deg2rad(75))
-        self.sky.draw_parallel(np.deg2rad(70))
-        self.sky.draw_parallel(np.deg2rad(65))
-        self.sky.draw_parallel(np.deg2rad(60))
+        ## self.sky.draw_parallel(np.deg2rad(85))
+        ## self.sky.draw_parallel(np.deg2rad(80))
+        ## self.sky.draw_parallel(np.deg2rad(75))
+        ## self.sky.draw_parallel(np.deg2rad(70))
+        ## self.sky.draw_parallel(np.deg2rad(65))
+        ## self.sky.draw_parallel(np.deg2rad(60))
         ## self.sky.draw_meridian(0)
         ## self.sky.draw_meridian(np.deg2rad(15)) # 1h
         for star in STARS:
