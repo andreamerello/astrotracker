@@ -1,7 +1,7 @@
 import math
 import cv2
 import numpy as np
-from stars import POLARIS, STARS, SkyPoint
+from stars import STARS, SkyPoint
 
 def pol2cart(rho, phi):
     x = rho * np.cos(phi)
