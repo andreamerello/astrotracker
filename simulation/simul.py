@@ -40,7 +40,8 @@ class Sky(object):
         y = (y+1) * (self.width/2)
         x = int(x)
         y = int(y)
-        self.img[x, y] = color
+        if 0 <= x < self.width and 0 <= y < self.width:
+            self.img[x, y] = color
 
     def draw_parallel(self, dec, step=0.1):
         for ra in np.arange(0, np.pi*2, step):
@@ -53,19 +54,50 @@ class Sky(object):
             self.set(p, [255, 120, 120])
 
 
+
+class CvTrackbar(object):
+
+    def __init__(self, name, win, min, max, callback, default=None):
+        self.name = name
+        self.win = win
+        cv2.createTrackbar(name, win, min, max, callback)
+        if default is not None:
+            self.value = default
+
+    @property
+    def value(self):
+        return cv2.getTrackbarPos(self.name, self.win)
+
+    @value.setter
+    def value(self, v):
+        cv2.setTrackbarPos(self.name, self.win, v)
+
+
 class Simulation(object):
 
     def __init__(self):
         cv2.namedWindow("sky")
+        self.ready = False
+        self.zoom = CvTrackbar('zoom', 'sky', 1, 10, self.update)
         self.sky = Sky(1000)
+        self.ready = True
 
-    def update(self):
+    def update(self, value=None):
+        if not self.ready:
+            return
+        if self.zoom.value == 0:
+            self.zoom.value = 1
+            return
+        self.sky.dec_width = np.pi/2 / self.zoom.value
+
         self.sky.clear()
         self.sky.set(SkyPoint(0, 0), color=[0, 0, 255])
         self.sky.draw_parallel(np.deg2rad(85))
         self.sky.draw_parallel(np.deg2rad(80))
         self.sky.draw_parallel(np.deg2rad(75))
         self.sky.draw_parallel(np.deg2rad(70))
+        self.sky.draw_parallel(np.deg2rad(65))
+        self.sky.draw_parallel(np.deg2rad(60))
         ## self.sky.draw_meridian(0)
         ## self.sky.draw_meridian(np.deg2rad(15)) # 1h
         for star in STARS:
