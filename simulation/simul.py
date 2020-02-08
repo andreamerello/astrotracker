@@ -35,14 +35,14 @@ def radec2cart(ra, dec):
     phi = ra
     return pol2cart(rho, phi)
 
-class Sky:
 
-    GRID_COLOR = (40, 40, 40)
+class ViewPort:
 
-    def __init__(self, width):
+    def __init__(self, name, width):
+        self.name = name
         self.width = width
         self.time = 0
-        self.angular_speed = PI*2 / (24*60*60) # 360 deg in 24hrs
+        #self.angular_speed = PI*2 / (24*60*60) # 360 deg in 24hrs
         self.img = np.zeros(shape=[self.width, self.width, 3], dtype=np.uint8)
         self.clear()
 
@@ -72,25 +72,44 @@ class Sky:
         if 0 <= i < self.width and 0 <= j < self.width:
             self.img[i, j] = color
 
+
+class Sky:
+
+    GRID_COLOR = (40, 40, 40)
+
+    def __init__(self):
+        self.sky_viewport = ViewPort('sky', 1000)
+
+    def show(self):
+        cv2.imshow('sky', self.sky_viewport.img)
+
+    def clear(self):
+        self.sky_viewport.clear()
+        self.draw_grid()
+
+    def draw_star(self, s):
+        self.sky_viewport.set(s, color=[0, 255, 255])
+
     def draw_grid(self):
+        # draw additional lines in the sky_viewport, not affecting other viewports
         if self.GRID_COLOR:
             for hr in range(24):
                 self.draw_meridian(np.deg2rad(15*hr))
             for dec in range(0, 90, 10):
                 self.draw_parallel(np.deg2rad(dec))
             self.draw_parallel(np.deg2rad(85))
-        self.set(NORTH_POLE, color=[0, 0, 255])
+        self.sky_viewport.set(NORTH_POLE, color=[0, 0, 255])
 
     def draw_parallel(self, dec):
-        i, j = self.radec2index(SkyPoint(ra=0, dec=NORTH_POLE.dec-dec))
+        i, j = self.sky_viewport.radec2index(SkyPoint(ra=0, dec=NORTH_POLE.dec-dec))
         radius = j
-        center = self.radec2index(NORTH_POLE)
-        cv2.circle(self.img, center, radius, self.GRID_COLOR)
+        center = self.sky_viewport.radec2index(NORTH_POLE)
+        cv2.circle(self.sky_viewport.img, center, radius, self.GRID_COLOR)
 
     def draw_meridian(self, ra):
-        p1 = self.radec2index(NORTH_POLE)
-        p2 = self.radec2index(SkyPoint(ra, dec=0))
-        cv2.line(self.img, p1, p2, self.GRID_COLOR)
+        p1 = self.sky_viewport.radec2index(NORTH_POLE)
+        p2 = self.sky_viewport.radec2index(SkyPoint(ra, dec=0))
+        cv2.line(self.sky_viewport.img, p1, p2, self.GRID_COLOR)
 
 
 
@@ -148,7 +167,7 @@ class Simulation:
         self.ready = False
         self.zoom = CvTrackbar('zoom', 'sky', 1, 10, self.update)
         self.time = CvTrackbar('time', 'sky', 0, 60*60*24, self.update)
-        self.sky = Sky(1000)
+        self.sky = Sky()
         ## self.camera = Camera(MIZAR.ra, MIZAR.dec)
         self.ready = True
         self.GRID = True
@@ -163,12 +182,11 @@ class Simulation:
         #self.sky.time = self.time.value
 
         self.sky.clear()
-        self.sky.draw_grid()
         for star in STARS:
-            self.sky.set(star, color=[0, 255, 255])
+            self.sky.draw_star(star)
 
         #self.camera.draw(self.sky)
-        cv2.imshow('sky', self.sky.img)
+        self.sky.show()
 
     def is_window_visible(self):
         # I don't know why, but WND_PROP_VISIBLE does not seem to work :(
