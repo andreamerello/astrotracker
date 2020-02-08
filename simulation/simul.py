@@ -3,67 +3,94 @@ import cv2
 import numpy as np
 from stars import STARS, SkyPoint
 
-def find_star(n):
-    for s in STARS:
-        if s.hipparcos == n:
-            return s
-    raise KeyError(n)
+"""
+Naming convention:
 
-MIZAR = find_star(65378)
+ra, dec: celestial coordinates
+x, y:    cartesian coordinates (from -1.0 to +1.0)
+i, j:    image coordinates (i.e., indexes into the numpy array)
+"""
+
+PI = np.pi
+NORTH_POLE = SkyPoint(0, PI/2)
 
 def pol2cart(rho, phi):
     x = rho * np.cos(phi)
     y = rho * np.sin(phi)
     return x, y
 
+def radec2cart(ra, dec):
+    """
+    Convert from RA/DEC coordinates to cartesian.
+
+    The North Pole is at (0, 0). Results are in the range -1.0, +1.0 for the
+    range from -45° to +45°
+    """
+    # center on the north pole
+    if dec < 0:
+        dec += PI/2
+    else:
+        dec -= PI/2
+    rho = dec / (PI/2) # scale to a total 90° range (-45° to +45°)
+    phi = ra
+    return pol2cart(rho, phi)
+
 class Sky:
 
-    # by default, show the sky from -45 to +45
-    def __init__(self, width, dec_width=np.pi/2):
+    GRID_COLOR = (40, 40, 40)
+
+    def __init__(self, width):
         self.width = width
-        self.dec_width = dec_width
         self.time = 0
-        self.angular_speed = np.pi*2 / (24*60*60) # 360 deg in 24hrs
+        self.angular_speed = PI*2 / (24*60*60) # 360 deg in 24hrs
         self.img = np.zeros(shape=[self.width, self.width, 3], dtype=np.uint8)
         self.clear()
-
-    def radec2xy(self, ra, dec):
-        # center on the north pole
-        if dec < 0:
-            dec += np.pi/2
-        else:
-            dec -= np.pi/2
-        rho = dec / self.dec_width # scale to the appropriate declination width
-        #
-        t_angle = self.time * self.angular_speed
-        phi = -ra + t_angle
-        x, y = pol2cart(rho, phi)
-        #
-        # x, y are in range -1..1. Tranform to image coordinates
-        x = (x+1) * (self.width/2)
-        y = (y+1) * (self.width/2)
-        return int(x), int(y)
 
     def clear(self):
         self.img.fill(0)
 
     def set(self, p, color):
-        x, y = self.radec2xy(p.ra, p.dec)
-        self.set_cartesian(x, y, color)
+        x, y = radec2cart(p.ra, p.dec)
+        i, j = self.cart2index(x, y)
+        self.set_pixel(i, j, color)
 
-    def set_cartesian(self, x, y, color):
-        if 0 <= x < self.width and 0 <= y < self.width:
-            self.img[y, x] = color
+    def cart2index(self, x, y):
+        # x, y are in range -1..1. Tranform to image coordinates
+        # note that "i" corresponds to the Y axis, "j" to the X axis
+        j = (x+1) * (self.width/2)
+        i = (y+1) * (self.width/2)
+        return int(i), int(j)
 
-    def draw_parallel(self, dec, step=0.1):
-        for ra in np.arange(0, np.pi*2, step):
-            p = SkyPoint(ra=ra, dec=dec)
-            self.set(p, [255, 120, 120])
+    def radec2index(self, p):
+        x, y = radec2cart(p.ra, p.dec)
+        return self.cart2index(x, y)
 
-    def draw_meridian(self, ra, step=0.05):
-        for dec in np.arange(-self.dec_width/2, self.dec_width/2, step):
-            p = SkyPoint(ra=ra, dec=dec)
-            self.set(p, [255, 50, 50])
+    def set_pixel(self, i, j, color):
+        # if we pass a float it's very likely that we are passing a (x, y)
+        # instead of a (i, j)
+        assert type(i) == type(j) == int
+        if 0 <= i < self.width and 0 <= j < self.width:
+            self.img[i, j] = color
+
+    def draw_grid(self):
+        if self.GRID_COLOR:
+            for hr in range(24):
+                self.draw_meridian(np.deg2rad(15*hr))
+            for dec in range(0, 90, 10):
+                self.draw_parallel(np.deg2rad(dec))
+            self.draw_parallel(np.deg2rad(85))
+        self.set(NORTH_POLE, color=[0, 0, 255])
+
+    def draw_parallel(self, dec):
+        i, j = self.radec2index(SkyPoint(ra=0, dec=NORTH_POLE.dec-dec))
+        radius = j
+        center = self.radec2index(NORTH_POLE)
+        cv2.circle(self.img, center, radius, self.GRID_COLOR)
+
+    def draw_meridian(self, ra):
+        p1 = self.radec2index(NORTH_POLE)
+        p2 = self.radec2index(SkyPoint(ra, dec=0))
+        cv2.line(self.img, p1, p2, self.GRID_COLOR)
 
 
 
@@ -85,35 +112,46 @@ class CvTrackbar:
         cv2.setTrackbarPos(self.name, self.win, v)
 
 
-class Camera:
+## class Camera:
 
-    def __init__(self, ra, dec):
-        self.ra = ra
-        self.dec = dec
-        self.horiz_angle = np.deg2rad(4.24)   # angle of view of APS-C @ 300mm
-        self.vert_angle = np.deg2rad(2.83)
+##     def __init__(self, ra, dec):
+##         self.ra = ra
+##         self.dec = dec
+##         self.horiz_angle = np.deg2rad(4.24)   # angle of view of APS-C @ 300mm
+##         self.vert_angle = np.deg2rad(2.83)
 
-    def draw(self, sky):
-        w = sky.width / sky.dec_width * self.horiz_angle / 2
-        h = sky.width / sky.dec_width * self.vert_angle  / 2
-        x, y = sky.radec2xy(self.ra, self.dec)
-        p1 = int(x-w/2), int(y-h/2)
-        p2 = int(x+w/2), int(y+h/2)
-        cv2.rectangle(sky.img, p1, p2, [0, 255, 0])
+##     def draw(self, sky):
+##         w = sky.width / sky.dec_width * self.horiz_angle / 2
+##         h = sky.width / sky.dec_width * self.vert_angle  / 2
+##         x, y = sky.radec2xy(self.ra, self.dec)
+##         p1 = int(x-w/2), int(y-h/2)
+##         p2 = int(x+w/2), int(y+h/2)
+##         cv2.rectangle(sky.img, p1, p2, [0, 255, 0])
 
 
-NORTH_POLE = SkyPoint(0, np.pi/2)
+def find_star(n):
+    for s in STARS:
+        if s.hipparcos == n:
+            return s
+    raise KeyError(n)
+
+MIZAR = find_star(65378)
+
+
 
 class Simulation:
 
     def __init__(self):
         cv2.namedWindow("sky")
+        cv2.moveWindow('sky', 5280, 0) # TEMP, Move to my 3rd screen
+
         self.ready = False
         self.zoom = CvTrackbar('zoom', 'sky', 1, 10, self.update)
         self.time = CvTrackbar('time', 'sky', 0, 60*60*24, self.update)
         self.sky = Sky(1000)
-        self.camera = Camera(MIZAR.ra, MIZAR.dec)
+        ## self.camera = Camera(MIZAR.ra, MIZAR.dec)
         self.ready = True
+        self.GRID = True
 
     def update(self, value=None):
         if not self.ready:
@@ -121,23 +159,15 @@ class Simulation:
         if self.zoom.value == 0:
             self.zoom.value = 1
             return
-        self.sky.dec_width = np.pi/2 / self.zoom.value
-        self.sky.time = self.time.value
+        #self.sky.dec_width = PI/2 / self.zoom.value
+        #self.sky.time = self.time.value
 
         self.sky.clear()
-        self.sky.set(NORTH_POLE, color=[0, 0, 255])
-        ## self.sky.draw_parallel(np.deg2rad(85))
-        ## self.sky.draw_parallel(np.deg2rad(80))
-        ## self.sky.draw_parallel(np.deg2rad(75))
-        ## self.sky.draw_parallel(np.deg2rad(70))
-        ## self.sky.draw_parallel(np.deg2rad(65))
-        ## self.sky.draw_parallel(np.deg2rad(60))
-        ## self.sky.draw_meridian(0)
-        ## self.sky.draw_meridian(np.deg2rad(15)) # 1h
+        self.sky.draw_grid()
         for star in STARS:
             self.sky.set(star, color=[0, 255, 255])
 
-        self.camera.draw(self.sky)
+        #self.camera.draw(self.sky)
         cv2.imshow('sky', self.sky.img)
 
     def is_window_visible(self):
