@@ -41,10 +41,10 @@ class ViewPort:
     def __init__(self, name, width):
         self.name = name
         self.width = width
-        self.time = 0
+        self.zoom = 1.0
+        #self.time = 0
         #self.angular_speed = PI*2 / (24*60*60) # 360 deg in 24hrs
         self.img = np.zeros(shape=[self.width, self.width, 3], dtype=np.uint8)
-        self.clear()
 
     def clear(self):
         self.img.fill(0)
@@ -57,8 +57,9 @@ class ViewPort:
     def cart2index(self, x, y):
         # x, y are in range -1..1. Tranform to image coordinates
         # note that "i" corresponds to the Y axis, "j" to the X axis
-        j = (x+1) * (self.width/2)
-        i = (y+1) * (self.width/2)
+        W = self.width
+        j = (x * self.zoom + 1) * W/2
+        i = (y * self.zoom + 1) * W/2
         return int(i), int(j)
 
     def radec2index(self, p):
@@ -103,6 +104,8 @@ class Sky:
     def draw_parallel(self, dec):
         i, j = self.sky_viewport.radec2index(SkyPoint(ra=0, dec=NORTH_POLE.dec-dec))
         radius = j
+        if radius <= 0:
+            return
         center = self.sky_viewport.radec2index(NORTH_POLE)
         cv2.circle(self.sky_viewport.img, center, radius, self.GRID_COLOR)
 
@@ -166,7 +169,7 @@ class Simulation:
 
         self.ready = False
         self.zoom = CvTrackbar('zoom', 'sky', 1, 10, self.update)
-        self.time = CvTrackbar('time', 'sky', 0, 60*60*24, self.update)
+        #self.time = CvTrackbar('time', 'sky', 0, 60*60*24, self.update)
         self.sky = Sky()
         ## self.camera = Camera(MIZAR.ra, MIZAR.dec)
         self.ready = True
@@ -178,6 +181,7 @@ class Simulation:
         if self.zoom.value == 0:
             self.zoom.value = 1
             return
+        self.sky.sky_viewport.zoom = self.zoom.value
         #self.sky.dec_width = PI/2 / self.zoom.value
         #self.sky.time = self.time.value
 
