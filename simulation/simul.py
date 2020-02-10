@@ -102,7 +102,7 @@ class Simulation:
 
     def __init__(self):
         #cv2.moveWindow('sky', 5280, 0) # TEMP, Move to my 3rd screen
-        self.sky = Sky(1000, 1.0)
+        self.sky = Sky(1000, 1.5)
         self.sky_win = cartesian.Window('sky', self.sky, self.draw_sky)
         self.t = CvTrackbar('t', 'sky', 0, 60*60*24, self.update)
         ## self.camera = Camera(MIZAR.ra, MIZAR.dec)
