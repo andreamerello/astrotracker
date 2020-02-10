@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from stars import STARS, SkyPoint
 import cartesian
-from cartesian import YELLOW, RED
+from cartesian import YELLOW, RED, GREEN
 from cvextra import CvTrackbar
 
 PI = np.pi
@@ -14,6 +14,7 @@ def pol2cart(rho, phi):
     y = rho * np.sin(phi)
     return x, y
 
+UNIT_PER_DEC = 1.0 / (PI/2) # -45°..+45° ==> -1..+1
 def radec2cart(p):
     """
     Convert from RA/DEC coordinates to cartesian.
@@ -28,7 +29,7 @@ def radec2cart(p):
         dec += PI/2
     else:
         dec -= PI/2
-    rho = dec / (PI/2) # scale to a total 90° range (-45° to +45°)
+    rho = dec * UNIT_PER_DEC
     phi = -ra
     return pol2cart(rho, phi)
 
@@ -71,21 +72,31 @@ class Sky(cartesian.Image):
         pt = rotate(p0, (0, 0), self.ANGULAR_SPEED, t)
         self.set(pt, YELLOW)
 
-## class Camera:
+class Camera:
 
-##     def __init__(self, ra, dec):
-##         self.ra = ra
-##         self.dec = dec
-##         self.horiz_angle = np.deg2rad(4.24)   # angle of view of APS-C @ 300mm
-##         self.vert_angle = np.deg2rad(2.83)
+    def __init__(self, skyp0):
+        """
+        p is the initial value of the center of the camera at t==0, expressed in
+        RA/DEC
+        """
+        self.skyp0 = skyp0
+        # angle of view of APS-C @ 300mm
+        self.width = np.deg2rad(4.24) * UNIT_PER_DEC
+        self.height = np.deg2rad(2.83) * UNIT_PER_DEC
 
-##     def draw(self, sky):
-##         w = sky.width / sky.dec_width * self.horiz_angle / 2
-##         h = sky.width / sky.dec_width * self.vert_angle  / 2
-##         x, y = sky.radec2xy(self.ra, self.dec)
-##         p1 = int(x-w/2), int(y-h/2)
-##         p2 = int(x+w/2), int(y+h/2)
-##         cv2.rectangle(sky.img, p1, p2, [0, 255, 0])
+    def draw(self, sky):
+        W = self.width
+        H = self.height
+        x, y = radec2cart(self.skyp0)
+        p1 = (x-W/2, y-H/2)
+        p2 = (x+W/2, y+H/2)
+        sky.rectangle(p1, p2, GREEN)
+        ## w = sky.width / sky.dec_width * self.horiz_angle / 2
+        ## h = sky.width / sky.dec_width * self.vert_angle  / 2
+        ## x, y = sky.radec2xy(self.ra, self.dec)
+        ## p1 = int(x-w/2), int(y-h/2)
+        ## p2 = int(x+w/2), int(y+h/2)
+        ## cv2.rectangle(sky.img, p1, p2, [0, 255, 0])
 
 
 def find_star(n):
@@ -105,7 +116,7 @@ class Simulation:
         self.sky = Sky(1000, 1.5)
         self.sky_win = cartesian.Window('sky', self.sky, self.draw_sky)
         self.t = CvTrackbar('t', 'sky', 0, 60*60*24, self.update)
-        ## self.camera = Camera(MIZAR.ra, MIZAR.dec)
+        self.camera = Camera(MIZAR)
 
     def update(self, value):
         self.sky_win.show()
@@ -115,6 +126,7 @@ class Simulation:
         self.sky.clear()
         for star in STARS:
             self.sky.draw_star(star, t)
+        self.camera.draw(self.sky)
 
     def is_window_visible(self):
         # I don't know why, but WND_PROP_VISIBLE does not seem to work :(

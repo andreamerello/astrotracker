@@ -67,6 +67,10 @@ class Image:
         p2 = self._convert(p2)
         cv2.line(self.mat, p1, p2, color)
 
+    def rectangle(self, p1, p2, color):
+        p1 = self._convert(p1)
+        p2 = self._convert(p2)
+        cv2.rectangle(self.mat, p1, p2, color)
 
 class Window:
     """
