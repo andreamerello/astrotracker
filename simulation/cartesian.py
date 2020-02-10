@@ -39,11 +39,12 @@ class Image:
     def __init__(self, pixel_width, unit_width):
         self.pixel_width = pixel_width
         self.unit_width = unit_width
+        self.zoom = 1.0
         self.mat = np.zeros(shape=[pixel_width, pixel_width, 3], dtype=np.uint8)
 
     @property
     def pixels_per_unit(self):
-        return self.pixel_width / self.unit_width
+        return self.pixel_width / self.unit_width * self.zoom
 
     def clear(self):
         self.mat.fill(0)
@@ -83,7 +84,7 @@ class Window:
         if value == 0:
             self.zoom.value = 1
             return
-        self.img.unit_width = 1/value
+        self.img.zoom = value
         self.show()
 
     def show(self):
