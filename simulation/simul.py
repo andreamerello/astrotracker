@@ -29,7 +29,7 @@ def radec2cart(p):
     else:
         dec -= PI/2
     rho = dec / (PI/2) # scale to a total 90° range (-45° to +45°)
-    phi = ra
+    phi = -ra
     return pol2cart(rho, phi)
 
 def _rotate(point, radians, origin=(0, 0)):
