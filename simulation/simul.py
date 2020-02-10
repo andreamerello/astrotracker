@@ -4,6 +4,7 @@ import numpy as np
 from stars import STARS, SkyPoint
 import cartesian
 from cartesian import YELLOW, RED
+from cvextra import CvTrackbar
 
 PI = np.pi
 NORTH_POLE = SkyPoint(0, PI/2)
@@ -31,6 +32,23 @@ def radec2cart(p):
     phi = ra
     return pol2cart(rho, phi)
 
+def _rotate(point, radians, origin=(0, 0)):
+    """
+    Rotate a point around a given point.
+    """
+    x, y = point
+    ox, oy = origin
+    qx = ox + math.cos(radians) * (x - ox) + math.sin(radians) * (y - oy)
+    qy = oy + -math.sin(radians) * (x - ox) + math.cos(radians) * (y - oy)
+    return qx, qy
+
+def rotate(point, origin, angular_speed, t):
+    """
+    Rotate a point at a given time, accordig to its angular_speed
+    """
+    radians = angular_speed * t
+    return _rotate(point, radians, origin)
+
 
 
 class Sky(cartesian.Image):
@@ -39,15 +57,19 @@ class Sky(cartesian.Image):
     expressed in RA/DEC)
     """
 
-    GRID_COLOR = (40, 40, 40)
+    # this is not completely accurate, but it's not important for the purposes
+    # of this simulation
+    ANGULAR_SPEED = (np.pi*2)/(60*60*24) # 360 deg / 24h, radians/s
 
     def clear(self):
         super(Sky, self).clear()
         self.set(radec2cart(NORTH_POLE), color=RED)
 
-    def draw_star(self, star):
-        self.set(radec2cart(star), YELLOW)
-
+    def draw_star(self, star, t):
+        # draw a star in the sky at the time t
+        p0 = radec2cart(star) # position at t==0
+        pt = rotate(p0, (0, 0), self.ANGULAR_SPEED, t)
+        self.set(pt, YELLOW)
 
 ## class Camera:
 
@@ -82,12 +104,17 @@ class Simulation:
         #cv2.moveWindow('sky', 5280, 0) # TEMP, Move to my 3rd screen
         self.sky = Sky(1000, 1.0)
         self.sky_win = cartesian.Window('sky', self.sky, self.draw_sky)
+        self.t = CvTrackbar('t', 'sky', 0, 60*60*24, self.update)
         ## self.camera = Camera(MIZAR.ra, MIZAR.dec)
 
+    def update(self, value):
+        self.sky_win.show()
+
     def draw_sky(self):
+        t = self.t.value
         self.sky.clear()
         for star in STARS:
-            self.sky.draw_star(star)
+            self.sky.draw_star(star, t)
 
     def is_window_visible(self):
         # I don't know why, but WND_PROP_VISIBLE does not seem to work :(
