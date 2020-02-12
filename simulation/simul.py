@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from stars import STARS, SkyPoint
 import cartesian
-from cartesian import YELLOW, RED, GREEN
+from cartesian import YELLOW, RED, GREEN, MAGENTA
 from cvextra import CvTrackbar
 
 PI = np.pi
@@ -74,29 +74,42 @@ class Sky(cartesian.Image):
 
 class Camera:
 
-    def __init__(self, skyp0):
+    def __init__(self, p0, tracker_p, tracker_speed):
         """
-        p is the initial value of the center of the camera at t==0, expressed in
-        RA/DEC
+        p0: center of the camera at t==0, expressed in RA/DEC
+        tracker_p: rotation center of the tracker, in RA/DEC
+        tracker_speed: angular speed of the tracker, in radians/sec
         """
-        self.skyp0 = skyp0
+        self.p0 = p0
+        self.tracker_p = tracker_p
+        self.tracker_speed = tracker_speed
         # angle of view of APS-C @ 300mm
         self.width = np.deg2rad(4.24) * UNIT_PER_DEC
         self.height = np.deg2rad(2.83) * UNIT_PER_DEC
 
-    def draw(self, sky):
+    def draw(self, sky, t):
         W = self.width
         H = self.height
-        x, y = radec2cart(self.skyp0)
-        p1 = (x-W/2, y-H/2)
-        p2 = (x+W/2, y+H/2)
-        sky.rectangle(p1, p2, GREEN)
-        ## w = sky.width / sky.dec_width * self.horiz_angle / 2
-        ## h = sky.width / sky.dec_width * self.vert_angle  / 2
-        ## x, y = sky.radec2xy(self.ra, self.dec)
-        ## p1 = int(x-w/2), int(y-h/2)
-        ## p2 = int(x+w/2), int(y+h/2)
-        ## cv2.rectangle(sky.img, p1, p2, [0, 255, 0])
+        # compute the corners of the camera at t0
+        x0, y0 = radec2cart(self.p0)
+        a0 = (x0-W/2, y0-H/2)
+        b0 = (x0-W/2, y0+H/2)
+        c0 = (x0+W/2, y0+H/2)
+        d0 = (x0+W/2, y0-H/2)
+        #
+        # rotate the corners at the given t
+        tracker_p = radec2cart(self.tracker_p)
+        at = rotate(a0, tracker_p, self.tracker_speed, t)
+        bt = rotate(b0, tracker_p, self.tracker_speed, t)
+        ct = rotate(c0, tracker_p, self.tracker_speed, t)
+        dt = rotate(d0, tracker_p, self.tracker_speed, t)
+        #
+        # draw the rectangle
+        sky.line(at, bt, GREEN)
+        sky.line(bt, ct, GREEN)
+        sky.line(ct, dt, GREEN)
+        sky.line(dt, at, GREEN)
+        sky.set(tracker_p, MAGENTA)
 
 
 def find_star(n):
@@ -116,7 +129,7 @@ class Simulation:
         self.sky = Sky(1000, 1.5)
         self.sky_win = cartesian.Window('sky', self.sky, self.draw_sky)
         self.t = CvTrackbar('t', 'sky', 0, 60*60*24, self.update)
-        self.camera = Camera(MIZAR)
+        self.camera = Camera(MIZAR, SkyPoint(0, PI/3), self.sky.ANGULAR_SPEED)
 
     def update(self, value):
         self.sky_win.show()
@@ -126,7 +139,7 @@ class Simulation:
         self.sky.clear()
         for star in STARS:
             self.sky.draw_star(star, t)
-        self.camera.draw(self.sky)
+        self.camera.draw(self.sky, t)
 
     def is_window_visible(self):
         # I don't know why, but WND_PROP_VISIBLE does not seem to work :(
