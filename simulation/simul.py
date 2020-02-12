@@ -8,13 +8,13 @@ from cvextra import CvTrackbar
 
 PI = np.pi
 NORTH_POLE = SkyPoint(0, PI/2)
+UNIT_PER_DEC = 1.0 / (PI/2) # -45°..+45° ==> -1..+1
 
 def pol2cart(rho, phi):
     x = rho * np.cos(phi)
     y = rho * np.sin(phi)
     return x, y
 
-UNIT_PER_DEC = 1.0 / (PI/2) # -45°..+45° ==> -1..+1
 def radec2cart(p):
     """
     Convert from RA/DEC coordinates to cartesian.
