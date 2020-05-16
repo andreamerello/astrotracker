@@ -1,6 +1,7 @@
 import time
 import datetime
 import subprocess
+import os
 from urllib.parse import parse_qs
 
 # stolen from picamera
@@ -124,7 +125,12 @@ class PolarisApp:
         yield out1
         # yield the rest
         try:
-            frame_size = 4096
+            # I measured that a single frame is ~54k (but maybe it will be
+            # smaller if you shoot the dark sky?). We want a frame size which
+            # is small enough to avoid waiting for multiple frames, but if
+            # it's too small the rpi0 CPU can't handle all the work and we get
+            # very few FPS. The following value seems to work well empirically
+            frame_size = 1024 * 16
             while True:
                 data = p.stdout.read(frame_size)
                 if data == b'':
@@ -133,6 +139,8 @@ class PolarisApp:
                 yield data
         finally:
             self.terminate(p)
+            # make sure to unlock the camera at the end
+            os.system('gphoto2 --set-config output=TFT')
 
     def picamera(self, path):
         fmt, w, h, fps, shutter = self.parse_picamera(path)
