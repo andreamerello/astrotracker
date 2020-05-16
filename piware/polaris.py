@@ -89,19 +89,35 @@ class PolarisApp:
 
     def gphoto_camera(self, path):
         # gphoto2 camera
-        fmt = 'mjpg'
-        frame_size = 1024 # we don't have a frame size, read in blocks of 1k
-        headers = [
-            ('Content-Type', 'video/x-motion-jpeg'),
-        ]
-        self.start_response('200 OK', headers)
         cmd = ['gphoto2',
                #'--port', 'ptpip:192.168.1.180',
                '--capture-movie',
                '--stdout'
         ]
         print('Executing: %s' % ' '.join(cmd))
-        p = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE)
+        p = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        #
+        # try to read some data, to exit early if it fails. We probably waste
+        # the first frame in doing so, but too bad
+        output = p.stdout.read(1024)
+        data = p.stdout.read(1024)
+        if data == b'':
+            # gphoto is not streaming anything, so it must be an error
+            stderr = p.stderr.read()
+            p.wait()
+            self.start_response('400 Bad Request', [])
+            yield stderr
+            yield output
+            return
+        #
+        # if we are here, gphoto is streaming correctly, let's read the frames
+        fmt = 'mjpg'
+        frame_size = 1024 # we don't have a frame size, read in blocks of 1k
+        headers = [
+            ('Content-Type', 'video/x-motion-jpeg'),
+        ]
+        self.start_response('200 OK', headers)
         try:
             yield from self.getframes(p.stdout, fmt, frame_size)
         finally:
@@ -159,6 +175,9 @@ class PolarisApp:
         bytes_read = 0
         while True:
             data = f.read(frame_size)
+            if data == b'':
+                print('getframes EOF')
+                break
             bytes_read += len(data)
             if fmt == 'raw' and bytes_read > frame_size:
                 # got a full frame
