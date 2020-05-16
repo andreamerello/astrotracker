@@ -100,6 +100,12 @@
         size_hint_x: None
         width: '100dp'
 
+        Spinner:
+            id: camera_model
+            text: 'Canon'
+            values: 'Canon', 'Pi Camera'
+            picam: self.text == 'Pi Camera'
+
         Label:
             text: root.camera.status
             color: (1, 0, 0, 1)
@@ -116,17 +122,19 @@
             id: format
             text: 'RAW'
             values: 'RAW', 'MJPG'
+            disabled: not root.ids.camera_model.picam
 
         Spinner:
             id: resolution
             text: '320x240'
             values: '2592x1944', '1296x972', '640x480', '320x240'
+            disabled: not root.ids.camera_model.picam
 
         Spinner:
             id: shutter
             text: 'auto'
             values: 'auto', '0.5"', '1"', '1.5"', '2"', '2.5"', '3"', '4"', '5"', '6"'
-
+            disabled: not root.ids.camera_model.picam
 
         BoxLayout:
             orientation: 'horizontal'
