@@ -2,6 +2,7 @@ import io
 import time
 import threading
 from urlparse import urljoin
+import traceback
 import datetime
 import requests
 from kivy.event import EventDispatcher
@@ -23,6 +24,7 @@ class RemoteCamera(EventDispatcher):
     app = ObjectProperty()
     frame_no = NumericProperty(0)
     status = StringProperty('Stopped')
+    extra_status = StringProperty('')
     fps = NumericProperty(0)
     frame_texture = ObjectProperty(None)
 
@@ -57,8 +59,9 @@ class RemoteCamera(EventDispatcher):
         self.running = False
 
     @mainthread
-    def set_status(self, status):
+    def set_status(self, status, extra=''):
         self.status = status
+        self.extra_status = extra
 
     @mainthread
     def set_jpg(self, jpg):
@@ -82,6 +85,17 @@ class RemoteCamera(EventDispatcher):
         url = self.url(params)
         Logger.info('RemoteCamera: connecting to %s' % url)
         self.set_status('Connecting...')
+        try:
+            self._camera_loop(url, recording)
+        except Exception as e:
+            self.stop()
+            self.set_status('Error', traceback.format_exc())
+            Logger.exception('RemoteCamera: Error')
+        else:
+            self.set_status('Stopped')
+            Logger.info('RemoteCamera: stop')
+
+    def _camera_loop(self, url, recording):
         resp = requests.get(url, stream=True)
         resp.raise_for_status() # XXX: handle this
 
@@ -138,8 +152,6 @@ class RemoteCamera(EventDispatcher):
 
         if outfile:
             outfile.close()
-        self.set_status('Stopped')
-        Logger.info('RemoteCamera: stop')
 
     def got_frame(self, tstart):
         self.frame_no += 1

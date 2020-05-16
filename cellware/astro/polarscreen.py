@@ -4,6 +4,7 @@ from kivy.properties import ObjectProperty, NumericProperty, BoundedNumericPrope
 from kivy.uix.effectwidget import EffectWidget, AdvancedEffectBase
 from astro.remotecamera import RemoteCamera
 from astro.uix import MyScreen
+from astro.error import MessageBox
 
 class PolarScreen(MyScreen):
     stars_angle = NumericProperty(0)
@@ -30,6 +31,11 @@ class PolarScreen(MyScreen):
             params = '/camera/'
         self.camera.start(params, recording)
 
+    def status_click(self):
+        box = MessageBox(title='Error',
+                         message=self.camera.status,
+                         description=self.camera.extra_status)
+        box.open()
 
 
 effect_string = '''

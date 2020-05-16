@@ -106,9 +106,11 @@
             values: 'Canon', 'Pi Camera'
             picam: self.text == 'Pi Camera'
 
-        Label:
+        FlatButton:
             text: root.camera.status
+            show_border: False
             color: (1, 0, 0, 1)
+            on_release: root.status_click()
 
         Label:
             text: "Frame %d" % root.camera.frame_no

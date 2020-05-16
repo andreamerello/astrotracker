@@ -1,11 +1,18 @@
 from kivy.lang import Builder
 from kivy.base import ExceptionHandler, ExceptionManager
 from kivy.uix.popup import Popup
+from kivy.uix.scrollview import ScrollView
 from kivy.properties import StringProperty
 
 Builder.load_string("""
-<MessageBox>:
+<ScrollableLabel>:
+    Label:
+        size_hint_y: None
+        height: self.texture_size[1]
+        text_size: self.width, None
+        text: root.text
 
+<MessageBox>:
     size_hint: 0.95, None
     height: app.std_height * 12
 
@@ -14,9 +21,10 @@ Builder.load_string("""
 
         Label:
             text: root.message
-            size_hint_y: 1
+            size_hint_y: None
+            height: self.texture_size[1]
 
-        Label:
+        ScrollableLabel:
             text: root.description
 
         Button:
@@ -25,9 +33,24 @@ Builder.load_string("""
             height: app.std_height
             on_release: root.dismiss()
 """)
+
+class ScrollableLabel(ScrollView):
+    text = StringProperty('')
+
 class MessageBox(Popup):
     message = StringProperty()
     description = StringProperty()
+
+    def __init__(self, *args, **kwargs):
+        super(MessageBox, self).__init__(*args, **kwargs)
+        lines = []
+        WIDTH=120
+        for line in self.description.splitlines():
+            while len(line) > WIDTH:
+                lines.append(line[:WIDTH])
+                line = line[WIDTH:]
+            lines.append(line)
+        self.description = '\n'.join(lines)
 
 
 class ErrorMessage(Exception):
@@ -39,7 +62,6 @@ class ErrorMessage(Exception):
     def __init__(self, message, description=''):
         self.message = message
         self.description = description
-
 
 class MyExceptionHandler(ExceptionHandler):
 
