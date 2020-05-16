@@ -12,6 +12,9 @@ from kivy.clock import Clock, mainthread
 from kivy.core.image import Image as CoreImage
 from kivy.graphics.texture import Texture
 
+class CameraNotFound(Exception):
+    pass
+
 def yuv_to_texture(data, width, height):
     texture = Texture.create(size=(width, height), colorfmt='luminance')
     texture.blit_buffer(data, colorfmt='luminance', bufferfmt='ubyte')
@@ -87,6 +90,10 @@ class RemoteCamera(EventDispatcher):
         self.set_status('Connecting...')
         try:
             self._camera_loop(url, recording)
+        except CameraNotFound as e:
+            self.stop()
+            self.set_status('No camera', str(e))
+            Logger.exception('RemoteCamera: CameraNotFound')
         except Exception as e:
             self.stop()
             self.set_status('Error', traceback.format_exc())
@@ -97,7 +104,11 @@ class RemoteCamera(EventDispatcher):
 
     def _camera_loop(self, url, recording):
         resp = requests.get(url, stream=True)
-        resp.raise_for_status() # XXX: handle this
+        if resp.status_code == 400:
+            # it's very likely that it's camera not found
+            raise CameraNotFound(resp.text)
+        # treat all the other HTTP errors as exceptions
+        resp.raise_for_status()
 
         ct = resp.headers['Content-Type']
         if ct == 'video/x-raw':
