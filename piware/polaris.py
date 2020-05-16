@@ -98,28 +98,39 @@ class PolarisApp:
         p = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         #
-        # try to read some data, to exit early if it fails. We probably waste
-        # the first frame in doing so, but too bad
-        output = p.stdout.read(1024)
-        data = p.stdout.read(1024)
-        if data == b'':
+        # If gphoto2 can't find the camera, it prints some text on stdout. To
+        # catch the case, we try to read some bytes: if out1 is empty, it
+        # means that gphoto is not streaming and out0 contains the error
+        # message. Else, out0 and out1 contains "real" MJPG frames, which we
+        # need to yield to the client.
+        out0 = p.stdout.read(1024)
+        out1 = p.stdout.read(1024)
+        if out1 == b'':
             # gphoto is not streaming anything, so it must be an error
             stderr = p.stderr.read()
             p.wait()
             self.start_response('400 Bad Request', [])
             yield stderr
-            yield output
+            yield out0
             return
         #
         # if we are here, gphoto is streaming correctly, let's read the frames
-        fmt = 'mjpg'
-        frame_size = 1024 # we don't have a frame size, read in blocks of 1k
         headers = [
             ('Content-Type', 'video/x-motion-jpeg'),
         ]
         self.start_response('200 OK', headers)
+        # yield the small data that we read preemptively
+        yield out0
+        yield out1
+        # yield the rest
         try:
-            yield from self.getframes(p.stdout, fmt, frame_size)
+            frame_size = 4096
+            while True:
+                data = p.stdout.read(frame_size)
+                if data == b'':
+                    # gphoto stopped streaming, something is wrong?
+                    break
+                yield data
         finally:
             self.terminate(p)
 
