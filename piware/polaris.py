@@ -35,7 +35,9 @@ class PolarisApp:
             path += '/'
         print('Handling', path)
         if path.startswith('/camera/'):
-            return self.camera(path)
+            return self.gphoto_camera(path)
+        if path.startswith('/picamera/'):
+            return self.picamera(path)
         elif path == '/counter/':
             return self.counter()
         else:
@@ -66,14 +68,14 @@ class PolarisApp:
         self.start_response(http_status, headers)
         return lines()
 
-    def parse_camera(self, path):
+    def parse_picamera(self, path):
         # XXX: we should handle errors somehow
         # path is something like '/camera/raw/640x480/'
         parts = path.split('/')
         assert len(parts) == 5
         root, camera, fmt, resolution, trail = parts
         assert root == ''
-        assert camera == 'camera'
+        assert camera == 'picamera'
         assert trail == ''
         assert fmt in ('raw', 'mjpg')
         w, h = resolution.split('x')
@@ -85,8 +87,28 @@ class PolarisApp:
             shutter = int(float(shutter) * 10**6)
         return fmt, w, h, fps, shutter
 
-    def camera(self, path):
-        fmt, w, h, fps, shutter = self.parse_camera(path)
+    def gphoto_camera(self, path):
+        # gphoto2 camera
+        fmt = 'mjpg'
+        frame_size = 1024 # we don't have a frame size, read in blocks of 1k
+        headers = [
+            ('Content-Type', 'video/x-motion-jpeg'),
+        ]
+        self.start_response('200 OK', headers)
+        cmd = ['gphoto2',
+               #'--port', 'ptpip:192.168.1.180',
+               '--capture-movie',
+               '--stdout'
+        ]
+        print('Executing: %s' % ' '.join(cmd))
+        p = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE)
+        try:
+            yield from self.getframes(p.stdout, fmt, frame_size)
+        finally:
+            self.terminate(p)
+
+    def picamera(self, path):
+        fmt, w, h, fps, shutter = self.parse_picamera(path)
         w, h = raw_resolution(w, h)
         if fmt == 'raw':
             headers = [
@@ -99,14 +121,14 @@ class PolarisApp:
                 ('Content-Type', 'video/x-motion-jpeg'),
             ]
         self.start_response('200 OK', headers)
-        return self.frames_fromcamera(fmt, w, h, fps, shutter)
+        return self.frames_from_raspivid(fmt, w, h, fps, shutter)
         #return fromfile('/home/pi/video.yuv', 'raw', w*h)
 
     def frames_fromfile(self, fname, fmt, frame_size):
         with open(fname, 'rb') as f:
             yield from self.getframes(f, fmt, frame_size)
 
-    def frames_fromcamera(self, fmt, w, h, fps, shutter):
+    def frames_from_raspivid(self, fmt, w, h, fps, shutter):
         if fmt == 'raw':
             cmd = ['raspividyuv', '--luma'] # stream only the Y (luminance) data
             frame_size = w*h

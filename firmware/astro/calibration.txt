@@ -1,0 +1,54 @@
+Tracker calibration: for each measurement we do the following.
+
+1. press "Rewind" to put the tracker in home position; measure the angle "home"
+2. press "FF" to put the tracker in a given position; measure the angle after X steps
+
+The measure the angle, we used a digital caliber
+
+X = 19955 steps
+
+
+Home     X*0.5      Delta
+----     ------     -----
+5.90     10.90       5.00
+5.90     10.80       5.10
+6.00     10.95       4.95
+6.00     11.10       5.10
+6.00     11.10	     5.10
+5.95     10.90       4.95
+6.05     11.10       5.05
+
+
+Home     X*0.75     Delta
+----     ------     -----
+6.15     13.70       7.55
+6.05     13.60       7.55
+6.10     13.65       7.55
+5.90     13.65       7.75
+
+
+Home         X      Delta
+----     -----      -----
+5.90     15.95      10.05
+5.95     15.75       9.80
+5.95     15.85	     9.90
+5.95     15.90       9.95
+6.00     16.00      10.00
+5.95     15.95      10.00
+6.00     16.05      10.05
+
+
+Home     X*1.25     Delta
+----     -----      -----
+6.00     18.45	    12.45
+6.00     18.40      12.40
+5.95     18.15      12.20
+5.90     18.30	    12.40
+
+
+Home     X*1.5      Delta
+----     -----      -----
+6.20     20.90      14.70
+6.00     20.80      14.80
+6.25     20.95      14.70
+6.20     20.90      14.70
