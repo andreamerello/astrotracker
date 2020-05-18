@@ -1,3 +1,4 @@
+import sys
 import time
 import datetime
 import subprocess
@@ -22,6 +23,11 @@ def now():
     return datetime.datetime.now().time()
 
 class PolarisApp:
+
+    def __init__(self, videofile=None):
+        self.videofile = videofile
+        if videofile is not None:
+            print('FAKE CAMERA from %s' % videofile)
 
     def __call__(self, env, start_response):
         """
@@ -87,7 +93,39 @@ class PolarisApp:
             shutter = int(float(shutter) * 10**6)
         return fmt, w, h, fps, shutter
 
+    def serve_videofile(self, fname):
+        # we assume it's a mjpg for now. Serve full frames at a constant rate
+        headers = [
+            ('Content-Type', 'video/x-motion-jpeg'),
+        ]
+        self.start_response('200 OK', headers)
+        FPS = 5.0
+        data = b''
+        nframes = 0
+        with open(fname, 'rb') as f:
+            while True:
+                chunk = f.read(1024)
+                if chunk == b'':
+                    return
+                data += chunk
+                a = data.find(b'\xff\xd8') # jpg_start
+                b = data.find(b'\xff\xd9') # jpg_end
+                if a != -1 and b != -1:
+                    # found a new frame!
+                    nframes += 1
+                    print('Got frame %d' % nframes)
+                    jpg_data = data[a:b+2]
+                    data = data[b+2:]
+                    yield jpg_data
+                    time.sleep(1/FPS)
+
+
     def gphoto_camera(self, path):
+        if self.videofile is not None:
+            # for testing
+            yield from self.serve_videofile(self.videofile)
+            return
+
         # gphoto2 camera
         cmd = ['gphoto2',
                #'--port', 'ptpip:192.168.1.180',
@@ -212,13 +250,17 @@ class PolarisApp:
         else:
             print('Process successully terminated')
 
-def main():
+def main(fname):
     from wsgiref.simple_server import make_server
-    app = PolarisApp()
+    app = PolarisApp(fname)
     httpd = make_server('', 8000, app)
     print("Serving HTTP on port 8000...")
     httpd.serve_forever()
     #httpd.handle_request() # serve one request, then exit
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) == 2:
+        fname = sys.argv[1]
+    else:
+        fname = None
+    main(fname)
