@@ -14,7 +14,9 @@ from kivy.utils import platform
 from kivy.logger import Logger
 import pypath
 import astro.uix
+import astro.sky
 from astro import iconfonts
+from astro.rotationscreen import RotationScreen
 from astro.polarscreen import PolarScreen
 from astro.manager import Manager
 from astro.error import MyExceptionHandler, MessageBox, ErrorMessage
@@ -62,7 +64,9 @@ class AstroApp(App):
         self.requests = SmartRequests(self)
         self.manager = Manager()
         self.manager.open(MainMenuScreen())
-        if '--polar' in self.argv:
+        if '--rotation' in self.argv:
+            self.open_rotation()
+        elif '--polar' in self.argv:
             self.open_polar()
             ## self.manager.current_view.test()
         return self.manager
@@ -73,6 +77,10 @@ class AstroApp(App):
     def on_keyboard(self, window, keycode, scancode, text, modifiers):
         if keycode == 27: # ESC
             return self.root.go_back()
+
+    def open_rotation(self):
+        screen = RotationScreen(name='rotationscreen')
+        self.manager.open(screen)
 
     def open_polar(self):
         polar_screen = PolarScreen(name='polarsceen')

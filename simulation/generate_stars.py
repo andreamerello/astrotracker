@@ -47,6 +47,8 @@ class SkyPoint:
 """)
 print()
 print('STARS = [')
+
+ALL_STARS = [5372]
 for n in ALL_STARS:
     if df.loc[n].magnitude >= 5:
         # ignore faint stars
