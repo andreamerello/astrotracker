@@ -19,6 +19,7 @@ class RotationScreen(MyScreen):
     def __init__(self, *args, **kwargs):
         super(RotationScreen, self).__init__(*args, **kwargs)
         self.ids.sky.bind(on_touch_down=self.on_sky_touch_down)
+        self.ids.sky.bind(on_touch_move=self.on_sky_touch_move)
 
     def autoscale(self):
         tw, th = self.ids.sky.texture.size
@@ -32,9 +33,16 @@ class RotationScreen(MyScreen):
         if meth:
             return meth(touch)
 
+    def on_sky_touch_move(self, img, touch):
+        meth = getattr(self, 'on_tool_%s_move' % self.tool, None)
+        if meth:
+            return meth(touch)
+
     def on_tool_set_center_touch(self, touch):
         self.O = touch.pos
 
     def on_tool_set_radius_touch(self, touch):
         distance = Vector(self.O).distance(touch.pos)
         self.sample_radius = distance
+
+    on_tool_set_radius_move = on_tool_set_radius_touch
