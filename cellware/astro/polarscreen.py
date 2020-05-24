@@ -1,10 +1,15 @@
 import io
 from kivy.uix.screenmanager import Screen
+from kivy.resources import resource_find
+from kivy.lang import Builder
 from kivy.properties import ObjectProperty, NumericProperty, BoundedNumericProperty
 from kivy.uix.effectwidget import EffectWidget, AdvancedEffectBase
 from astro.remotecamera import RemoteCamera
 from astro.uix import MyScreen
 from astro.error import MessageBox
+
+Builder.load_file(resource_find('astro/polarscreen.kv'))
+
 
 class PolarScreen(MyScreen):
     stars_angle = NumericProperty(0)
