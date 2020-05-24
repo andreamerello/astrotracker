@@ -1,0 +1,34 @@
+#:kivy 1.0
+#:import MyScatterPlaneLayout astro.uix
+
+
+<RotationScreen>:
+
+    MyScatterPlaneLayout:
+        do_rotation: False
+        do_translation: True
+        do_scale: True
+        auto_bring_to_front: False
+        Image:
+            id: sky
+            source: 'test.jpg'
+            pos: 0, 0
+            size: root.size
+
+
+
+    BoxLayout:
+        # right toolbar
+        right: root.right
+        orientation: 'vertical'
+        size_hint_x: None
+        width: '100dp'
+
+        FlatButton:
+            text: 'Load from Camera'
+
+        FlatButton:
+            text: 'Save'
+
+        FlatButton:
+            text: 'Reset'

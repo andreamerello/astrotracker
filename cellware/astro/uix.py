@@ -6,6 +6,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.screenmanager import Screen
 from kivy.uix.popup import Popup
 from kivy.uix.behaviors.button import ButtonBehavior
+from kivy.uix.scatterlayout import ScatterLayout
 from kivy.utils import get_color_from_hex
 
 
@@ -190,3 +191,11 @@ def darker(color, factor=0.5):
     g *= factor
     b *= factor
     return r, g, b, a
+
+
+class MyScatterPlaneLayout(ScatterLayout):
+    # the ScatterPlaneLayout which is distributed with kivy 1.9.1 seems buggy:
+    # it inherits from ScatterPlane instead of ScatterLayout. This is
+    # supposedly the correct version
+    def collide_point(self, x, y):
+        return True
