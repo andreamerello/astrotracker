@@ -4,16 +4,22 @@
 
 <RotationScreen>:
 
+    on_size: root.autoscale()
+
     MyScatterPlaneLayout:
+        id: scatter
         do_rotation: False
         do_translation: True
         do_scale: True
         auto_bring_to_front: False
+
         Image:
             id: sky
             source: 'test.jpg'
             pos: 0, 0
-            size: root.size
+            size: self.texture_size
+            size_hint: None, None
+            on_source: root.autoscale()
 
 
 
@@ -26,6 +32,10 @@
 
         FlatButton:
             text: 'Load from Camera'
+
+        FlatButton:
+            text: 'Autoscale'
+            on_release: root.autoscale()
 
         FlatButton:
             text: 'Save'
