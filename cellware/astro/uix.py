@@ -49,6 +49,7 @@ class MDBootstrapTheme(BootstrapTheme):
     # colors taken from:
     #   http://mdbootstrap.com/css/colors/
     #   http://mdbootstrap.com/css/helpers/
+    WHITE   = get_color_from_hex("#FFFFFF")
     MUTED   = get_color_from_hex("#777777")
     PRIMARY = get_color_from_hex("#4285F4")
     SUCCESS = get_color_from_hex("#00C851")

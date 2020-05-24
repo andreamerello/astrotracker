@@ -1,6 +1,6 @@
 #:kivy 1.0
 #:import MyScatterPlaneLayout astro.uix
-
+#:import Theme astro.uix.Theme
 
 <RotationScreen>:
 
@@ -9,8 +9,8 @@
     MyScatterPlaneLayout:
         id: scatter
         do_rotation: False
-        do_translation: True
-        do_scale: True
+        do_translation: root.tool == 'move'
+        do_scale: root.tool == 'move'
         auto_bring_to_front: False
 
         Image:
@@ -41,6 +41,18 @@
         FlatButton:
             text: 'Autoscale'
             on_release: root.autoscale()
+
+        FlatButton:
+            text: 'Move'
+            tool: 'move'
+            background_color: Theme.BGSUCCESS if root.tool == self.tool else Theme.WHITE
+            on_release: root.tool = self.tool
+
+        FlatButton:
+            text: 'Set center'
+            tool: 'set_center'
+            background_color: Theme.BGSUCCESS if root.tool == self.tool else Theme.WHITE
+            on_release: root.tool = self.tool
 
         FlatButton:
             text: 'Save'
