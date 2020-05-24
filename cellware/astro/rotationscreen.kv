@@ -15,7 +15,7 @@
 
         Image:
             id: sky
-            source: 'test.jpg'
+            source: 'test2.jpg'
             pos: 0, 0
             size: self.texture_size
             size_hint: None, None
@@ -64,10 +64,11 @@
             background_color: Theme.BGSUCCESS if root.tool == self.tool else Theme.WHITE
             on_release: root.tool = self.tool
 
-        Slider:
-            min: 0
-            max: root.ids.sky.width
-            on_value: root.sample_radius = self.value
+        FlatButton:
+            text: 'Radius'
+            tool: 'set_radius'
+            background_color: Theme.BGSUCCESS if root.tool == self.tool else Theme.WHITE
+            on_release: root.tool = self.tool
 
         FlatButton:
             text: 'Save'

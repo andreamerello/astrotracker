@@ -9,6 +9,7 @@ FILES=(android.txt
        libs
        data
        *.png
+       *.jpg
       )
 
 rm -rf $TMPDIR

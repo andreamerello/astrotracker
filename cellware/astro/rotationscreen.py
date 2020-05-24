@@ -1,6 +1,7 @@
 from kivy.resources import resource_find
 from kivy.lang import Builder
 from kivy.properties import NumericProperty, ReferenceListProperty, StringProperty
+from kivy.vector import Vector
 from astro.uix import MyScreen
 from astro.error import MessageBox
 
@@ -33,3 +34,7 @@ class RotationScreen(MyScreen):
 
     def on_tool_set_center_touch(self, touch):
         self.O = touch.pos
+
+    def on_tool_set_radius_touch(self, touch):
+        distance = Vector(self.O).distance(touch.pos)
+        self.sample_radius = distance

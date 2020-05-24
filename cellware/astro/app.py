@@ -14,7 +14,6 @@ from kivy.utils import platform
 from kivy.logger import Logger
 import pypath
 import astro.uix
-import astro.sky
 from astro import iconfonts
 from astro.rotationscreen import RotationScreen
 from astro.polarscreen import PolarScreen
