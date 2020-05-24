@@ -162,50 +162,28 @@
                 color: (1, 0, 0, 1)
                 on_release: root.start_camera(recording=True)
 
+        BoxLayout:
+            id: star_toolbar
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: "20dp"
+            IconButton:
+                icon: 'fa-minus'
+                font_size: "24sp"
+                on_release: root.stars_angle -= 1
+            IconButton:
+                icon: "fa-minus"
+                font_size: "12sp"
+                on_release: root.stars_angle -= 0.1
+            IconButton:
+                icon: "fa-star" if stars.visible else "fa-star-o"
+                on_release: stars.visible = not stars.visible
 
-
-<PolarScreen>:
-    Image:
-        id: stars
-        visible: True
-        opacity: 1 if self.visible else 0
-        source: "polaris75mm.png"
-        pos: 0, 0
-        size: root.size
-        size_hint: None, None
-        allow_stretch: True
-        canvas.before:
-            PushMatrix
-            Rotate:
-                angle: root.stars_angle
-                origin: self.center
-        canvas.after:
-            PopMatrix
-
-    # this is "added" at the end of the right_toolbar by the Python code in
-    # the init
-    BoxLayout:
-        id: star_toolbar
-        orientation: 'horizontal'
-        size_hint_y: None
-        height: "20dp"
-        IconButton:
-            icon: 'fa-minus'
-            font_size: "24sp"
-            on_release: root.stars_angle -= 1
-        IconButton:
-            icon: "fa-minus"
-            font_size: "12sp"
-            on_release: root.stars_angle -= 0.1
-        IconButton:
-            icon: "fa-star" if stars.visible else "fa-star-o"
-            on_release: stars.visible = not stars.visible
-
-        IconButton:
-            icon: "fa-plus"
-            font_size: "12sp"
-            on_release: root.stars_angle += 0.1
-        IconButton:
-            icon: "fa-plus"
-            font_size: "24sp"
-            on_release: root.stars_angle += 1
+            IconButton:
+                icon: "fa-plus"
+                font_size: "12sp"
+                on_release: root.stars_angle += 0.1
+            IconButton:
+                icon: "fa-plus"
+                font_size: "24sp"
+                on_release: root.stars_angle += 1
