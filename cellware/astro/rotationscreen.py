@@ -13,6 +13,8 @@ class RotationScreen(MyScreen):
     Oy = NumericProperty(0)
     O = ReferenceListProperty(Ox, Oy)
 
+    sample_radius = NumericProperty(100)
+
     def __init__(self, *args, **kwargs):
         super(RotationScreen, self).__init__(*args, **kwargs)
         self.ids.sky.bind(on_touch_down=self.on_sky_touch_down)
