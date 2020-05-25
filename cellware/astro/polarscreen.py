@@ -2,7 +2,8 @@ import io
 from kivy.uix.screenmanager import Screen
 from kivy.resources import resource_find
 from kivy.lang import Builder
-from kivy.properties import ObjectProperty, NumericProperty, BoundedNumericProperty
+from kivy.properties import (ObjectProperty, NumericProperty, BoundedNumericProperty,
+                             ReferenceListProperty)
 from kivy.uix.effectwidget import EffectWidget, AdvancedEffectBase
 from astro.remotecamera import RemoteCamera
 from astro.uix import MyScreen
@@ -12,8 +13,18 @@ Builder.load_file(resource_find('astro/polarscreen.kv'))
 
 
 class PolarScreen(MyScreen):
+    app = ObjectProperty()
     stars_angle = NumericProperty(0)
     camera = ObjectProperty(RemoteCamera())
+
+    # North Pole
+    NPx = NumericProperty(0)
+    NPy = NumericProperty(0)
+    NP = ReferenceListProperty(NPx, NPy)
+
+    def __init__(self, *args, **kwargs):
+        super(PolarScreen, self).__init__(*args, **kwargs)
+        self.NP = self.app.load_north_pole() # coordinates in the 0-1.0 range
 
     def test(self):
         from astro.remotecamera import yuv_to_texture

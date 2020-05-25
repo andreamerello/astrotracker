@@ -22,9 +22,14 @@
             PushMatrix
             Rotate:
                 angle: root.stars_angle
-                origin: (100, 100) #self.center
+                origin: self.width * root.NPx, self.height * root.NPy
         canvas.after:
             PopMatrix
+            # Color:
+            #     rgba: (0, 1, 0, 1)
+            # Line:
+            #     circle: self.width * root.NPx, self.height * root.NPy, 10
+
 
     BoxLayout:
         orientation: 'horizontal'

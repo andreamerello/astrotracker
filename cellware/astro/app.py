@@ -102,7 +102,7 @@ class AstroApp(App):
         self.manager.open(screen)
 
     def open_polar(self):
-        polar_screen = PolarScreen(name='polarsceen')
+        polar_screen = PolarScreen(name='polarsceen', app=self)
         polar_screen.camera.app = self
         self.manager.open(polar_screen)
 
