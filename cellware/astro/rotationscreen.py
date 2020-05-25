@@ -1,5 +1,6 @@
 from kivy.resources import resource_find
 from kivy.lang import Builder
+from kivy.clock import Clock
 from kivy.properties import (NumericProperty, ReferenceListProperty, StringProperty,
                              ObjectProperty)
 from kivy.vector import Vector
@@ -33,8 +34,17 @@ class RotationScreen(MyScreen):
 
     def _load_center(self):
         # sp is expressed as coordinates in the 0-1.0 range
-        sp = eval(self.app.config.get('tracker', 'center'))
-        sx, sy = sp
+        try:
+            src = self.app.config.get('tracker', 'center')
+            sp = eval(src)
+            sx, sy = sp
+        except Exception as e:
+            self.O = (0, 0)
+            msg = MessageBox(message="Error when loading the center from the settings",
+                             description='%s\n%s' % (src, str(e)))
+            Clock.schedule_once(msg.open, 0)
+            return
+
         # transform into "pixel" coordinates
         x = int(self.ids.sky.width * sx)
         y = int(self.ids.sky.height * sy)
