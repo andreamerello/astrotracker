@@ -51,6 +51,9 @@ class RotationScreen(MyScreen):
             self._movement_origin = touch.pos
 
     def on_tool_set_center_move(self, touch):
+        if touch.grab_list:
+            # someone else grabbed this movement, probably the slider. Ignore
+            return
         mox, moy = self._movement_origin
         dx = touch.x - mox
         dy = touch.y - moy
@@ -64,4 +67,8 @@ class RotationScreen(MyScreen):
         distance = Vector(self.O).distance(touch.pos)
         self.sample_radius = distance
 
-    on_tool_set_radius_move = on_tool_set_radius_touch
+    def on_tool_set_radius_move(self, touch):
+        if touch.grab_list:
+            # someone else grabbed this movement, probably the slider. Ignore
+            return
+        self.on_tool_set_radius_touch(touch)
