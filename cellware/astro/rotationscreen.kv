@@ -9,8 +9,8 @@
     MyScatterPlaneLayout:
         id: scatter
         do_rotation: False
-        do_translation: root.tool == 'move'
-        do_scale: root.tool == 'move'
+        do_translation: root.tool == 'pan'
+        do_scale: root.tool == 'pan'
         auto_bring_to_front: False
 
         Image:
@@ -53,8 +53,8 @@
             on_release: root.autoscale()
 
         FlatButton:
-            text: 'Move'
-            tool: 'move'
+            text: 'Pan & Zoom'
+            tool: 'pan'
             background_color: Theme.BGSUCCESS if root.tool == self.tool else Theme.WHITE
             on_release: root.tool = self.tool
 

@@ -8,7 +8,7 @@ from astro.error import MessageBox
 Builder.load_file(resource_find('astro/rotationscreen.kv'))
 
 class RotationScreen(MyScreen):
-    tool = StringProperty('move')
+    tool = StringProperty('pan')
     # the rotation center
     Ox = NumericProperty(0)
     Oy = NumericProperty(0)
