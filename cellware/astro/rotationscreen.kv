@@ -13,30 +13,61 @@
         do_scale: root.tool == 'pan'
         auto_bring_to_front: False
 
-        Image:
-            id: sky
-            source: 'test2.jpg'
-            pos: 0, 0
-            size: self.texture_size
+        ColorClippingWidget:
+            id: color_clipping
+            size: root.ids.sky.size
             size_hint: None, None
-            on_source: root.autoscale()
+            #border_color: (0, 0, 1, 1)
 
-            canvas.after:
-                # small circle whose visual size is always the same, to show
-                # the rotation center
-                Color:
-                    rgba: (1, 1, 0, 1)
-                Line:
-                    circle: root.Ox, root.Oy, (10/root.ids.scatter.scale)
+            Image:
+                id: sky
+                source: 'test2.jpg'
+                pos: 0, 0
+                size: self.texture_size
+                size_hint: None, None
+                on_source: root.autoscale()
 
-                # big circle whose radius is controlled by the user, to
-                # visually check that the star trails match
-                Color:
-                    rgba: (1, 0, 0, 1)
-                Line:
-                    circle: root.Ox, root.Oy, root.sample_radius
-                    dash_offset: 5
-                    dash_length: 3
+                canvas.after:
+                    # small circle whose visual size is always the same, to show
+                    # the rotation center
+                    Color:
+                        rgba: (1, 1, 0, 1)
+                    Line:
+                        circle: root.Ox, root.Oy, (10/root.ids.scatter.scale)
+
+                    # big circle whose radius is controlled by the user, to
+                    # visually check that the star trails match
+                    Color:
+                        rgba: (1, 0, 0, 1)
+                    Line:
+                        circle: root.Ox, root.Oy, root.sample_radius
+                        dash_offset: 5
+                        dash_length: 3
+
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: None, None
+        height: '50dp'
+        width: root.width - dp(100)
+
+        Label:
+            text: 'Black: %d' % (root.ids.slider.value1)
+            color: Theme.PRIMARY
+            width: self.texture_size[0] + dp(10)
+            size_hint_x: None
+        RangeSlider:
+            id: slider
+            min: 0
+            max: 255
+            value1: 0
+            value2: 255
+            on_value1: color_clipping.black = self.value1
+            on_value2: color_clipping.white = self.value2
+        Label:
+            text: 'White: %d' % (root.ids.slider.value2)
+            color: Theme.PRIMARY
+            width: self.texture_size[0] + dp(10)
+            size_hint_x: None
 
     BoxLayout:
         # right toolbar
