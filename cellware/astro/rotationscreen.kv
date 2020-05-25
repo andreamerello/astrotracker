@@ -106,6 +106,8 @@
 
         FlatButton:
             text: 'Save'
+            on_release: root.save()
 
         FlatButton:
-            text: 'Reset'
+            text: 'Exit'
+            on_release: app.root.go_back()

@@ -43,6 +43,9 @@ class AstroApp(App):
             'host': '192.168.1.3',
             'port': '8000'
         })
+        config.setdefaults('tracker', {
+            'center': (0.5, 0.5)
+            })
 
     @property
     def storage(self):
@@ -78,7 +81,7 @@ class AstroApp(App):
             return self.root.go_back()
 
     def open_rotation(self):
-        screen = RotationScreen(name='rotationscreen')
+        screen = RotationScreen(name='rotationscreen', app=self)
         self.manager.open(screen)
 
     def open_polar(self):
