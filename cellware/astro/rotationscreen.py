@@ -12,10 +12,11 @@ Builder.load_file(resource_find('astro/rotationscreen.kv'))
 class RotationScreen(MyScreen):
     app = ObjectProperty()
     tool = StringProperty('pan')
-    # the rotation center
-    Ox = NumericProperty(0)
-    Oy = NumericProperty(0)
-    O = ReferenceListProperty(Ox, Oy)
+
+    # North Pole
+    NPx = NumericProperty(0)
+    NPy = NumericProperty(0)
+    NP = ReferenceListProperty(NPx, NPy)
 
     sample_radius = NumericProperty(500)
 
@@ -35,11 +36,11 @@ class RotationScreen(MyScreen):
     def _load_center(self):
         # sp is expressed as coordinates in the 0-1.0 range
         try:
-            src = self.app.config.get('tracker', 'center')
+            src = self.app.config.get('tracker', 'NP')
             sp = eval(src)
             sx, sy = sp
         except Exception as e:
-            self.O = (0, 0)
+            self.NP = (0, 0)
             msg = MessageBox(message="Error when loading the center from the settings",
                              description='%s\n%s' % (src, str(e)))
             Clock.schedule_once(msg.open, 0)
@@ -48,12 +49,12 @@ class RotationScreen(MyScreen):
         # transform into "pixel" coordinates
         x = int(self.ids.sky.width * sx)
         y = int(self.ids.sky.height * sy)
-        self.O = (x, y)
+        self.NP = (x, y)
 
     def save(self):
-        sx = self.Ox / float(self.ids.sky.width)
-        sy = self.Oy / float(self.ids.sky.height)
-        self.app.config.set('tracker', 'center', str([sx, sy]))
+        sx = self.NPx / float(self.ids.sky.width)
+        sy = self.NPy / float(self.ids.sky.height)
+        self.app.config.set('tracker', 'NP', str([sx, sy]))
         self.app.config.write()
 
     def on_sky_touch_down(self, img, touch):
@@ -71,11 +72,11 @@ class RotationScreen(MyScreen):
 
     def on_tool_set_center_touch(self, touch):
         if touch.is_double_tap:
-            self.O = touch.pos
+            self.NP = touch.pos
         else:
-            # make sure NOT so save self.O, else we save a *reference* to Ox
-            # and Oy, not a copy
-            self._old_O = self.Ox, self.Oy
+            # make sure NOT so save self.NP, else we save a *reference* to NPx
+            # and NPy, not a copy
+            self._old_NP = self.NPx, self.NPy
             self._movement_origin = touch.pos
 
     def on_tool_set_center_move(self, touch):
@@ -85,14 +86,14 @@ class RotationScreen(MyScreen):
         mox, moy = self._movement_origin
         dx = touch.x - mox
         dy = touch.y - moy
-        ox, oy = self._old_O
-        self.O = ox+dx, oy+dy
+        npx, npy = self._old_NP
+        self.NP = npx+dx, npy+dy
 
     # ===============
     # set_radius tool
 
     def on_tool_set_radius_touch(self, touch):
-        distance = Vector(self.O).distance(touch.pos)
+        distance = Vector(self.NP).distance(touch.pos)
         self.sample_radius = distance
 
     def on_tool_set_radius_move(self, touch):

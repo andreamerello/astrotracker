@@ -35,14 +35,14 @@
                 Color:
                     rgba: (1, 1, 0, 1)
                 Line:
-                    circle: root.Ox, root.Oy, (10/root.ids.scatter.scale)
+                    circle: root.NPx, root.NPy, (10/root.ids.scatter.scale)
 
                 # big circle whose radius is controlled by the user, to
                 # visually check that the star trails match
                 Color:
                     rgba: (1, 0, 0, 1)
                 Line:
-                    circle: root.Ox, root.Oy, root.sample_radius
+                    circle: root.NPx, root.NPy, root.sample_radius
                     dash_offset: 5
                     dash_length: 3
 

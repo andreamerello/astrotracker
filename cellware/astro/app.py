@@ -44,7 +44,7 @@ class AstroApp(App):
             'port': '8000'
         })
         config.setdefaults('tracker', {
-            'center': (0.5, 0.5)
+            'NP': (0.5, 0.5)
             })
 
     @property
