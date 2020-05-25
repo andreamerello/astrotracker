@@ -10,11 +10,11 @@ Builder.load_file(resource_find('astro/rotationscreen.kv'))
 class RotationScreen(MyScreen):
     tool = StringProperty('pan')
     # the rotation center
-    Ox = NumericProperty(0)
-    Oy = NumericProperty(0)
+    Ox = NumericProperty(3000)
+    Oy = NumericProperty(2000)
     O = ReferenceListProperty(Ox, Oy)
 
-    sample_radius = NumericProperty(100)
+    sample_radius = NumericProperty(500)
 
     def __init__(self, *args, **kwargs):
         super(RotationScreen, self).__init__(*args, **kwargs)
@@ -38,8 +38,27 @@ class RotationScreen(MyScreen):
         if meth:
             return meth(touch)
 
+    # ===============
+    # set_center tool
+
     def on_tool_set_center_touch(self, touch):
-        self.O = touch.pos
+        if touch.is_double_tap:
+            self.O = touch.pos
+        else:
+            # make sure NOT so save self.O, else we save a *reference* to Ox
+            # and Oy, not a copy
+            self._old_O = self.Ox, self.Oy
+            self._movement_origin = touch.pos
+
+    def on_tool_set_center_move(self, touch):
+        mox, moy = self._movement_origin
+        dx = touch.x - mox
+        dy = touch.y - moy
+        ox, oy = self._old_O
+        self.O = ox+dx, oy+dy
+
+    # ===============
+    # set_radius tool
 
     def on_tool_set_radius_touch(self, touch):
         distance = Vector(self.O).distance(touch.pos)
