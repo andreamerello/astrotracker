@@ -12,6 +12,7 @@ from kivy.core.window import Window
 from kivy.uix.screenmanager import Screen
 from kivy.utils import platform
 from kivy.logger import Logger
+from kivy.clock import Clock
 import pypath
 import astro.uix
 from astro import iconfonts
@@ -79,6 +80,22 @@ class AstroApp(App):
     def on_keyboard(self, window, keycode, scancode, text, modifiers):
         if keycode == 27: # ESC
             return self.root.go_back()
+
+    def load_north_pole(self):
+        try:
+            src = self.config.get('tracker', 'NP')
+            np = eval(src)
+        except Exception as e:
+            msg = MessageBox(message="Error when loading the North Pole location",
+                             description='%s\n%s' % (src, str(e)))
+            Clock.schedule_once(msg.open, 0)
+            return (0, 0)
+        else:
+            return np
+
+    def save_north_pole(self, p):
+        self.config.set('tracker', 'NP', str(p))
+        self.config.write()
 
     def open_rotation(self):
         screen = RotationScreen(name='rotationscreen', app=self)
