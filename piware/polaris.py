@@ -132,6 +132,7 @@ class PolarisApp:
         # gphoto2 camera
         cmd = ['gphoto2',
                #'--port', 'ptpip:192.168.1.180',
+               '--set-config', 'output=TFT + PC',
                '--capture-movie',
                '--stdout'
         ]
