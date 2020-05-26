@@ -44,7 +44,7 @@ class local(object):
     def listdir(self, pattern='*'):
         pattern = os.path.join(self.strpath, pattern)
         return map(self.__class__, glob(pattern))
-            
+
     def join(self, *parts):
         parts = map(str, parts)
         return self.__class__(os.path.join(self.strpath, *parts))
@@ -52,8 +52,8 @@ class local(object):
     def open(self, mode='r', **kwargs):
         return open(self.strpath, mode, **kwargs)
 
-    def write(self, s):
-        with open(self.strpath, 'w') as f:
+    def write(self, s, mode='w'):
+        with open(self.strpath, mode) as f:
             f.write(s)
 
     def read(self, mode='r'):
@@ -94,7 +94,7 @@ class local(object):
         oldcwd = local(os.getcwd())
         os.chdir(self.strpath)
         return oldcwd
-    
+
     def relto(self, path):
         return os.path.relpath(self.strpath, str(path))
 

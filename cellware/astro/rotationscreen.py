@@ -35,7 +35,23 @@ class RotationScreen(MyScreen):
             n += step
             self.last_image = 'IMG_%d.JPG' % n
 
+    def load_image(self):
+        imgfile = self.app.image_storage.join(self.last_image)
+        if not imgfile.exists():
+            data = self._fetch_image_from_server()
+            imgfile.write(data, 'wb')
+        self.ids.sky.source = str(imgfile)
+
+    def _fetch_image_from_server(self):
+        name, host, port = self.app.get_active_server()
+        url = 'http://%s:%s/camera/picture/%s' % (host, port, self.last_image)
+        resp = self.app.requests.get(url, timeout=120)
+        assert resp.status_code == 200
+        return resp.content
+
     def autoscale(self):
+        if self.ids.sky.texture is None:
+            return
         tw, th = self.ids.sky.texture.size
         scale_x = self.width / float(tw)
         scale_y = self.height / float(th)

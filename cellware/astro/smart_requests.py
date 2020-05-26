@@ -5,10 +5,6 @@ from kivy.utils import platform
 from kivy.logger import Logger
 from astro.error import ErrorMessage
 
-DESCRIPTION = """
-Check that the device is connected to the correct WiFi network
-"""
-
 class SmartRequests(object):
     """
     Like requests, but it always print a traceback on exception and raises on
@@ -23,13 +19,17 @@ class SmartRequests(object):
         kwargs.setdefault('timeout', self.app.get_timeout())
 
         meth = getattr(requests, method)
+        resp = None
         try:
             resp = meth(*args, **kwargs)
             resp.raise_for_status()
             return resp
         except RequestException as e:
             Logger.exception('SmartRequests exception')
-            raise ErrorMessage(error_message, DESCRIPTION)
+            descr = ''
+            if resp is not None:
+                descr = resp.content
+            raise ErrorMessage(error_message, descr)
 
     def get(self, *args, **kwargs):
         return self.do_smart_request('get', *args, **kwargs)

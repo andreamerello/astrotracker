@@ -23,7 +23,7 @@
             #border_color: (0, 0, 1, 1)
             Image:
                 id: sky
-                source: 'test2.jpg'
+                #source: 'test2.jpg'
                 pos: 0, 0
                 size: self.texture_size
                 size_hint: None, None
@@ -104,7 +104,8 @@
                 on_release: root.last_image_inc(+1)
 
         FlatButton:
-            text: 'Fetch'
+            text: 'Load'
+            on_release: root.load_image()
 
         Separator:
 

@@ -66,6 +66,10 @@ class AstroApp(App):
             path = '/tmp'
         return pypath.local(path)
 
+    @property
+    def image_storage(self):
+        return self.storage.join('astropi').ensure(dir=True)
+
     def build_settings(self, settings):
         from kivy.config import Config
         settings.add_json_panel('App', self.config,
