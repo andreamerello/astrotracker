@@ -41,9 +41,11 @@ class PolarisApp:
         if path[-1] != '/':
             path += '/'
         print('Handling', path)
-        if path.startswith('/camera/'):
-            return self.gphoto_camera(path)
-        if path.startswith('/picamera/'):
+        if path.startswith('/camera/liveview/'):
+            return self.gphoto_liveview(path)
+        elif path.startswith('/camera/picture/'):
+            return self.gphoto_picture(path)
+        elif path.startswith('/picamera/'):
             return self.picamera(path)
         elif path == '/counter/':
             return self.counter()
@@ -63,7 +65,7 @@ class PolarisApp:
         headers = [('Content-Type', 'text/plain')]
         self.start_response(http_status, headers)
         path = path.encode('utf-8')
-        return [b'Hello World: %s' % path]
+        return [b'Hello World: %s\n' % path]
 
     def counter(self):
         def lines():
@@ -121,7 +123,7 @@ class PolarisApp:
                     time.sleep(1/FPS)
 
 
-    def gphoto_camera(self, path):
+    def gphoto_liveview(self, path):
         if self.videofile is not None:
             # for testing
             yield from self.serve_videofile(self.videofile)
@@ -179,6 +181,11 @@ class PolarisApp:
             self.terminate(p)
             # make sure to unlock the camera at the end
             os.system('gphoto2 --set-config output=TFT')
+
+    def gphoto_picture(self, path):
+        headers = []
+        self.start_response('404 NOT FOUND', headers)
+        return []
 
     def picamera(self, path):
         fmt, w, h, fps, shutter = self.parse_picamera(path)
