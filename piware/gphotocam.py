@@ -1,6 +1,7 @@
 import os
 import time
 import subprocess
+from utils import terminate
 
 class GPhotoCamera:
 
@@ -64,7 +65,7 @@ class GPhotoCamera:
                     break
                 yield data
         finally:
-            self.terminate(p)
+            terminate(p)
             # make sure to unlock the camera at the end
             os.system('gphoto2 --set-config output=TFT')
 
