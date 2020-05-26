@@ -144,3 +144,19 @@ class GPhotoCamera:
         ]
         self.app.start_response('200 OK', headers)
         return [content]
+
+    def unlock(self, path):
+        """
+        Unlock the UI, else the camera says "BUSY" when I press any button
+        """
+        cmd = ['gphoto2', '--summary']
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        if proc.returncode != 0:
+            self.app.start_response('400 Bad Request', [])
+            return [proc.stdout]
+        #
+        headers = [
+            ('Content-Type', 'text/plain'),
+            ]
+        self.app.start_response('200 OK', headers)
+        return [proc.stdout]

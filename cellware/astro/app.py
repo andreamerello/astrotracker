@@ -128,6 +128,12 @@ class AstroApp(App):
         polar_screen.camera.app = self
         self.manager.open(polar_screen)
 
+    def unlock_camera(self):
+        name, host, port = self.get_active_server()
+        url = 'http://%s:%s/camera/unlock/' % (host, port)
+        resp = self.requests.get(url, timeout=120)
+        assert resp.status_code == 200
+
     def open_camera(self):
         print "TODO"
 

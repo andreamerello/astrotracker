@@ -30,6 +30,8 @@ class PolarisApp:
             return self.gphoto.liveview(path)
         elif path.startswith('/camera/picture/'):
             return self.gphoto.picture(path)
+        elif path.startswith('/camera/unlock/'):
+            return self.gphoto.unlock(path)
         elif path.startswith('/picamera/liveview/'):
             return self.picam.liveview(path)
         elif path == '/counter/':
