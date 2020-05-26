@@ -1,7 +1,8 @@
+import re
 from kivy.resources import resource_find
 from kivy.lang import Builder
 from kivy.properties import (NumericProperty, ReferenceListProperty, StringProperty,
-                             ObjectProperty)
+                             ObjectProperty, ConfigParserProperty)
 from kivy.vector import Vector
 from astro.uix import MyScreen
 from astro.error import MessageBox
@@ -9,14 +10,16 @@ from astro.error import MessageBox
 Builder.load_file(resource_find('astro/rotationscreen.kv'))
 
 class RotationScreen(MyScreen):
+    LAST_IMAGE_REGEXP = re.compile(r'IMG_([0-9]+).JPG')
+
     app = ObjectProperty()
     tool = StringProperty('pan')
+    last_image = ConfigParserProperty('', 'tracker', 'last_image', 'app')
 
     # North Pole
     NPx = NumericProperty(0)
     NPy = NumericProperty(0)
     NP = ReferenceListProperty(NPx, NPy)
-
     sample_radius = NumericProperty(500)
 
     def __init__(self, *args, **kwargs):
@@ -24,6 +27,13 @@ class RotationScreen(MyScreen):
         self.ids.sky.bind(on_touch_down=self.on_sky_touch_down)
         self.ids.sky.bind(on_touch_move=self.on_sky_touch_move)
         self._load_np()
+
+    def last_image_inc(self, step=1):
+        m = self.LAST_IMAGE_REGEXP.match(self.last_image)
+        if m:
+            n = int(m.group(1))
+            n += step
+            self.last_image = 'IMG_%d.JPG' % n
 
     def autoscale(self):
         tw, th = self.ids.sky.texture.size

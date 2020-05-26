@@ -54,7 +54,8 @@ class AstroApp(App):
             'port': '8000',
             })
         config.setdefaults('tracker', {
-            'NP': (0.5, 0.5)
+            'NP': (0.5, 0.5),
+            'last_image': 'IMG_1000.JPG',
             })
 
     @property

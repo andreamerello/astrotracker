@@ -38,7 +38,7 @@ class PolarScreen(MyScreen):
             fmt = self.ids.format.text.lower()
             resolution = self.ids.resolution.text
             shutter = self.ids.shutter.text
-            params = '/picamera/%s/%s/' % (fmt, resolution)
+            params = '/picamera/liveview/%s/%s/' % (fmt, resolution)
             if shutter != 'auto':
                 assert shutter[-1] == '"'
                 shutter = shutter[:-1]
