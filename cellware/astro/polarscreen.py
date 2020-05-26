@@ -1,13 +1,30 @@
 import io
 from kivy.uix.screenmanager import Screen
-from kivy.properties import ObjectProperty, NumericProperty, BoundedNumericProperty
+from kivy.resources import resource_find
+from kivy.lang import Builder
+from kivy.properties import (ObjectProperty, NumericProperty, BoundedNumericProperty,
+                             ReferenceListProperty)
 from kivy.uix.effectwidget import EffectWidget, AdvancedEffectBase
 from astro.remotecamera import RemoteCamera
 from astro.uix import MyScreen
+from astro.error import MessageBox
+
+Builder.load_file(resource_find('astro/polarscreen.kv'))
+
 
 class PolarScreen(MyScreen):
+    app = ObjectProperty()
     stars_angle = NumericProperty(0)
     camera = ObjectProperty(RemoteCamera())
+
+    # North Pole
+    NPx = NumericProperty(0)
+    NPy = NumericProperty(0)
+    NP = ReferenceListProperty(NPx, NPy)
+
+    def __init__(self, *args, **kwargs):
+        super(PolarScreen, self).__init__(*args, **kwargs)
+        self.NP = self.app.load_north_pole() # coordinates in the 0-1.0 range
 
     def test(self):
         from astro.remotecamera import yuv_to_texture
@@ -17,16 +34,24 @@ class PolarScreen(MyScreen):
         self.camera.frame_texture = texture
 
     def start_camera(self, recording=False):
-        fmt = self.ids.format.text.lower()
-        resolution = self.ids.resolution.text
-        shutter = self.ids.shutter.text
-        params = '/camera/%s/%s/' % (fmt, resolution)
-        if shutter != 'auto':
-            assert shutter[-1] == '"'
-            shutter = shutter[:-1]
-            params += '?shutter=%s' % shutter
+        if self.ids.camera_model.picam:
+            fmt = self.ids.format.text.lower()
+            resolution = self.ids.resolution.text
+            shutter = self.ids.shutter.text
+            params = '/picamera/%s/%s/' % (fmt, resolution)
+            if shutter != 'auto':
+                assert shutter[-1] == '"'
+                shutter = shutter[:-1]
+                params += '?shutter=%s' % shutter
+        else:
+            params = '/camera/'
         self.camera.start(params, recording)
 
+    def status_click(self):
+        box = MessageBox(title='Error',
+                         message=self.camera.status,
+                         description=self.camera.extra_status)
+        box.open()
 
 
 effect_string = '''

@@ -6,6 +6,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.screenmanager import Screen
 from kivy.uix.popup import Popup
 from kivy.uix.behaviors.button import ButtonBehavior
+from kivy.uix.scatterlayout import ScatterLayout
 from kivy.utils import get_color_from_hex
 
 
@@ -48,6 +49,7 @@ class MDBootstrapTheme(BootstrapTheme):
     # colors taken from:
     #   http://mdbootstrap.com/css/colors/
     #   http://mdbootstrap.com/css/helpers/
+    WHITE   = get_color_from_hex("#FFFFFF")
     MUTED   = get_color_from_hex("#777777")
     PRIMARY = get_color_from_hex("#4285F4")
     SUCCESS = get_color_from_hex("#00C851")
@@ -184,49 +186,17 @@ class Paragraph(MyLabel):
         anim.name = 'hide'
         self._start(anim)
 
-
-Builder.load_string('''
-<ScrollableLabel>:
-    MyLabel:
-        size_hint_y: None
-        height: self.texture_size[1]
-        text_size: self.width, None
-        text: root.text
-''')
-
-class ScrollableLabel(ScrollView):
-    text = StringProperty('')
-
-
-Builder.load_string("""
-<MessageBox>:
-
-    size_hint: 0.95, None
-    height: app.std_height * 12
-
-    BoxLayout:
-        orientation: 'vertical'
-
-        Paragraph:
-            text: root.message
-            size_hint_y: 1
-
-        Paragraph:
-            text: root.description
-
-        FlatButton:
-            text: 'OK'
-            size_hint_y: None
-            height: app.std_height
-            on_release: root.dismiss()
-""")
-class MessageBox(Popup):
-    message = StringProperty()
-    description = StringProperty()
-
 def darker(color, factor=0.5):
     r, g, b, a = color
     r *= factor
     g *= factor
     b *= factor
     return r, g, b, a
+
+
+class MyScatterPlaneLayout(ScatterLayout):
+    # the ScatterPlaneLayout which is distributed with kivy 1.9.1 seems buggy:
+    # it inherits from ScatterPlane instead of ScatterLayout. This is
+    # supposedly the correct version
+    def collide_point(self, x, y):
+        return True

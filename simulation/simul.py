@@ -87,6 +87,14 @@ class Camera:
         self.width = np.deg2rad(4.24) * UNIT_PER_DEC
         self.height = np.deg2rad(2.83) * UNIT_PER_DEC
 
+        #...
+        # an image for the full sensor would be 3984x2656, with
+        # unit_width==sky.unit_width/self.width (or self.height, since cartesian.Image
+        # assumes a square)
+        #self.img = cartesian.Image(...)
+
+
+
     def draw(self, sky, t):
         W = self.width
         H = self.height

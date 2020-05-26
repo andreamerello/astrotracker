@@ -12,9 +12,11 @@ from kivy.core.window import Window
 from kivy.uix.screenmanager import Screen
 from kivy.utils import platform
 from kivy.logger import Logger
+from kivy.clock import Clock
 import pypath
 import astro.uix
 from astro import iconfonts
+from astro.rotationscreen import RotationScreen
 from astro.polarscreen import PolarScreen
 from astro.manager import Manager
 from astro.error import MyExceptionHandler, MessageBox, ErrorMessage
@@ -42,6 +44,9 @@ class AstroApp(App):
             'host': '192.168.1.3',
             'port': '8000'
         })
+        config.setdefaults('tracker', {
+            'NP': (0.5, 0.5)
+            })
 
     @property
     def storage(self):
@@ -62,7 +67,9 @@ class AstroApp(App):
         self.requests = SmartRequests(self)
         self.manager = Manager()
         self.manager.open(MainMenuScreen())
-        if '--polar' in self.argv:
+        if '--rotation' in self.argv:
+            self.open_rotation()
+        elif '--polar' in self.argv:
             self.open_polar()
             ## self.manager.current_view.test()
         return self.manager
@@ -74,8 +81,28 @@ class AstroApp(App):
         if keycode == 27: # ESC
             return self.root.go_back()
 
+    def load_north_pole(self):
+        try:
+            src = self.config.get('tracker', 'NP')
+            np = eval(src)
+        except Exception as e:
+            msg = MessageBox(message="Error when loading the North Pole location",
+                             description='%s\n%s' % (src, str(e)))
+            Clock.schedule_once(msg.open, 0)
+            return (0, 0)
+        else:
+            return np
+
+    def save_north_pole(self, p):
+        self.config.set('tracker', 'NP', str(p))
+        self.config.write()
+
+    def open_rotation(self):
+        screen = RotationScreen(name='rotationscreen', app=self)
+        self.manager.open(screen)
+
     def open_polar(self):
-        polar_screen = PolarScreen(name='polarsceen')
+        polar_screen = PolarScreen(name='polarsceen', app=self)
         polar_screen.camera.app = self
         self.manager.open(polar_screen)
 

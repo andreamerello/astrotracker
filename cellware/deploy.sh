@@ -8,7 +8,8 @@ FILES=(android.txt
        astro
        libs
        data
-       stars.png
+       *.png
+       *.jpg
       )
 
 rm -rf $TMPDIR
