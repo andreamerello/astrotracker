@@ -44,7 +44,7 @@ class PolarScreen(MyScreen):
                 shutter = shutter[:-1]
                 params += '?shutter=%s' % shutter
         else:
-            params = '/camera/'
+            params = '/camera/liveview/'
         self.camera.start(params, recording)
 
     def status_click(self):
