@@ -31,7 +31,7 @@ class PolarisApp:
         elif path.startswith('/camera/picture/'):
             return self.gphoto.picture(path)
         elif path.startswith('/picamera/liveview/'):
-            return self.picamera.liveview(path)
+            return self.picam.liveview(path)
         elif path == '/counter/':
             return self.counter()
         else:
