@@ -41,9 +41,18 @@ class AstroApp(App):
 
     def build_config(self, config):
         config.setdefaults('server', {
+            'active': '1',
+            })
+        config.setdefaults('server1', {
+            'name': 'default',
             'host': '192.168.1.3',
-            'port': '8000'
-        })
+            'port': '8000',
+            })
+        config.setdefaults('server2', {
+            'name': 'alternative',
+            'host': '192.168.43.81',
+            'port': '8000',
+            })
         config.setdefaults('tracker', {
             'NP': (0.5, 0.5)
             })
@@ -60,6 +69,14 @@ class AstroApp(App):
         from kivy.config import Config
         settings.add_json_panel('App', self.config,
                                 filename=resource_find('data/settings.json'))
+
+    def get_active_server(self):
+        active = self.config.get('server', 'active')
+        section = 'server' + active
+        name = self.config.get(section, 'name')
+        host = self.config.get(section, 'host')
+        port = self.config.get(section, 'port')
+        return name, host, port
 
     def build(self):
         Window.bind(on_keyboard=self.on_keyboard)

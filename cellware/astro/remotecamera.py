@@ -40,8 +40,7 @@ class RemoteCamera(EventDispatcher):
         self.running = False
 
     def url(self, path):
-        host = self.app.config.get('server', 'host')
-        port = self.app.config.get('server', 'port')
+        name, host, port = self.app.get_active_server()
         base = 'http://%s:%s' % (host, port)
         return urljoin(base, path)
 

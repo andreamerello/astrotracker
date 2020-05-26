@@ -1,14 +1,41 @@
 [
     { "title": "Camera Server", "type": "title"},
-    { "title": "Address",
-      "type": "string",
-      "desc": "Server Address",
+    { "title": "Active Server",
+      "type": "options",
+      "options": ["1", "2"],
       "section": "server",
+      "key": "active"
+    },
+
+    { "title": "Name", "desc": "Server 1",
+      "type": "string",
+      "section": "server1",
+      "key": "name"
+    },
+    { "title": "Address", "desc": "Server 1",
+      "type": "string",
+      "section": "server1",
       "key": "host"
     },
-    { "title": "Port",
+    { "title": "Port", "desc": "Server 1",
       "type": "string",
-      "section": "server",
+      "section": "server1",
+      "key": "port"
+    },
+
+    { "title": "Name", "desc": "Server 2",
+      "type": "string",
+      "section": "server2",
+      "key": "name"
+    },
+    { "title": "Address", "desc": "Server 2",
+      "type": "string",
+      "section": "server2",
+      "key": "host"
+    },
+    { "title": "Port", "desc": "Server 2",
+      "type": "string",
+      "section": "server2",
       "key": "port"
     }
 ]
