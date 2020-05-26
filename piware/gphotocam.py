@@ -2,12 +2,19 @@ import os
 import time
 import subprocess
 from utils import terminate
+from pathlib import Path
 
 class GPhotoCamera:
+
+    # XXX find this programmatically:
+    #    gphoto2 --list-folders
+    CAMERA_FOLDER = '/store_00020001/DCIM/100CANON/'
+    CAPTURE_DIR = Path('/tmp/pictures')
 
     def __init__(self, app, videofile):
         self.app = app
         self.videofile = videofile
+        self.CAPTURE_DIR.mkdir(parents=True, exist_ok=True)
 
     def liveview(self, path):
         if self.videofile is not None:
@@ -96,6 +103,42 @@ class GPhotoCamera:
                     time.sleep(1/FPS)
 
     def picture(self, path):
-        headers = []
-        self.app.start_response('404 NOT FOUND', headers)
-        return []
+        """
+        Retrieve a picture from the camera. The url is something like:
+            /camera/picture/IMG_1234.JPG
+        """
+        root, camera, picture, fname = path.split('/', 3)
+        assert root == ''
+        assert camera == 'camera'
+        assert picture == 'picture'
+        if fname[-1] == '/':
+            fname = fname[:-1]
+        if '/' in fname:
+            self.app.start_response('400 Bad Request', [])
+            return [b'Invalid filename: %s' % fname.encode('utf-8')]
+
+        fpath = self.CAPTURE_DIR / fname
+        if fpath.exists():
+            print('%s already exists, serving directly' % fpath)
+        else:
+            os.chdir(str(self.CAPTURE_DIR))
+            cmd = [
+                'gphoto2',
+                '--force-overwrite',
+                '--folder', self.CAMERA_FOLDER,
+                '--get-file', fname
+            ]
+            print('Executing: %s' % ' '.join(cmd))
+            proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            if proc.returncode != 0:
+                self.app.start_response('400 Bad Request', [])
+                return [proc.stdout]
+
+        content = fpath.read_bytes()
+        headers = [
+            ('Content-Type', 'image/jpeg'),
+            ('Content-Disposition', 'inline; filename="%s"' % fname),
+            ('Content-Length', str(len(content))),
+        ]
+        self.app.start_response('200 OK', headers)
+        return [content]
