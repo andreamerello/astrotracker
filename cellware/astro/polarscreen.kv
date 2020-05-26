@@ -68,6 +68,7 @@
             text: 'Canon'
             values: 'Canon', 'Pi Camera'
             picam: self.text == 'Pi Camera'
+            canon: self.text == 'Canon'
 
         FlatButton:
             text: root.camera.status
@@ -82,6 +83,12 @@
         Label:
             text: "%.2f fps" % root.camera.fps
             color: (1, 0, 0, 1)
+
+        Spinner:
+            id: fps
+            text: '3'
+            values: '1', '2', '3', '5', '10', '15', '25'
+            disabled: not root.ids.camera_model.canon
 
         Spinner:
             id: format
