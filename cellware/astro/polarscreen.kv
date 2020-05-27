@@ -1,4 +1,5 @@
 <PolarScreen>:
+    on_size: root.autoscale()
 
     MyScatterPlaneLayout:
         id: scatter
@@ -6,7 +7,6 @@
         do_translation: True
         do_scale: True
         auto_bring_to_front: False
-        scale: 1
 
         ColorClippingWidget:
             id: color_clipping
@@ -37,10 +37,10 @@
                     origin: self.center # self.width * root.NPx, self.height * root.NPy
             canvas.after:
                 PopMatrix
-                Color:
-                    rgba: (0, 1, 0, 1)
-                Line:
-                    circle: self.center_x, self.center_y, 10
+                # Color:
+                #     rgba: (0, 1, 0, 1)
+                # Line:
+                #     circle: self.center_x, self.center_y, 10
 
 
     BoxLayout:
