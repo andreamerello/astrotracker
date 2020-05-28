@@ -1,34 +1,46 @@
 <PolarScreen>:
-    ColorClippingWidget:
-        id: color_clipping
+    on_size: root.autoscale()
+
+    MyScatterPlaneLayout:
+        id: scatter
+        do_rotation: False
+        do_translation: True
+        do_scale: True
+        auto_bring_to_front: False
+
+        ColorClippingWidget:
+            id: color_clipping
+            size: root.ids.sky.size
+            size_hint: None, None
+            #border_color: (1, 0, 0, 1)
+            Image:
+                id: sky
+                texture: root.camera.frame_texture
+                #source: 'desk-small.jpg'
+                pos: 0, 0
+                size: self.texture_size
+                size_hint: None, None
+
         Image:
-            id: piframe
-            texture: root.camera.frame_texture
-            pos: 0, 0
-            size: root.size
+            id: stars
+            visible: True
+            opacity: 1 if self.visible else 0
+            source: "polaris75mm.png"
+            center: self.width * root.NPx, self.height * root.NPy
+            size: root.ids.sky.size
             size_hint: None, None
             allow_stretch: True
-
-    Image:
-        id: stars
-        visible: True
-        opacity: 1 if self.visible else 0
-        source: "polaris75mm.png"
-        pos: 0, 0
-        size: root.size
-        size_hint: None, None
-        allow_stretch: True
-        canvas.before:
-            PushMatrix
-            Rotate:
-                angle: root.stars_angle
-                origin: self.width * root.NPx, self.height * root.NPy
-        canvas.after:
-            PopMatrix
-            # Color:
-            #     rgba: (0, 1, 0, 1)
-            # Line:
-            #     circle: self.width * root.NPx, self.height * root.NPy, 10
+            canvas.before:
+                PushMatrix
+                Rotate:
+                    angle: root.stars_angle
+                    origin: self.center # self.width * root.NPx, self.height * root.NPy
+            canvas.after:
+                PopMatrix
+                # Color:
+                #     rgba: (0, 1, 0, 1)
+                # Line:
+                #     circle: self.center_x, self.center_y, 10
 
 
     BoxLayout:

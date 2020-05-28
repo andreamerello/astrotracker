@@ -41,6 +41,7 @@ class RotationScreen(MyScreen):
             data = self._fetch_image_from_server()
             imgfile.write(data, 'wb')
         self.ids.sky.source = str(imgfile)
+        self._load_np()
 
     def _fetch_image_from_server(self):
         name, host, port = self.app.get_active_server()
@@ -59,16 +60,23 @@ class RotationScreen(MyScreen):
         self.ids.scatter.pos = (0, 0)
 
     def _load_np(self):
+        if self.ids.sky.texture is None:
+            return
         sx, sy = self.app.load_north_pole() # coordinates in the 0-1.0 range
         # transform into "pixel" coordinates
-        x = int(self.ids.sky.width * sx)
-        y = int(self.ids.sky.height * sy)
+        x = self.ids.sky.width * sx
+        y = self.ids.sky.height * sy
         self.NP = (x, y)
 
-    def save(self):
+    def _save_np(self):
+        if self.ids.sky.texture is None:
+            return
         sx = self.NPx / float(self.ids.sky.width)
         sy = self.NPy / float(self.ids.sky.height)
         self.app.save_north_pole((sx, sy))
+
+    def on_NP(self, instance, value):
+        self._save_np()
 
     def on_sky_touch_down(self, img, touch):
         meth = getattr(self, 'on_tool_%s_touch' % self.tool, None)

@@ -26,6 +26,17 @@ class PolarScreen(MyScreen):
         super(PolarScreen, self).__init__(*args, **kwargs)
         self.NP = self.app.load_north_pole() # coordinates in the 0-1.0 range
 
+    def autoscale(self):
+        # it's a bid bad to hardcode this value: ideally, we should wait for
+        # the first frame we receive from the camera, and get tw, th from it,
+        # but it's too complicate and for now we know that the size is going
+        # to be this.
+        tw, th = 960, 640
+        scale_x = self.width / float(tw)
+        scale_y = self.height / float(th)
+        self.ids.scatter.scale = min(scale_x, scale_y)
+        self.ids.scatter.pos = (0, 0)
+
     def test(self):
         from astro.remotecamera import yuv_to_texture
         with open('frame.yuv', 'rb') as f:
