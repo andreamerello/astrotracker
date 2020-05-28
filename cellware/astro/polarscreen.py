@@ -31,7 +31,7 @@ class PolarScreen(MyScreen):
         # the first frame we receive from the camera, and get tw, th from it,
         # but it's too complicate and for now we know that the size is going
         # to be this.
-        tw, th = 960, 640
+        tw, th = 480, 320
         scale_x = self.width / float(tw)
         scale_y = self.height / float(th)
         self.ids.scatter.scale = min(scale_x, scale_y)
