@@ -11,6 +11,9 @@ class GPhotoCamera:
     CAMERA_FOLDER = '/store_00020001/DCIM/100CANON/'
     CAPTURE_DIR = Path('/tmp/pictures')
 
+    FAKE_CAPTURE = None
+    #FAKE_CAPTURE = 'gphoto-capture-20s'
+
     def __init__(self, app, videofile):
         self.app = app
         self.videofile = videofile
@@ -23,12 +26,18 @@ class GPhotoCamera:
             yield from self.serve_videofile(self.videofile)
             return
 
-        cmd = ['gphoto2',
-               #'--port', 'ptpip:192.168.1.180',
-               '--set-config', 'output=TFT + PC',
-               '--capture-movie',
-               '--stdout'
-        ]
+        if self.FAKE_CAPTURE:
+            cmd = ['python3',
+                   'fake-gphoto-capture.py',
+                   self.FAKE_CAPTURE
+                   ]
+        else:
+            cmd = ['gphoto2',
+                   #'--port', 'ptpip:192.168.1.180',
+                   '--set-config', 'output=TFT + PC',
+                   '--capture-movie',
+                   '--stdout'
+            ]
         print('Executing: %s' % ' '.join(cmd))
         p = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
@@ -64,8 +73,9 @@ class GPhotoCamera:
                     yield frame
         finally:
             terminate(p)
-            # make sure to unlock the camera at the end
-            os.system('gphoto2 --set-config output=TFT')
+            if not self.FAKE_CAPTURE:
+                # make sure to unlock the camera at the end
+                os.system('gphoto2 --set-config output=TFT')
 
     def iter_mjpg(self, f, data=b''):
         """
