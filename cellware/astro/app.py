@@ -13,6 +13,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.utils import platform
 from kivy.logger import Logger
 from kivy.clock import Clock
+from kivy.metrics import sp
 import pypath
 import astro.uix
 from astro import iconfonts
@@ -29,7 +30,7 @@ class MainMenuScreen(MyScreen):
     pass
 
 class AstroApp(App):
-    font_size = 15.0
+    font_size = sp(15.0)
     std_height = font_size * 2
 
     def __init__(self, argv, **kwargs):
