@@ -84,6 +84,9 @@ class PolarScreen(MyScreen):
                          description=self.camera.extra_status)
         box.open()
 
+    def on_pre_leave(self):
+        if self.camera.running:
+            self.stop_camera()
 
 effect_string = '''
 // the uniforms are in the range 0.0-1.0
