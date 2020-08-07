@@ -19,6 +19,7 @@ import astro.uix
 from astro import iconfonts
 from astro.rotationscreen import RotationScreen
 from astro.polarscreen import PolarScreen
+from astro.camerascreen import CameraScreen
 from astro.manager import Manager
 from astro.error import MyExceptionHandler, MessageBox, ErrorMessage
 from astro.smart_requests import SmartRequests
@@ -136,7 +137,8 @@ class AstroApp(App):
         assert resp.status_code == 200
 
     def open_camera(self):
-        print "TODO"
+        camera_screen = CameraScreen(name='camerascreen', app=self)
+        self.manager.open(camera_screen)
 
     def upgrade_from_github(self):
         raise ErrorMessage("FIX ME")

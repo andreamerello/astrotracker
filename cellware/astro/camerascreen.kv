@@ -1,0 +1,126 @@
+<CameraScreen>:
+    on_size: root.autoscale()
+
+    MyScatterPlaneLayout:
+        id: scatter
+        do_rotation: False
+        do_translation: True
+        do_scale: True
+        auto_bring_to_front: False
+
+        ColorClippingWidget:
+            id: color_clipping
+            size: root.ids.sky.size
+            size_hint: None, None
+            #border_color: (1, 0, 0, 1)
+            Image:
+                id: sky
+                texture: root.camera.frame_texture
+                #source: 'desk-small.jpg'
+                pos: 0, 0
+                size: self.texture_size
+                size_hint: None, None
+
+        Image:
+            id: stars
+            visible: True
+            opacity: 1 if self.visible else 0
+            source: "polaris75mm.png"
+            # center: self.width * root.NPx, self.height * root.NPy
+            size: root.ids.sky.size
+            size_hint: None, None
+            allow_stretch: True
+            canvas.before:
+                PushMatrix
+                Rotate:
+                    origin: self.center # self.width * root.NPx, self.height * root.NPy
+            canvas.after:
+                PopMatrix
+                # Color:
+                #     rgba: (0, 1, 0, 1)
+                # Line:
+                #     circle: self.center_x, self.center_y, 10
+
+
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: None, None
+        height: '50dp'
+        width: root.width - dp(100)
+
+        Label:
+            text: 'Black: %d' % (root.ids.slider.value1)
+            color: Theme.PRIMARY
+            width: self.texture_size[0] + dp(10)
+            size_hint_x: None
+        RangeSlider:
+            id: slider
+            min: 0
+            max: 255
+            value1: 0
+            value2: 255
+            on_value1: color_clipping.black = self.value1
+            on_value2: color_clipping.white = self.value2
+        Label:
+            text: 'White: %d' % (root.ids.slider.value2)
+            color: Theme.PRIMARY
+            width: self.texture_size[0] + dp(10)
+            size_hint_x: None
+
+    BoxLayout:
+        # right toolbar
+        right: root.right
+        orientation: 'vertical'
+        size_hint_x: None
+        width: '100dp'
+
+        FlatButton:
+            text: root.camera.status
+            show_border: False
+            color: (1, 0, 0, 1)
+            on_release: root.status_click()
+
+        Label:
+            text: "Frame %d" % root.camera.frame_no
+            color: (1, 0, 0, 1)
+
+        Label:
+            text: "%.2f fps" % root.camera.fps
+            color: (1, 0, 0, 1)
+
+        Spinner:
+            id: fps
+            text: '3'
+            values: '1', '1.5', '2', '3', '5', '10', '15', '25'
+
+        Spinner:
+            id: shutter
+            text: 'auto'
+            values: 'auto', '0.5"', '1"', '1.5"', '2"', '2.5"', '3"', '4"', '5"', '6"'
+
+        Spinner:
+            id: iso
+            text: '100'
+            values: '100', '200'
+            on_text: root.set_iso(self.text)
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: "33dp"
+
+            IconButton:
+                icon: 'fa-play'
+                font_size: "24sp"
+                on_release: root.start_camera()
+
+            IconButton:
+                icon: 'fa-stop'
+                font_size: "24sp"
+                on_release: root.camera.stop()
+
+            IconButton:
+                icon: 'fa-circle'
+                font_size: "24sp"
+                color: (1, 0, 0, 1)
+                on_release: root.start_camera(recording=True)
