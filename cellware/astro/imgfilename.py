@@ -7,7 +7,7 @@ Builder.load_string('''
 <ImgFileName>:
     pos: (root.x, root.y)
     size_hint_y: None
-    y_size: sp(25)
+    height: sp(80)
     orientation: 'vertical'
 
     TextInput:
