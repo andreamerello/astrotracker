@@ -11,6 +11,7 @@ Builder.load_string('''
     orientation: 'vertical'
 
     TextInput:
+        font_size: sp(13)
         text: root.last_image
         multiline: False
         on_focus: root.last_image = self.text
