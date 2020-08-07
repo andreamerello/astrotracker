@@ -82,6 +82,11 @@
             picam: self.text == 'Pi Camera'
             canon: self.text == 'Canon'
 
+        ImgFileName:
+            id: imgfilename
+            right: root.right
+        Separator:
+
         FlatButton:
             text: root.camera.status
             show_border: False
@@ -133,7 +138,7 @@
             IconButton:
                 icon: 'fa-stop'
                 font_size: "24sp"
-                on_release: root.camera.stop()
+                on_release: root.stop_camera()
 
             IconButton:
                 icon: 'fa-circle'

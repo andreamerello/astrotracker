@@ -5,12 +5,13 @@ from kivy.lang import Builder
 from kivy.properties import (ObjectProperty, NumericProperty, BoundedNumericProperty,
                              ReferenceListProperty)
 from kivy.uix.effectwidget import EffectWidget, AdvancedEffectBase
+from kivy.graphics.texture import Texture
 from astro.remotecamera import RemoteCamera
 from astro.uix import MyScreen
 from astro.error import MessageBox
+from astro.imgfilename import ImgFileName
 
 Builder.load_file(resource_find('astro/polarscreen.kv'))
-
 
 class PolarScreen(MyScreen):
     app = ObjectProperty()
@@ -24,7 +25,22 @@ class PolarScreen(MyScreen):
 
     def __init__(self, *args, **kwargs):
         super(PolarScreen, self).__init__(*args, **kwargs)
+        self.ids.imgfilename.load_image = self.load_image
         self.NP = self.app.load_north_pole() # coordinates in the 0-1.0 range
+
+    def load_image(self):
+        imgfile = self.app.image_storage.join(self.ids.imgfilename.last_image)
+        if not imgfile.exists():
+            data = self._fetch_image_from_server()
+            imgfile.write(data, 'wb')
+        self.camera.set_jpg(data)
+
+    def _fetch_image_from_server(self):
+        name, host, port = self.app.get_active_server()
+        url = 'http://%s:%s/camera/picture/%s' % (host, port, self.ids.imgfilename.last_image)
+        resp = self.app.requests.get(url, timeout=120)
+        assert resp.status_code == 200
+        return resp.content
 
     def autoscale(self):
         # it's a bid bad to hardcode this value: ideally, we should wait for
@@ -44,7 +60,12 @@ class PolarScreen(MyScreen):
         texture = yuv_to_texture(data, 320, 240)
         self.camera.frame_texture = texture
 
+    def stop_camera(self):
+        self.ids.imgfilename.disabled = False
+        self.camera.stop()
+
     def start_camera(self, recording=False):
+        self.ids.imgfilename.disabled = True
         if self.ids.camera_model.picam:
             fmt = self.ids.format.text.lower()
             resolution = self.ids.resolution.text

@@ -1,4 +1,3 @@
-import re
 from kivy.resources import resource_find
 from kivy.lang import Builder
 from kivy.properties import (NumericProperty, ReferenceListProperty, StringProperty,
@@ -6,15 +5,13 @@ from kivy.properties import (NumericProperty, ReferenceListProperty, StringPrope
 from kivy.vector import Vector
 from astro.uix import MyScreen
 from astro.error import MessageBox
+from astro.imgfilename import ImgFileName
 
 Builder.load_file(resource_find('astro/rotationscreen.kv'))
 
 class RotationScreen(MyScreen):
-    LAST_IMAGE_REGEXP = re.compile(r'IMG_([0-9]+).JPG')
-
     app = ObjectProperty()
     tool = StringProperty('pan')
-    last_image = ConfigParserProperty('', 'tracker', 'last_image', 'app')
 
     # North Pole
     NPx = NumericProperty(0)
@@ -26,17 +23,11 @@ class RotationScreen(MyScreen):
         super(RotationScreen, self).__init__(*args, **kwargs)
         self.ids.sky.bind(on_touch_down=self.on_sky_touch_down)
         self.ids.sky.bind(on_touch_move=self.on_sky_touch_move)
+        self.ids.imgfilename.load_image = self.load_image
         self._load_np()
 
-    def last_image_inc(self, step=1):
-        m = self.LAST_IMAGE_REGEXP.match(self.last_image)
-        if m:
-            n = int(m.group(1))
-            n += step
-            self.last_image = 'IMG_%d.JPG' % n
-
     def load_image(self):
-        imgfile = self.app.image_storage.join(self.last_image)
+        imgfile = self.app.image_storage.join(self.ids.imgfilename.last_image)
         if not imgfile.exists():
             data = self._fetch_image_from_server()
             imgfile.write(data, 'wb')
@@ -45,7 +36,7 @@ class RotationScreen(MyScreen):
 
     def _fetch_image_from_server(self):
         name, host, port = self.app.get_active_server()
-        url = 'http://%s:%s/camera/picture/%s' % (host, port, self.last_image)
+        url = 'http://%s:%s/camera/picture/%s' % (host, port, self.ids.imgfilename.last_image)
         resp = self.app.requests.get(url, timeout=120)
         assert resp.status_code == 200
         return resp.content
