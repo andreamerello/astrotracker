@@ -33,6 +33,8 @@ class PolarScreen(MyScreen):
         if not imgfile.exists():
             data = self._fetch_image_from_server()
             imgfile.write(data, 'wb')
+        else:
+            data = imgfile.read()
         self.camera.set_jpg(data)
 
     def _fetch_image_from_server(self):
