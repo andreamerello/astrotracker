@@ -36,8 +36,13 @@ class RemoteCamera(EventDispatcher):
     # ==============================
 
     def __init__(self, **kwargs):
+        self.register_event_type('on_remote_camera_size')
         super(RemoteCamera, self).__init__(**kwargs)
+        self.img_width, self.img_height = 480, 320
         self.running = False
+
+    def on_remote_camera_size(self, *args):
+        pass
 
     def url(self, path):
         name, host, port = self.app.get_active_server()
@@ -72,6 +77,10 @@ class RemoteCamera(EventDispatcher):
         # why.
         stream = io.BytesIO(jpg)
         img = CoreImage(stream, ext="jpg")
+        if (self.img_width != img.width) or (self.img_height != img.height):
+            self.img_width = img.width
+            self.img_height = img.height
+            self.dispatch('on_remote_camera_size')
         self.frame_texture = img.texture
 
     @mainthread

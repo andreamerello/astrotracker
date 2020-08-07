@@ -27,6 +27,7 @@ class PolarScreen(MyScreen):
         super(PolarScreen, self).__init__(*args, **kwargs)
         self.ids.imgfilename.load_image = self.load_image
         self.NP = self.app.load_north_pole() # coordinates in the 0-1.0 range
+        self.camera.bind(on_remote_camera_size=self.autoscale)
 
     def load_image(self):
         imgfile = self.app.image_storage.join(self.ids.imgfilename.last_image)
@@ -44,14 +45,9 @@ class PolarScreen(MyScreen):
         assert resp.status_code == 200
         return resp.content
 
-    def autoscale(self):
-        # it's a bid bad to hardcode this value: ideally, we should wait for
-        # the first frame we receive from the camera, and get tw, th from it,
-        # but it's too complicate and for now we know that the size is going
-        # to be this.
-        tw, th = 480, 320
-        scale_x = self.width / float(tw)
-        scale_y = self.height / float(th)
+    def autoscale(self, *args):
+        scale_x = self.width / float(self.camera.img_width)
+        scale_y = self.height / float(self.camera.img_height)
         self.ids.scatter.scale = min(scale_x, scale_y)
         self.ids.scatter.pos = (0, 0)
 
