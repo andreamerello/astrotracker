@@ -1,5 +1,5 @@
 <PolarScreen>:
-    on_size: root.autoscale()
+    #on_size: root.autoscale()
 
     MyScatterPlaneLayout:
         id: scatter
@@ -77,10 +77,15 @@
 
         Spinner:
             id: camera_model
-            text: 'Canon'
-            values: 'Canon', 'Pi Camera'
+            text: 'DSLR'
+            values: 'DSLR', 'Pi Camera'
             picam: self.text == 'Pi Camera'
-            canon: self.text == 'Canon'
+            canon: self.text == 'DSLR'
+
+        ImgFileName:
+            id: imgfilename
+            right: root.right
+        Separator:
 
         FlatButton:
             text: root.camera.status
@@ -133,7 +138,7 @@
             IconButton:
                 icon: 'fa-stop'
                 font_size: "24sp"
-                on_release: root.camera.stop()
+                on_release: root.stop_camera()
 
             IconButton:
                 icon: 'fa-circle'

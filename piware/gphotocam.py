@@ -8,7 +8,8 @@ class GPhotoCamera:
 
     # XXX find this programmatically:
     #    gphoto2 --list-folders
-    CAMERA_FOLDER = '/store_00020001/DCIM/100CANON/'
+    CANON_CAMERA_FOLDER = '/store_00020001/DCIM/100CANON/'
+    NIKON_CAMERA_FOLDER = '/store_00010001/DCIM/100D5300/'
     CAPTURE_DIR = Path('/tmp/pictures')
 
     FAKE_CAPTURE = None
@@ -134,10 +135,20 @@ class GPhotoCamera:
             print('%s already exists, serving directly' % fpath)
         else:
             os.chdir(str(self.CAPTURE_DIR))
+            cmd = [ 'gphoto2',
+                    '--auto-detect'
+            ]
+            print('Executing: %s' % ' '.join(cmd))
+            proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            if str(proc.stdout).find("Nikon") > 0:
+                camera_folder = self.NIKON_CAMERA_FOLDER
+            else:
+                camera_folder = self.CANON_CAMERA_FOLDER
+
             cmd = [
                 'gphoto2',
                 '--force-overwrite',
-                '--folder', self.CAMERA_FOLDER,
+                '--folder', camera_folder,
                 '--get-file', fname
             ]
             print('Executing: %s' % ' '.join(cmd))
