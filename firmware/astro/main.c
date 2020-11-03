@@ -40,10 +40,13 @@ static void monitor_task(void *arg __attribute((unused)))
 {
 	vTaskDelay(2000 / portTICK_PERIOD_MS);
 	while (1) {
-        // the USB input is not reliable, comment out by default
-        /* char c; */
-		/* c = std_getc(); */
-		/* motor_cmd(c); */
+#ifdef ENABLE_KEYBOARD_COMMANDS
+		// note that the USB input is not reliable: if it causes problems,
+		// make sure to #undef ENABLE_KEYBOARD_COMMANDS
+		char c;
+		c = std_getc();
+		motor_cmd(c);
+#endif
 		vTaskDelay(1000);
 	}
 }

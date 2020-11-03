@@ -8,10 +8,14 @@
 //#define DEBUG
 #undef DEBUG
 
+#define ENABLE_KEYBOARD_COMMANDS
+
+
 #ifdef DEBUG
 #define my_printf std_printf
 #else
 #define my_printf(...) ;
+#undef ENABLE_KEYBOARD_COMMANDS
 #endif
 
 void ui_init(void);
