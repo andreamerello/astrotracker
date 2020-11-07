@@ -29,7 +29,6 @@
 #include "ui.h"
 #include "rtc.h"
 
-
 /*
  * There is a bug in the usb layer. If a print is done before the
  * tty is attached then weird thing happen: printed chars are
@@ -111,12 +110,16 @@ int main(void)
 	ui_init();
 
 	xTaskCreate(monitor_task,"monitor",512,NULL,1,NULL);
-
 	usb_start(1,1);
 	std_set_device(mcu_usb);			// Use USB for std I/O
 
 	set_led_blink(500, 500, 0);
 	vTaskStartScheduler();
+
+#ifdef DEBUG
+    my_printf("WARNING: DEBUG BUILD\n!");
+#endif
+
 	for (;;);
 }
 
