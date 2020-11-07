@@ -1,6 +1,7 @@
 #ifndef __RTC_H__
 #define __RTC_H__
 #include <stdint.h>
+#include "tracker_config.h"
 
 void rtc_init(void);
 void rtc_reset(void);
