@@ -26,11 +26,14 @@
 static const bool LED_IS_INVERTED = false;
 static const pin_t LED = PIN_C13;
 static const pin_t BUZZER = PIN_A9;
+static const bool ENABLE_BUTTONS = true;
+
 
 #elif defined(MINITRACK)
 static const bool LED_IS_INVERTED = true;
 static const pin_t LED = PIN_C13;
 static const pin_t BUZZER = PIN_A9;
+static const bool ENABLE_BUTTONS = false;
 
 #endif /* BARN_DOOR or MINITRACK */
 

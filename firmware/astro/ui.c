@@ -239,14 +239,16 @@ void ui_init(void)
 {
 	led_init();
 	buzzer_init();
-	button_init(BUTTON_STOP);
-	button_init(BUTTON_PLAY);
-	button_init(BUTTON_REWIND);
-	button_init(BUTTON_FAST_FW);
-	rcc_periph_clock_enable(RCC_AFIO);	 // EXTI
-	ui_antibump_init();
-	nvic_enable_irq(NVIC_EXTI4_IRQ);
-	nvic_enable_irq(NVIC_EXTI9_5_IRQ);
+	if (ENABLE_BUTTONS) {
+		button_init(BUTTON_STOP);
+		button_init(BUTTON_PLAY);
+		button_init(BUTTON_REWIND);
+		button_init(BUTTON_FAST_FW);
+		rcc_periph_clock_enable(RCC_AFIO);	 // EXTI
+		ui_antibump_init();
+		nvic_enable_irq(NVIC_EXTI4_IRQ);
+		nvic_enable_irq(NVIC_EXTI9_5_IRQ);
+	}
 	led_queue = xQueueCreate(1, sizeof(led_blinking_t));
 	buzzer_queue = xQueueCreate(1, sizeof(beep_t));
 	xTaskCreate(led_task, "led", 128, NULL, 1, NULL);
