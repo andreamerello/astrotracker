@@ -36,10 +36,6 @@ static button_t BUTTON_STOP    = { GPIOA, GPIO5, RCC_GPIOA, EXTI5 };
 static button_t BUTTON_REWIND  = { GPIOA, GPIO6, RCC_GPIOA, EXTI6 };
 static button_t BUTTON_FAST_FW = { GPIOA, GPIO8, RCC_GPIOA, EXTI8 };
 
-#define LED_PORT GPIOC
-#define LED_PIN GPIO13
-#define LED_RCC RCC_GPIOC
-
 #define BUZZER_PORT GPIOA
 #define BUZZER_PIN GPIO9
 #define BUZZER_RCC RCC_GPIOA
@@ -108,6 +104,11 @@ void exti9_5_isr(void)
 /* every beep_rate blinks, we do a beep. If beep_rate == 0, no beeps */
 void set_led_blink(int on_ms, int off_ms, int beep_rate)
 {
+	if (LED_IS_INVERTED) {
+		int tmp = on_ms;
+		on_ms = off_ms;
+		off_ms = tmp;
+	}
 	led_blinking_t c = {on_ms, off_ms, beep_rate};
 	xQueueOverwrite(led_queue, &c);
 }
