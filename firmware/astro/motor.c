@@ -40,17 +40,9 @@ static uint32_t time_for_step(int step)
 
 #define ARRAY_SIZE(x) ((int)(sizeof(x) / sizeof((x)[0])))
 
-static struct {
-	uint32_t port;
-	uint32_t pin;
-	uint32_t rcc;
-} motor_gpio_table[] = {
-	//                              STM PIN     MOTOR PIN
-	{ GPIOA, GPIO1, RCC_GPIOA }, //   A1          A1 (A)
-	{ GPIOA, GPIO3, RCC_GPIOA }, //   A3          A2 (A/)
-	{ GPIOA, GPIO0, RCC_GPIOA }, //   A0          B1 (B)
-	{ GPIOA, GPIO2, RCC_GPIOA }, //   A2          B2 (B/)
-};
+
+//                  motor wires:       A1      A2      B1      B2
+static pin_t MOTOR_GPIO_TABLE[] = {PIN_A1, PIN_A3, PIN_A0, PIN_A2};
 
 static uint8_t magic_table[][4] = {
 	{1, 0, 1, 0},
@@ -76,8 +68,8 @@ static int homing_switch_pressed(void)
 
 static void set_pin(int i, int value)
 {
-	uint32_t port = motor_gpio_table[i].port;
-	uint32_t pin = motor_gpio_table[i].pin;
+	uint32_t port = MOTOR_GPIO_TABLE[i].port;
+	uint32_t pin = MOTOR_GPIO_TABLE[i].pin;
 	if (value)
 		gpio_set(port, pin);
 	else
@@ -95,11 +87,11 @@ void motor_init(void)
 
 
 	/* initialize motor control pins */
-	for (i = 0; i < ARRAY_SIZE(motor_gpio_table); i++) {
-		rcc_periph_clock_enable(motor_gpio_table[i].rcc);
-		gpio_set_mode(motor_gpio_table[i].port, GPIO_MODE_OUTPUT_2_MHZ,
-			      GPIO_CNF_OUTPUT_PUSHPULL, motor_gpio_table[i].pin);
-		gpio_clear(motor_gpio_table[i].port, motor_gpio_table[i].pin);
+	for (i = 0; i < ARRAY_SIZE(MOTOR_GPIO_TABLE); i++) {
+		rcc_periph_clock_enable(MOTOR_GPIO_TABLE[i].rcc);
+		gpio_set_mode(MOTOR_GPIO_TABLE[i].port, GPIO_MODE_OUTPUT_2_MHZ,
+					  GPIO_CNF_OUTPUT_PUSHPULL, MOTOR_GPIO_TABLE[i].pin);
+		gpio_clear(MOTOR_GPIO_TABLE[i].port, MOTOR_GPIO_TABLE[i].pin);
 	}
 
 	motor_queue = xQueueCreate(4, sizeof(char));
@@ -134,7 +126,7 @@ __maybe_unused static void motor_test(void)
 	my_printf("setting pin %d to %d\r\n", motor_i, motor_value);
 	set_pin(motor_i, motor_value);
 	motor_i += 1;
-	if (motor_i == ARRAY_SIZE(motor_gpio_table)) {
+	if (motor_i == ARRAY_SIZE(MOTOR_GPIO_TABLE)) {
 		motor_i = 0;
 		motor_value = !motor_value;
 	}

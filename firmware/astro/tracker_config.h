@@ -24,12 +24,12 @@
 #if defined(BARN_DOOR)
 // external led attached to PC13
 static const bool LED_IS_INVERTED = false;
-static const pin_t LED = PIN_PC13;
+static const pin_t LED = PIN_C13;
 static const pin_t BUZZER = PIN_A9;
 
 #elif defined(MINITRACK)
 static const bool LED_IS_INVERTED = true;
-static const pin_t LED = PIN_PC13;
+static const pin_t LED = PIN_C13;
 static const pin_t BUZZER = PIN_A9;
 
 #endif /* BARN_DOOR or MINITRACK */
