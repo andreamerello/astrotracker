@@ -184,7 +184,7 @@ static void motor_task(void *arg __attribute((unused)))
 			break;
 		case FAST_FW:
 			direction = 1;
-			set_led_blink(40, 400, 0);
+			set_led_blink(40, 400, 5);
 			break;
 		case STOP:
 			direction = 0;
