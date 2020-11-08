@@ -9,8 +9,8 @@
 // (also know as "v2")
 
 // uncomment only one of the two lines
-#define BARN_DOOR
-//#define MINITRACK
+//#define BARN_DOOR
+#define MINITRACK
 
 #if defined(BARN_DOOR) && defined(MINITRACK)
 #  error "You cannot define both BARN_DOOR and MINITRACK. See tracker_config.h"

@@ -66,10 +66,12 @@ static void motor_task(void *);
 
 static QueueHandle_t motor_queue;
 
+#ifdef BARN_DOOR
 static int homing_switch_pressed(void)
 {
 	return gpio_get(HOMING_PORT, HOMING_PIN);
 }
+#endif
 
 static void set_pin(int i, int value)
 {
@@ -198,8 +200,8 @@ static void motor_task(void *arg __attribute((unused)))
 			direction = -1;
 			set_led_blink(400, 40, 0);
 			break;
-		}
 #endif
+		}
 		step_count = 0;
 		motor_stop();
 		rtc_reset();
