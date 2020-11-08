@@ -36,10 +36,6 @@ static button_t BUTTON_STOP    = { GPIOA, GPIO5, RCC_GPIOA, EXTI5 };
 static button_t BUTTON_REWIND  = { GPIOA, GPIO6, RCC_GPIOA, EXTI6 };
 static button_t BUTTON_FAST_FW = { GPIOA, GPIO8, RCC_GPIOA, EXTI8 };
 
-#define BUZZER_PORT GPIOA
-#define BUZZER_PIN GPIO9
-#define BUZZER_RCC RCC_GPIOA
-
 #define ANTIBUMP_DELAY 10000
 
 static QueueHandle_t led_queue;
@@ -141,13 +137,13 @@ static void led_task(void *arg __attribute((unused)))
 	reinit();
 
 	while (1) {
-		gpio_set(LED_PORT, LED_PIN);
+		gpio_set(LED.port, LED.pin);
 		if (pdPASS == xQueueReceive(led_queue, &periods, on_ticks)) {
 			/* someone set a blink command, reset&continue */
 			reinit();
 			continue;
 		}
-		gpio_clear(LED_PORT, LED_PIN);
+		gpio_clear(LED.port, LED.pin);
 		if (pdPASS == xQueueReceive(led_queue, &periods, off_ticks)) {
 			/* someone set a blink command, reset&continue */
 			reinit();
@@ -163,11 +159,11 @@ static void led_task(void *arg __attribute((unused)))
 
 static void led_init(void)
 {
-	rcc_periph_clock_enable(LED_RCC);
-	gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ,
-		      GPIO_CNF_OUTPUT_OPENDRAIN, LED_PIN);
+	rcc_periph_clock_enable(LED.rcc);
+	gpio_set_mode(LED.port, GPIO_MODE_OUTPUT_2_MHZ,
+		      GPIO_CNF_OUTPUT_OPENDRAIN, LED.pin);
 
-	gpio_clear(LED_PORT, LED_PIN);
+	gpio_clear(LED.port, LED.pin);
 }
 
 
@@ -187,13 +183,13 @@ static void buzzer_task(void *arg __attribute((unused)))
 
 static void buzzer_init(void)
 {
-	rcc_periph_clock_enable(BUZZER_RCC);
+	rcc_periph_clock_enable(BUZZER.rcc);
 	rcc_periph_clock_enable(RCC_TIM1);
 
-	gpio_set_mode(BUZZER_PORT, GPIO_MODE_OUTPUT_2_MHZ,
-		      GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, BUZZER_PIN);
+	gpio_set_mode(BUZZER.port, GPIO_MODE_OUTPUT_2_MHZ,
+		      GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, BUZZER.pin);
 
-	gpio_clear(BUZZER_PORT, BUZZER_PIN);
+	gpio_clear(BUZZER.port, BUZZER.pin);
 
 	timer_set_mode(TIM1, TIM_CR1_CKD_CK_INT,
 		TIM_CR1_CMS_CENTER_1, TIM_CR1_DIR_DOWN);

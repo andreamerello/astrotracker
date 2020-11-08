@@ -45,10 +45,11 @@ static struct {
 	uint32_t pin;
 	uint32_t rcc;
 } motor_gpio_table[] = {
-	{ GPIOA, GPIO1, RCC_GPIOA }, // A1
-	{ GPIOA, GPIO3, RCC_GPIOA }, // A2
-	{ GPIOA, GPIO0, RCC_GPIOA }, // B1
-	{ GPIOA, GPIO2, RCC_GPIOA }, // B2
+	//                              STM PIN     MOTOR PIN
+	{ GPIOA, GPIO1, RCC_GPIOA }, //   A1          A1 (A)
+	{ GPIOA, GPIO3, RCC_GPIOA }, //   A3          A2 (A/)
+	{ GPIOA, GPIO0, RCC_GPIOA }, //   A0          B1 (B)
+	{ GPIOA, GPIO2, RCC_GPIOA }, //   A2          B2 (B/)
 };
 
 static uint8_t magic_table[][4] = {
