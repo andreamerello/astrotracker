@@ -151,11 +151,13 @@ void motor_cmd_from_isr(char c)
 typedef enum {
 	STOP,
 	PLAY,
-	REWIND,
 	FAST_FW,
+#ifdef BARN_DOOR
+	REWIND,
 	HOMING_FOUND,
 	HOMING_PRESSED,
 	QUITTING_HOME
+#endif
 } motor_state_t;
 
 static void motor_task(void *arg __attribute((unused)))
@@ -182,21 +184,22 @@ static void motor_task(void *arg __attribute((unused)))
 			direction = 1;
 			set_led_blink(40, 400, 0);
 			break;
+		case STOP:
+			direction = 0;
+			set_led_on();
+			break;
+#ifdef BARN_DOOR
 		case HOMING_PRESSED:
 		case QUITTING_HOME:
 		case HOMING_FOUND:
 			direction = 1;
-			break;
-		case STOP:
-			direction = 0;
-			set_led_on();
 			break;
 		case REWIND:
 			direction = -1;
 			set_led_blink(400, 40, 0);
 			break;
 		}
-
+#endif
 		step_count = 0;
 		motor_stop();
 		rtc_reset();
@@ -216,10 +219,6 @@ static void motor_task(void *arg __attribute((unused)))
 		TickType_t delay = (state != STOP) ? 1 : portMAX_DELAY;
 		if (pdPASS == xQueueReceive(motor_queue, &cmd, delay)) {
 			switch (cmd) {
-			case 'r':
-				if (set_state(REWIND))
-					print_state("Rewind");
-				break;
 			case 's':
 				if (set_state(PLAY))
 					print_state("Play");
@@ -232,19 +231,29 @@ static void motor_task(void *arg __attribute((unused)))
 				if (set_state(FAST_FW))
 					print_state("Fast forward");
 				break;
-				/* case '0': */
-				/* case '1': */
-				/* case '2': */
-				/* case '3': */
-				/* 	my_printf("set motor pin %d\n", (cmd - '0')); */
-				/* 	set_pin(cmd - '0', 1); */
-				/* 	break; */
+#ifdef BARN_DOOR
+			case 'r':
+				if (set_state(REWIND))
+					print_state("Rewind");
+				break;
+#endif
+
+#ifdef ENABLE_DEBUG_MOTOR_COMMANDS
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+				my_printf("set motor pin %d\n", (cmd - '0'));
+				set_pin(cmd - '0', 1);
+				break;
+#endif
 			default:
 				my_printf("Invalid command: %c\n", cmd);
 				break;
 			}
 		}
 
+#ifdef BARN_DOOR
 		if (state == REWIND) {
 			/* moving backward looking for switch pressed event */
 			if (homing_switch_pressed()) {
@@ -269,17 +278,20 @@ static void motor_task(void *arg __attribute((unused)))
 				set_state(STOP);
 			}
 		}
+#endif
 
 		if (state != STOP) {
 			uint32_t ticks = rtc_get_ticks();
 			uint32_t tick_for_next_step;
 
+#ifdef BARN_DOOR
 			if (direction == 1) {
 				if (motor_absolute_position > MOTOR_MAX_POSITION) {
 					ui_beep(3000, 150);
 					set_state(STOP);
 				}
 			}
+#endif
 
 			if (state == PLAY)
 				tick_for_next_step = time_for_step(step_count + 1);

@@ -21,12 +21,15 @@
 //#undef DEBUG
 
 #define ENABLE_KEYBOARD_COMMANDS
+#define ENABLE_DEBUG_MOTOR_COMMANDS
+
 
 #ifdef DEBUG
 #  define my_printf std_printf
 #else
 #  define my_printf(...) ;
 #  undef ENABLE_KEYBOARD_COMMANDS
+#  undef ENABLE_DEBUG_MOTOR_COMMANDS
 #endif
 
 #ifndef __maybe_unused
