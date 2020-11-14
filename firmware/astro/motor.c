@@ -40,16 +40,11 @@ static uint32_t time_for_step(int step)
 
 #define ARRAY_SIZE(x) ((int)(sizeof(x) / sizeof((x)[0])))
 
+static pin_t MOTOR_GPIO_TABLE[] = MOTOR_PINS;
 
-//                  motor wires:       A1      A2      B1      B2
-#if defined(BARN_DOOR)
-static pin_t MOTOR_GPIO_TABLE[] = {PIN_A1, PIN_A3, PIN_A0, PIN_A2};
-#elif defined(MINITRACK)
-static pin_t MOTOR_GPIO_TABLE[] = {PIN_A0, PIN_A3, PIN_A5, PIN_A6};
-#endif
-
-// this is the table which drives the motor: see MOTOR_GPIO_TABLE
+#if defined(MOTOR_BIPOLAR)
 static uint8_t magic_table[][4] = {
+//  A1 A2 B1 B2
 	{1, 0, 1, 0},
 	{0, 0, 1, 0},
 	{0, 1, 1, 0},
@@ -59,6 +54,22 @@ static uint8_t magic_table[][4] = {
 	{1, 0, 0, 1},
 	{1, 0, 0, 0},
 };
+#elif defined(MOTOR_UNIPOLAR)
+static uint8_t magic_table[][4] = {
+//  A1 A2 B1 B2
+	{1, 0, 0, 0},
+	{1, 1, 0, 0},
+	{0, 1, 0, 0},
+	{0, 1, 1, 0},
+	{0, 0, 1, 0},
+	{0, 0, 1, 1},
+	{0, 0, 0, 1},
+	{1, 0, 0, 1},
+};
+#else
+#  error "You must define either MOTOR_UNIPOLAR or MOTOR_BIPOLAR
+#endif
+
 
 static void motor_task(void *);
 

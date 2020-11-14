@@ -28,12 +28,22 @@ static const pin_t LED = PIN_C13;
 static const pin_t BUZZER = PIN_A9;
 static const bool ENABLE_BUTTONS = true;
 
+// "moror wires" refers to the wires attached to the motors: in the datasheet
+// they are often labeled as A1, A2, B1, B2 or A, A/, B, B/
+//
+// motor wires:         A1      A2      B1      B2
+#define MOTOR_PINS {PIN_A1, PIN_A3, PIN_A0, PIN_A2}
+#define MOTOR_BIPOLAR
 
 #elif defined(MINITRACK)
 static const bool LED_IS_INVERTED = true;
 static const pin_t LED = PIN_C13;
 static const pin_t BUZZER = PIN_A9;
 static const bool ENABLE_BUTTONS = false;
+
+// motor wires:         A1      A2      B1      B2
+#define MOTOR_PINS {PIN_A0, PIN_A3, PIN_A5, PIN_A6};
+#define MOTOR_UNIPOLAR
 
 #endif /* BARN_DOOR or MINITRACK */
 
