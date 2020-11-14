@@ -252,12 +252,6 @@ static void motor_task(void *arg __attribute((unused)))
 		TickType_t delay = (state != STOP) ? 1 : portMAX_DELAY;
 		if (pdPASS == xQueueReceive(motor_queue, &cmd, delay)) {
 			switch (cmd) {
-			case 's':
-				motor_debug_do_steps(1, 1);
-				break;
-			case 'S':
-				motor_debug_do_steps(1, 512);
-				break;
 			case 'p':
 				if (set_state(PLAY))
 					print_state("Play");
@@ -285,6 +279,18 @@ static void motor_task(void *arg __attribute((unused)))
 			case '3':
 				my_printf("toggle motor pin %d\n", (cmd - '0'));
 				motor_toggle_pin(cmd - '0');
+				break;
+			case 's':
+				motor_debug_do_steps(1, 1); // single step forward
+				break;
+			case 'S':
+				motor_debug_do_steps(1, 512); // many steps forward
+				break;
+			case 'a':
+				motor_debug_do_steps(-1, 1); // single step backward
+				break;
+			case 'A':
+				motor_debug_do_steps(-1, 512); // many steps backward
 				break;
 #endif
 			default:
