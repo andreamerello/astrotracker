@@ -219,7 +219,7 @@ static void motor_task(void *arg __attribute((unused)))
 		TickType_t delay = (state != STOP) ? 1 : portMAX_DELAY;
 		if (pdPASS == xQueueReceive(motor_queue, &cmd, delay)) {
 			switch (cmd) {
-			case 's':
+			case 'p':
 				if (set_state(PLAY))
 					print_state("Play");
 				break;

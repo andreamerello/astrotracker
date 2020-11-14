@@ -73,7 +73,7 @@ void exti4_isr(void)
 		return;
 
 	if (exti_get_flag_status(BUTTON_PLAY.exti)) {
-		motor_cmd_from_isr('s');
+		motor_cmd_from_isr('p');
 		exti_reset_request(BUTTON_PLAY.exti);
 	}
 }
