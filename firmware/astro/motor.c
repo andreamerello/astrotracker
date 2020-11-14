@@ -71,7 +71,15 @@ static int homing_switch_pressed(void)
 }
 #endif
 
-static void set_pin(int i, int value)
+static void motor_toggle_pin(int i)
+{
+	uint32_t port = MOTOR_GPIO_TABLE[i].port;
+	uint32_t pin = MOTOR_GPIO_TABLE[i].pin;
+	gpio_toggle(port, pin);
+}
+
+
+static void motor_set_pin(int i, int value)
 {
 	uint32_t port = MOTOR_GPIO_TABLE[i].port;
 	uint32_t pin = MOTOR_GPIO_TABLE[i].pin;
@@ -114,14 +122,14 @@ static void motor_step(int direction)
 
 	for (int i = 0; i < 4; i++) {
 		int value = magic_table[motor_current_index][i];
-		set_pin(i, value);
+		motor_set_pin(i, value);
 	}
 }
 
 static void motor_stop(void)
 {
 	for (int i = 0; i < 4; i++)
-		set_pin(i, 0);
+		motor_set_pin(i, 0);
 }
 
 __maybe_unused static void motor_test(void)
@@ -129,7 +137,7 @@ __maybe_unused static void motor_test(void)
 	static int motor_i = 0;
 	static int motor_value = 0;
 	my_printf("setting pin %d to %d\r\n", motor_i, motor_value);
-	set_pin(motor_i, motor_value);
+	motor_set_pin(motor_i, motor_value);
 	motor_i += 1;
 	if (motor_i == ARRAY_SIZE(MOTOR_GPIO_TABLE)) {
 		motor_i = 0;
@@ -243,8 +251,8 @@ static void motor_task(void *arg __attribute((unused)))
 			case '1':
 			case '2':
 			case '3':
-				my_printf("set motor pin %d\n", (cmd - '0'));
-				set_pin(cmd - '0', 1);
+				my_printf("toggle motor pin %d\n", (cmd - '0'));
+				motor_toggle_pin(cmd - '0');
 				break;
 #endif
 			default:
