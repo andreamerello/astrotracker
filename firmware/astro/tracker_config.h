@@ -42,7 +42,7 @@ static const pin_t BUZZER = PIN_A9;
 static const bool ENABLE_BUTTONS = false;
 
 // motor wires:         A1      A2      B1      B2
-#define MOTOR_PINS {PIN_A0, PIN_A3, PIN_A5, PIN_A6};
+#define MOTOR_PINS {PIN_A0, PIN_A3, PIN_A5, PIN_A6}
 #define MOTOR_UNIPOLAR
 
 #endif /* BARN_DOOR or MINITRACK */

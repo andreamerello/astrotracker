@@ -67,7 +67,7 @@ static uint8_t magic_table[][4] = {
 	{1, 0, 0, 1},
 };
 #else
-#  error "You must define either MOTOR_UNIPOLAR or MOTOR_BIPOLAR
+#  error "You must define either MOTOR_UNIPOLAR or MOTOR_BIPOLAR"
 #endif
 
 
@@ -167,6 +167,20 @@ void motor_cmd_from_isr(char c)
 	xQueueSendFromISR(motor_queue, &c, NULL);
 }
 
+static void motor_debug_do_steps(int direction, int n)
+{
+	motor_stop();
+	for(int step=0; step<n; step++) {
+		my_printf("Step %d", step);
+		for(int i=0; i<ARRAY_SIZE(magic_table); i++) {
+			my_printf(".");
+			motor_step(direction);
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+		my_printf("\n");
+	}
+}
+
 typedef enum {
 	STOP,
 	PLAY,
@@ -238,6 +252,12 @@ static void motor_task(void *arg __attribute((unused)))
 		TickType_t delay = (state != STOP) ? 1 : portMAX_DELAY;
 		if (pdPASS == xQueueReceive(motor_queue, &cmd, delay)) {
 			switch (cmd) {
+			case 's':
+				motor_debug_do_steps(1, 1);
+				break;
+			case 'S':
+				motor_debug_do_steps(1, 512);
+				break;
 			case 'p':
 				if (set_state(PLAY))
 					print_state("Play");
@@ -250,6 +270,7 @@ static void motor_task(void *arg __attribute((unused)))
 				if (set_state(FAST_FW))
 					print_state("Fast forward");
 				break;
+
 #ifdef BARN_DOOR
 			case 'r':
 				if (set_state(REWIND))
