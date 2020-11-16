@@ -302,22 +302,26 @@ static void motor_task(void *arg __attribute((unused)))
 				// full rotation of the motor
 				motor_debug_do_steps(1, 512);
 				break;
+			case 'w':
+				// full rotation of the tracker
+				motor_debug_do_steps(1, 41500);
+				break;
 			// forward
 			case 'z': motor_debug_do_steps( 1,       1); break;
 			case 'x': motor_debug_do_steps( 1,      10); break;
 			case 'c': motor_debug_do_steps( 1,     100); break;
 			case 'v': motor_debug_do_steps( 1,    1000); break;
 			case 'b': motor_debug_do_steps( 1,   10000); break;
-			case 'n': motor_debug_do_steps( 1,  100000); break;
-			case 'm': motor_debug_do_steps( 1, 1000000); break;
+			case 'n': motor_debug_do_steps( 1,   30000); break;
+			//case 'm': motor_debug_do_steps( 1, 1000000); break;
 			// backward
 			case 'Z': motor_debug_do_steps(-1,       1); break;
 			case 'X': motor_debug_do_steps(-1,      10); break;
 			case 'C': motor_debug_do_steps(-1,     100); break;
 			case 'V': motor_debug_do_steps(-1,    1000); break;
 			case 'B': motor_debug_do_steps(-1,   10000); break;
-			case 'N': motor_debug_do_steps(-1,  100000); break;
-			case 'M': motor_debug_do_steps(-1, 1000000); break;
+			case 'N': motor_debug_do_steps(-1,   30000); break;
+			//case 'M': motor_debug_do_steps(-1, 1000000); break;
 #endif
 			default:
 				my_printf("Invalid command: %c\n", cmd);
