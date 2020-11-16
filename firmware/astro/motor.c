@@ -169,16 +169,34 @@ void motor_cmd_from_isr(char c)
 
 static void motor_debug_do_steps(int direction, int n)
 {
+	int print_speed = 1;
+	if (n > 100)
+		print_speed = 10;
+	if (n > 1000)
+		print_speed = 100;
+
+	if (n > 10) {
+		const char *s_dir = (direction == 1) ? "forward" : "backward";
+		my_printf("Doing %d steps %s\n", n, s_dir);
+	}
+
 	motor_stop();
 	for(int step=0; step<n; step++) {
-		my_printf("Step %d", step);
+		int should_print = (step % print_speed == 0);
+		if (should_print)
+			my_printf("Step %d", step);
 		for(int i=0; i<ARRAY_SIZE(magic_table); i++) {
-			my_printf(".");
+			if (should_print)
+				my_printf(".");
 			motor_step(direction);
-			vTaskDelay(1 / portTICK_PERIOD_MS);
+			vTaskDelay(3 / portTICK_PERIOD_MS);
 		}
-		my_printf("\n");
+		if (should_print)
+			my_printf("\n");
 	}
+	motor_stop();
+	motor_absolute_position += (n*direction);
+	my_printf("Absolute position: %d\n", motor_absolute_position);
 }
 
 typedef enum {
@@ -280,18 +298,26 @@ static void motor_task(void *arg __attribute((unused)))
 				my_printf("toggle motor pin %d\n", (cmd - '0'));
 				motor_toggle_pin(cmd - '0');
 				break;
-			case 's':
-				motor_debug_do_steps(1, 1); // single step forward
+			case 'q':
+				// full rotation of the motor
+				motor_debug_do_steps(1, 512);
 				break;
-			case 'S':
-				motor_debug_do_steps(1, 512); // many steps forward
-				break;
-			case 'a':
-				motor_debug_do_steps(-1, 1); // single step backward
-				break;
-			case 'A':
-				motor_debug_do_steps(-1, 512); // many steps backward
-				break;
+			// forward
+			case 'z': motor_debug_do_steps( 1,       1); break;
+			case 'x': motor_debug_do_steps( 1,      10); break;
+			case 'c': motor_debug_do_steps( 1,     100); break;
+			case 'v': motor_debug_do_steps( 1,    1000); break;
+			case 'b': motor_debug_do_steps( 1,   10000); break;
+			case 'n': motor_debug_do_steps( 1,  100000); break;
+			case 'm': motor_debug_do_steps( 1, 1000000); break;
+			// backward
+			case 'Z': motor_debug_do_steps(-1,       1); break;
+			case 'X': motor_debug_do_steps(-1,      10); break;
+			case 'C': motor_debug_do_steps(-1,     100); break;
+			case 'V': motor_debug_do_steps(-1,    1000); break;
+			case 'B': motor_debug_do_steps(-1,   10000); break;
+			case 'N': motor_debug_do_steps(-1,  100000); break;
+			case 'M': motor_debug_do_steps(-1, 1000000); break;
 #endif
 			default:
 				my_printf("Invalid command: %c\n", cmd);
