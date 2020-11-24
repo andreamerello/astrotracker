@@ -153,11 +153,13 @@ void motor_cmd(char c)
 	xQueueSend(motor_queue, &c, portMAX_DELAY);
 }
 
+/*
 void motor_cmd_from_isr(char c)
 {
 	ui_beep(30, -1);
 	xQueueSendFromISR(motor_queue, &c, NULL);
 }
+*/
 
 static void motor_debug_do_steps(int direction, int n)
 {

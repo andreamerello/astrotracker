@@ -61,7 +61,7 @@ static const int DEFAULT_DIRECTION = -1;
 static const bool LED_IS_INVERTED = true;
 static const pin_t LED = PIN_C13;
 static const pin_t BUZZER = PIN_A9;
-static const bool ENABLE_BUTTONS = false;
+static const bool ENABLE_BUTTONS = true; // XXX
 
 // motor wires:         A1      A2      B1      B2
 #define MOTOR_PINS {PIN_A0, PIN_A3, PIN_A5, PIN_A6}

@@ -36,7 +36,7 @@ static button_t BUTTON_STOP    = { GPIOA, GPIO5, RCC_GPIOA, EXTI5 };
 static button_t BUTTON_REWIND  = { GPIOA, GPIO6, RCC_GPIOA, EXTI6 };
 static button_t BUTTON_FAST_FW = { GPIOA, GPIO8, RCC_GPIOA, EXTI8 };
 
-#define ANTIBUMP_DELAY 10000
+#define ANTIBUMP_DELAY 1000
 
 static QueueHandle_t led_queue;
 static QueueHandle_t buzzer_queue;
@@ -46,14 +46,13 @@ static void button_init(button_t btn)
 {
 	rcc_periph_clock_enable(btn.rcc);
 	gpio_set_mode(btn.port, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, btn.pin);
-	exti_select_source(btn.exti, btn.port);
-	exti_set_trigger(btn.exti, EXTI_TRIGGER_RISING);
-	exti_enable_request(btn.exti);
+	//exti_select_source(btn.exti, btn.port);
+	//exti_set_trigger(btn.exti, EXTI_TRIGGER_RISING);
+	//exti_enable_request(btn.exti);
 }
 
 static int ui_antibump(void)
 {
-
 	int time = timer_get_counter(TIM2);
 	if (time < button_last_interrupt_time)
 		button_last_interrupt_time -= 65536;
@@ -67,13 +66,14 @@ static int ui_antibump(void)
 	}
 }
 
+/*
 void exti4_isr(void)
 {
 	if (ui_antibump())
 		return;
 
 	if (exti_get_flag_status(BUTTON_PLAY.exti)) {
-		motor_cmd_from_isr('p');
+		motor_cmd_from_isr('a'); // "auto"
 		exti_reset_request(BUTTON_PLAY.exti);
 	}
 }
@@ -96,6 +96,7 @@ void exti9_5_isr(void)
 		exti_reset_request(BUTTON_FAST_FW.exti);
 	}
 }
+*/
 
 /* every beep_rate blinks, we do a beep. If beep_rate == 0, no beeps */
 void set_led_blink(int on_ms, int off_ms, int beep_rate)
@@ -180,6 +181,43 @@ static void buzzer_task(void *arg __attribute((unused)))
 	}
 }
 
+static void button_task(void *arg __attribute((unused)))
+{
+	char state = 't'; // sTop, Play, FF
+	while(1) {
+		int value = gpio_get(BUTTON_PLAY.port, BUTTON_PLAY.pin);
+		if (value && !ui_antibump()) {
+			switch (state) {
+			case 't':
+				// stop ==> play
+				ui_beep(30, -1);
+				state = 'p';
+				motor_cmd('p');
+				break;
+			case 'p':
+				// play ==> FF
+				ui_beep(100, 300);
+				state = 'f';
+				motor_cmd('f');
+				break;
+			case 'f':
+				// FF ==> stop
+				ui_beep(500, 500);
+				state = 't';
+				motor_cmd('t');
+				break;
+			default:
+				// this should not happen, alert the user
+				ui_beep(1000, -1);
+				break;
+			}
+		}
+		vTaskDelay(100 / portTICK_PERIOD_MS);
+	}
+}
+
+
+
 
 static void buzzer_init(void)
 {
@@ -240,17 +278,18 @@ void ui_init(void)
 	led_init();
 	buzzer_init();
 	if (ENABLE_BUTTONS) {
-		button_init(BUTTON_STOP);
+		//button_init(BUTTON_STOP);
 		button_init(BUTTON_PLAY);
-		button_init(BUTTON_REWIND);
-		button_init(BUTTON_FAST_FW);
+		//button_init(BUTTON_REWIND);
+		//button_init(BUTTON_FAST_FW);
 		rcc_periph_clock_enable(RCC_AFIO);	 // EXTI
 		ui_antibump_init();
-		nvic_enable_irq(NVIC_EXTI4_IRQ);
-		nvic_enable_irq(NVIC_EXTI9_5_IRQ);
+		//nvic_enable_irq(NVIC_EXTI4_IRQ);
+		//nvic_enable_irq(NVIC_EXTI9_5_IRQ);
 	}
 	led_queue = xQueueCreate(1, sizeof(led_blinking_t));
 	buzzer_queue = xQueueCreate(1, sizeof(beep_t));
 	xTaskCreate(led_task, "led", 128, NULL, 1, NULL);
 	xTaskCreate(buzzer_task, "buzzer", 128, NULL, 1, NULL);
+	xTaskCreate(button_task, "button", 128, NULL, 1, NULL);
 }
