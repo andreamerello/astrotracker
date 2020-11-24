@@ -22,13 +22,20 @@
 #endif
 
 #if defined(BARN_DOOR)
+/***** GEOMETRY *****/
+static const long STEPS_FOR_10_DEGREES = 19955UL;
+static const long STEPS_FOR_360_DEGREES = STEPS_FOR_TEN_DEGREES * 36;
+static const int MOTOR_MAX_POSITION = (int)(STEPS_FOR_10_DEGREES * 1.5);
+static const int HOME_QUIT_STEPS =  (int)(STEPS_FOR_10_DEGREES / 10);
+
+/***** ELECTRONIC *****/
 // external led attached to PC13
 static const bool LED_IS_INVERTED = false;
 static const pin_t LED = PIN_C13;
 static const pin_t BUZZER = PIN_A9;
 static const bool ENABLE_BUTTONS = true;
 
-// "moror wires" refers to the wires attached to the motors: in the datasheet
+// "motor wires" refers to the wires attached to the motors: in the datasheet
 // they are often labeled as A1, A2, B1, B2 or A, A/, B, B/
 //
 // motor wires:         A1      A2      B1      B2
@@ -36,12 +43,18 @@ static const bool ENABLE_BUTTONS = true;
 #define MOTOR_BIPOLAR
 
 #elif defined(MINITRACK)
+/***** GEOMETRY *****/
+// 512 are the steps for a full rotation of the motor
+//  27 is the reduction of the gearbox
+//  41 the number of teeth of the big gear after the worm gear
+static const long STEPS_FOR_360_DEGREES = 512 * 27 * 41;
+
+
+/***** ELECTRONIC *****/
 static const bool LED_IS_INVERTED = true;
 static const pin_t LED = PIN_C13;
 static const pin_t BUZZER = PIN_A9;
 static const bool ENABLE_BUTTONS = false;
-
-// 41500 steps per 360°
 
 // motor wires:         A1      A2      B1      B2
 #define MOTOR_PINS {PIN_A0, PIN_A3, PIN_A5, PIN_A6}

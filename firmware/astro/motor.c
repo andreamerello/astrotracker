@@ -11,15 +11,13 @@
 #include "rtc.h"
 #include "ui.h"
 
-#define STEPS_FOR_TEN_DEGREES 19955UL
-
 /* constants for astro-track velocity */
 #define TICKS_PER_SECOND 32768UL
 #define SIDERAL_DAY (86164UL * TICKS_PER_SECOND)
 
 
-#define MOTOR_MAX_POSITION ((int)STEPS_FOR_TEN_DEGREES * 1.5)
-#define HOME_QUIT_STEPS ((int)STEPS_FOR_TEN_DEGREES / 10)
+#define MOTOR_MAX_POSITION ((int)STEPS_FOR_10_DEGREES * 1.5)
+#define HOME_QUIT_STEPS ((int)STEPS_FOR_10_DEGREES / 10)
 
 /* this GPIO has an internal pull-up */
 #define HOMING_PIN GPIO15
@@ -35,7 +33,7 @@ static uint32_t time_for_step(int step)
 	 * overflow.
 	 */
 	uint64_t step64 = step;
-	return step64 * SIDERAL_DAY / (36*STEPS_FOR_TEN_DEGREES);
+	return step64 * SIDERAL_DAY / (STEPS_FOR_360_DEGREES);
 }
 
 #define ARRAY_SIZE(x) ((int)(sizeof(x) / sizeof((x)[0])))
