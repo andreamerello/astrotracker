@@ -116,6 +116,7 @@ void motor_init(void)
 static int motor_current_index = 0;
 static void motor_step(int direction)
 {
+	direction *= DEFAULT_DIRECTION;
 	motor_current_index += direction;
 	if (motor_current_index == -1)
 		motor_current_index = ARRAY_SIZE(magic_table) - 1;
