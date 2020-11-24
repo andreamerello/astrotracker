@@ -15,15 +15,6 @@
 #define TICKS_PER_SECOND 32768UL
 #define SIDERAL_DAY (86164UL * TICKS_PER_SECOND)
 
-
-#define MOTOR_MAX_POSITION ((int)STEPS_FOR_10_DEGREES * 1.5)
-#define HOME_QUIT_STEPS ((int)STEPS_FOR_10_DEGREES / 10)
-
-/* this GPIO has an internal pull-up */
-#define HOMING_PIN GPIO15
-#define HOMING_PORT GPIOA
-#define HOMING_RCC RCC_GPIOA
-
 static int motor_absolute_position;
 
 static uint32_t time_for_step(int step)
@@ -102,10 +93,12 @@ void motor_init(void)
 {
 	int i;
 
+#ifdef BARN_DOOR
 	/* initialize homing switch pin */
 	rcc_periph_clock_enable(HOMING_RCC);
 	gpio_set_mode(HOMING_PORT, GPIO_MODE_INPUT,
 		      GPIO_CNF_INPUT_PULL_UPDOWN, HOMING_PIN);
+#endif // BARN_DOOR
 
 
 	/* initialize motor control pins */

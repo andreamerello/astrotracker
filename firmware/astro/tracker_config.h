@@ -35,6 +35,12 @@ static const pin_t LED = PIN_C13;
 static const pin_t BUZZER = PIN_A9;
 static const bool ENABLE_BUTTONS = true;
 
+/* this GPIO has an internal pull-up */
+#define HOMING_PIN GPIO15
+#define HOMING_PORT GPIOA
+#define HOMING_RCC RCC_GPIOA
+
+
 // "motor wires" refers to the wires attached to the motors: in the datasheet
 // they are often labeled as A1, A2, B1, B2 or A, A/, B, B/
 //
