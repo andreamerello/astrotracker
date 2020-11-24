@@ -296,7 +296,7 @@ static void motor_task(void *arg __attribute((unused)))
 				break;
 			case 'w':
 				// full rotation of the tracker
-				motor_debug_do_steps(1, 41500);
+				motor_debug_do_steps(1, STEPS_FOR_360_DEGREES);
 				break;
 			// forward
 			case 'z': motor_debug_do_steps( 1,       1); break;
