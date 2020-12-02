@@ -54,7 +54,7 @@ static const bool ENABLE_BUTTONS = true;
 // 512 are the steps for a full rotation of the motor
 //  27 is the reduction of the gearbox
 //  41 the number of teeth of the big gear after the worm gear
-static const long STEPS_FOR_360_DEGREES = 512 * 27 * 41;
+static const long STEPS_FOR_360_DEGREES = 512 * 27 * 41 * 8;
 static const int DEFAULT_DIRECTION = -1;
 
 /***** ELECTRONIC *****/
@@ -71,11 +71,14 @@ static const bool ENABLE_BUTTONS = true; // XXX
 
 
 
-#define DEBUG
-//#undef DEBUG
+//#define DEBUG
+#undef DEBUG
 
 #define ENABLE_KEYBOARD_COMMANDS
 #define ENABLE_DEBUG_MOTOR_COMMANDS
+
+// if it's true, the buzzer will beep during PLAY and FF
+static const int ENABLE_BEEP_DURING_BLINK = 0;
 
 
 #ifdef DEBUG

@@ -153,7 +153,8 @@ static void led_task(void *arg __attribute((unused)))
 		blink_count++;
 		if (blink_count == beep_rate) {
 			blink_count = 0;
-			ui_beep(5, 500);
+			if (ENABLE_BEEP_DURING_BLINK)
+				ui_beep(5, 500);
 		}
 	}
 }
