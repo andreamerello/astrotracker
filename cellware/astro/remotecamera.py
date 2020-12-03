@@ -142,4 +142,6 @@ class RemoteCamera(EventDispatcher):
                 # you put too many tasks into kivy's @mainthread and things
                 # seems to hang.
                 time.sleep(0.01)
-
+        #
+        # stop the gphoto thread on the remote side
+        requests.get(url + 'stop') # this is a bit of a hack :(
