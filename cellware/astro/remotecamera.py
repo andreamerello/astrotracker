@@ -112,11 +112,11 @@ class RemoteCamera(EventDispatcher):
             Logger.info('RemoteCamera: stop')
 
     def _camera_loop(self, url, recording):
-        # XXX use requests.session to keep-alive the connection
+        session = requests.session()
         self.frame_no = 0
         frame_times = collections.deque([time.time()], maxlen=25)
         while self.running:
-            resp = requests.get(url)
+            resp = session.get(url)
             if resp.status_code == 400:
                 # it's very likely that it's camera not found
                 raise CameraNotFound(resp.text)
@@ -144,6 +144,6 @@ class RemoteCamera(EventDispatcher):
                 time.sleep(0.01)
         #
         # stop the gphoto thread on the remote side
-        requests.get(url + 'stop/') # this is a bit of a hack :(
+        session.get(url + 'stop/') # this is a bit of a hack :(
         self.set_status('Stopped')
 
