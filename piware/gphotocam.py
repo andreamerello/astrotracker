@@ -133,6 +133,20 @@ class GPhotoCamera:
         self.gphoto = GPhotoThread(fake_camera_file)
 
     def liveview(self, path):
+        if path == '/camera/liveview/':
+            return self.liveview_frame()
+        elif path == '/camera/liveview/stop/':
+            return self.liveview_stop()
+        else:
+            self.app.start_response('404 Not Found', [])
+            return [('Path not found: %s' % path).encode('utf-8')]
+
+    def liveview_stop(self):
+        self.gphoto.stop()
+        self.app.start_response('200 OK', [])
+        return [b'OK']
+
+    def liveview_frame(self):
         if self.gphoto.state == 'STOPPED':
             print('Starting gphoto thread')
             self.gphoto.start()
