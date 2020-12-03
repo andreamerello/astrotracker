@@ -134,7 +134,7 @@ class RemoteCamera(EventDispatcher):
 
             frame_times.append(time.time())
             self.fps = len(frame_times) / (frame_times[-1] - frame_times[0])
-            Logger.info('RemoteCamera: %.2f fps, deque size %s' % (self.fps, len(frame_times)))
+            #Logger.info('RemoteCamera: %.2f fps' % self.fps)
             if self.fps > 100:
                 # sleep a bit: for the polaris stream this is not an issue since
                 # it will be at a very low fps. However, if you try to display a
