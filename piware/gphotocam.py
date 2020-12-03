@@ -32,11 +32,8 @@ def iter_mjpg(f, data=b''):
 
 class GPhotoThread:
 
-    #FAKE_CAPTURE = None
-    #FAKE_CAPTURE = 'gphoto-capture-20s.mjpg'
-    FAKE_CAPTURE = 'sky.mjpg'
-
-    def __init__(self):
+    def __init__(self, fake_camera_file):
+        self.fake_camera_file = fake_camera_file
         self.state = 'STOPPED'
         self.thread = None
         self.last_frame = None
@@ -58,11 +55,8 @@ class GPhotoThread:
     def run(self):
         assert self.state == 'STARTING'
         self.should_stop = False
-        if self.FAKE_CAPTURE:
-            cmd = ['python3',
-                   'fake-gphoto-capture.py',
-                   self.FAKE_CAPTURE
-                   ]
+        if self.fake_camera_file:
+            cmd = ['python3', 'fake-gphoto-capture.py', self.fake_camera_file]
         else:
             cmd = ['gphoto2',
                    #'--port', 'ptpip:192.168.1.180',
@@ -121,11 +115,10 @@ class GPhotoCamera:
     NIKON_CAMERA_FOLDER = '/store_00010001/DCIM/100D5300/'
     CAPTURE_DIR = Path('/tmp/pictures')
 
-    def __init__(self, app, videofile):
+    def __init__(self, app, fake_camera_file):
         self.app = app
-        self.videofile = videofile
         self.CAPTURE_DIR.mkdir(parents=True, exist_ok=True)
-        self.gphoto = GPhotoThread()
+        self.gphoto = GPhotoThread(fake_camera_file)
 
     def liveview(self, path):
         if self.gphoto.state == 'STOPPED':
