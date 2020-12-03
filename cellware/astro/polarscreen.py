@@ -65,7 +65,8 @@ class PolarScreen(MyScreen):
 
     def start_camera(self):
         self.ids.imgfilename.disabled = True
-        if self.ids.camera_model.picam:
+        if False and self.ids.camera_model.picam:
+            # picamera code commented out for now
             fmt = self.ids.format.text.lower()
             resolution = self.ids.resolution.text
             shutter = self.ids.shutter.text

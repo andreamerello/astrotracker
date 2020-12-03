@@ -73,11 +73,11 @@
         size_hint_x: None
         width: '100dp'
 
-        Spinner:
-            id: camera_model
-            text: 'DSLR'
-            values: 'DSLR', 'Pi Camera'
-            picam: self.text == 'Pi Camera'
+        # Spinner:
+        #     id: camera_model
+        #     text: 'DSLR'
+        #     values: 'DSLR', 'Pi Camera'
+        #     picam: self.text == 'Pi Camera'
 
         ImgFileName:
             id: imgfilename
@@ -98,38 +98,44 @@
             text: "%.2f fps" % root.camera.fps
             color: (1, 0, 0, 1)
 
+        # these are useful only for the picamera: uncomment if/when we need it again
+        # Spinner:
+        #     id: format
+        #     text: 'RAW'
+        #     values: 'RAW', 'MJPG'
+        #     disabled: not root.ids.camera_model.picam
+
+        # Spinner:
+        #     id: resolution
+        #     text: '320x240'
+        #     values: '2592x1944', '1296x972', '640x480', '320x240'
+        #     disabled: not root.ids.camera_model.picam
+
+        # Spinner:
+        #     id: shutter
+        #     text: 'auto'
+        #     values: 'auto', '0.5"', '1"', '1.5"', '2"', '2.5"', '3"', '4"', '5"', '6"'
+        #     disabled: not root.ids.camera_model.picam
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: "50dp"
+
+            IconButton:
+                icon: 'fa-play'
+                font_size: "40dp"
+                on_release: root.start_camera()
+
+            IconButton:
+                icon: 'fa-stop'
+                font_size: "40dp"
+                on_release: root.stop_camera()
+
         Spinner:
             id: focal_length
             text: '45mm'
             values: '45mm', '75mm'
-
-        Spinner:
-            id: format
-            text: 'RAW'
-            values: 'RAW', 'MJPG'
-            disabled: not root.ids.camera_model.picam
-
-        Spinner:
-            id: resolution
-            text: '320x240'
-            values: '2592x1944', '1296x972', '640x480', '320x240'
-            disabled: not root.ids.camera_model.picam
-
-        Spinner:
-            id: shutter
-            text: 'auto'
-            values: 'auto', '0.5"', '1"', '1.5"', '2"', '2.5"', '3"', '4"', '5"', '6"'
-            disabled: not root.ids.camera_model.picam
-
-        IconButton:
-            icon: 'fa-play'
-            font_size: "64sp"
-            on_release: root.start_camera()
-
-        IconButton:
-            icon: 'fa-stop'
-            font_size: "64sp"
-            on_release: root.stop_camera()
 
         BoxLayout:
             id: star_toolbar
