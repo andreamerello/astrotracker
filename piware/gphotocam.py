@@ -32,6 +32,9 @@ def iter_mjpg(f, data=b''):
 
 class GPhotoLiveView:
 
+    FAKE_CAPTURE = None
+    #FAKE_CAPTURE = 'gphoto-capture-20s.mjpg'
+
     def __init__(self):
         self.status = 'STOPPED'
         self.thread = None
@@ -54,16 +57,18 @@ class GPhotoLiveView:
     def run(self):
         self.status = 'STARTING'
         self.should_stop = False
-        cmd = ['python3',
-               'fake-gphoto-capture.py',
-               self.FAKE_CAPTURE
-               ]
-        ## cmd = ['gphoto2',
-        ##        #'--port', 'ptpip:192.168.1.180',
-        ##        '--set-config', 'output=TFT + PC',
-        ##        '--capture-movie',
-        ##        '--stdout'
-        ## ]
+        if self.FAKE_CAPTURE:
+            cmd = ['python3',
+                   'fake-gphoto-capture.py',
+                   self.FAKE_CAPTURE
+                   ]
+        else:
+            cmd = ['gphoto2',
+                   #'--port', 'ptpip:192.168.1.180',
+                   '--set-config', 'output=TFT + PC',
+                   '--capture-movie',
+                   '--stdout'
+            ]
         self.log('Executing: %s' % ' '.join(cmd))
         p = subprocess.Popen(cmd, bufsize=0,
                              stdout=subprocess.PIPE,
@@ -88,11 +93,13 @@ class GPhotoLiveView:
         # if we are here, gphoto is streaming correctly, let's read the frames
         self.status = 'STREAMING'
         try:
+            # XXX: kill gphoto if nobody has asked for a frame in the last X seconds
             self.n_frame = 0
             for frame in iter_mjpg(p.stdout, out0+out1):
                 self.last_frame = frame
                 self.n_frame += 1
-                self.log('got frame', n_frame)
+                if self.n_frame % 10 == 0:
+                    self.log('got frame', self.n_frame)
                 if self.should_stop:
                     self.log('should_stop received, exiting')
                     return
@@ -112,9 +119,6 @@ class GPhotoCamera:
     CANON_CAMERA_FOLDER = '/store_00020001/DCIM/100CANON/'
     NIKON_CAMERA_FOLDER = '/store_00010001/DCIM/100D5300/'
     CAPTURE_DIR = Path('/tmp/pictures')
-
-    FAKE_CAPTURE = None
-    #FAKE_CAPTURE = 'gphoto-capture-20s'
 
     def __init__(self, app, videofile):
         self.app = app
@@ -142,7 +146,8 @@ class GPhotoCamera:
         if self.liveview_thread.status == 'STREAMING':
             # return the last frame
             headers = [
-                ('Content-Type', 'video/x-motion-jpeg'),
+                ('Content-Type', 'image/jpeg'),
+                ('X-Frame-Number', str(self.liveview_thread.n_frame)),
             ]
             self.app.start_response('200 OK', headers)
             return [self.liveview_thread.last_frame]
@@ -153,20 +158,6 @@ class GPhotoCamera:
     def error(self, message):
         self.app.start_response('500 Internal Server Error', [])
         return [message]
-
-    ## def serve_videofile(self, fname):
-    ##     # we assume it's a mjpg for now. Serve full frames at a constant rate
-    ##     headers = [
-    ##         ('Content-Type', 'video/x-motion-jpeg'),
-    ##     ]
-    ##     self.app.start_response('200 OK', headers)
-    ##     fps = float(self.app.qs.get('fps', 0))
-    ##     if fps == 0:
-    ##         fps = 5.0 # just a random default value
-    ##     with open(fname, 'rb') as f:
-    ##         for frame in self.iter_mjpg(f):
-    ##             yield frame
-    ##             time.sleep(1/fps)
 
     def picture(self, path):
         """

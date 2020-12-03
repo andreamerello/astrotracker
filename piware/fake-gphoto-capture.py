@@ -1,24 +1,20 @@
-import time
 import sys
-from pathlib import Path
+import time
+from gphotocam import iter_mjpg
+
+FPS = 25.0
 
 def main():
     if len(sys.argv) != 2:
-        print('Usage: fake-gphoto-capture.py DIRECTORY')
+        print('Usage: fake-gphoto-capture.py VIDEOFILE')
         sys.exit(1)
-
-    FPS = 35.0
-    delay = 1/FPS
-    d = Path(sys.argv[1])
-    n = len(list(d.glob('frame*.jpg')))
+    filename = sys.argv[1]
     fout = sys.stdout.buffer
-    for i in range(n):
-        fname = d / ('frame%d.jpg' % i)
-        data = fname.read_bytes()
-        fout.write(data)
-        fout.flush()
-        time.sleep(delay)
-
+    with open(filename, 'rb') as f:
+        for frame in iter_mjpg(f):
+            fout.write(frame)
+            fout.flush()
+            time.sleep(1/FPS)
 
 if __name__ == '__main__':
     main()
