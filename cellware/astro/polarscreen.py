@@ -62,7 +62,7 @@ class PolarScreen(MyScreen):
         self.ids.imgfilename.disabled = False
         self.camera.stop()
 
-    def start_camera(self, recording=False):
+    def start_camera(self):
         self.ids.imgfilename.disabled = True
         if self.ids.camera_model.picam:
             fmt = self.ids.format.text.lower()
@@ -74,9 +74,8 @@ class PolarScreen(MyScreen):
                 shutter = shutter[:-1]
                 params += '?shutter=%s' % shutter
         else:
-            fps = self.ids.fps.text
-            params = '/camera/liveview/?fps=%s' % fps
-        self.camera.start(params, recording)
+            params = '/camera/liveview/'
+        self.camera.start(params)
 
     def status_click(self):
         box = MessageBox(title='Error',
