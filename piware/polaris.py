@@ -9,10 +9,10 @@ from picam import PiCamera
 
 class PolarisApp:
 
-    def __init__(self, videofile=None):
-        if videofile is not None:
-            print('FAKE CAMERA from %s' % videofile)
-        self.gphoto = GPhotoCamera(self, videofile)
+    def __init__(self, fake_camera_file=None):
+        if fake_camera_file is not None:
+            print('FAKE CAMERA from %s' % fake_camera_file)
+        self.gphoto = GPhotoCamera(self, fake_camera_file)
         self.picam = PiCamera(self)
 
     def __call__(self, env, start_response):
@@ -75,7 +75,7 @@ def main(fname):
 
 if __name__ == "__main__":
     if len(sys.argv) == 2:
-        fname = sys.argv[1]
+        fake_camera_file = sys.argv[1]
     else:
-        fname = None
-    main(fname)
+        fake_camera_file = None
+    main(fake_camera_file)
