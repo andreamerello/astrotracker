@@ -132,6 +132,11 @@ class RemoteCamera(EventDispatcher):
             else:
                 raise ValueError('Unsupported Content-Type: %s' % ct)
 
+            try:
+                self.frame_no = int(resp.headers['X-Frame-Number'])
+            except (KeyError, ValueError):
+                pass
+
             frame_times.append(time.time())
             self.fps = len(frame_times) / (frame_times[-1] - frame_times[0])
             #Logger.info('RemoteCamera: %.2f fps' % self.fps)
