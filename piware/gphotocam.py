@@ -36,8 +36,7 @@ class GPhotoThread:
         self.fake_camera_file = fake_camera_file
         self.state = 'STOPPED'
         self.thread = None
-        self.last_frame = None
-        self.n_frame = -1
+        self._latest_frame = (-1, None) # (frame_no, bytes_content)
 
     def start(self):
         assert self.state == 'STOPPED' # XXX todo
@@ -51,6 +50,9 @@ class GPhotoThread:
 
     def log(self, *args):
         print('[GPhotoThread]', *args)
+
+    def get_latest_frame(self):
+        return self._latest_frame
 
     def run(self):
         assert self.state == 'STARTING'
@@ -89,12 +91,12 @@ class GPhotoThread:
         self.state = 'STREAMING'
         try:
             # XXX: kill gphoto if nobody has asked for a frame in the last X seconds
-            self.n_frame = 0
+            n = 0
             for frame in iter_mjpg(p.stdout, out0+out1):
-                self.last_frame = frame
-                self.n_frame += 1
-                if self.n_frame % 10 == 0:
-                    self.log('got frame', self.n_frame)
+                self._latest_frame = (n, frame) # atomic update
+                n += 1
+                if n % 10 == 0:
+                    self.log('got frame', n)
                 if self.should_stop:
                     self.log('should_stop received, exiting')
                     return
@@ -138,12 +140,13 @@ class GPhotoCamera:
 
         if self.gphoto.state == 'STREAMING':
             # return the last frame
+            n, frame = self.gphoto.get_latest_frame()
             headers = [
                 ('Content-Type', 'image/jpeg'),
-                ('X-Frame-Number', str(self.gphoto.n_frame)),
+                ('X-Frame-Number', str(n)),
             ]
             self.app.start_response('200 OK', headers)
-            return [self.gphoto.last_frame]
+            return [frame]
 
         # if we are here, we are in an unexpected state
         return self.error('Unknown gphoto thread state: %s' % self.gphoto.state)
