@@ -13,7 +13,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.utils import platform
 from kivy.logger import Logger
 from kivy.clock import Clock
-from kivy.metrics import sp
+from kivy.metrics import sp, Metrics
 import pypath
 import astro.uix
 from astro import iconfonts
@@ -84,7 +84,14 @@ class AstroApp(App):
         port = self.config.get(section, 'port')
         return name, host, port
 
+    def log_metrics(self):
+        Logger.info('metrics: Window.size is %sx%s' % Window.size)
+        Logger.info('metrics: dpi = %s' % Metrics.dpi)
+        Logger.info('metrics: density = %s' % Metrics.density)
+        Logger.info('metrics: fontscale = %s' % Metrics.fontscale)
+
     def build(self):
+        self.log_metrics()
         Window.bind(on_keyboard=self.on_keyboard)
         self.exception_handler = MyExceptionHandler()
         self.requests = SmartRequests(self)
