@@ -1,6 +1,4 @@
 <PolarScreen>:
-    #on_size: root.autoscale()
-
     MyScatterPlaneLayout:
         id: scatter
         do_rotation: False
@@ -25,7 +23,7 @@
             id: stars
             visible: True
             opacity: 1 if self.visible else 0
-            source: "polaris%s.png" % root.ids.focal_length
+            source: "polaris%s.png" % root.ids.focal_length.text
             center: self.width * root.NPx, self.height * root.NPy
             size: root.ids.sky.size
             size_hint: None, None
