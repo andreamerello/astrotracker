@@ -30,21 +30,22 @@ def iter_mjpg(f, data=b''):
 
 
 
-class GPhotoLiveView:
+class GPhotoThread:
 
-    FAKE_CAPTURE = None
+    #FAKE_CAPTURE = None
     #FAKE_CAPTURE = 'gphoto-capture-20s.mjpg'
+    FAKE_CAPTURE = 'sky.mjpg'
 
     def __init__(self):
-        self.status = 'STOPPED'
+        self.state = 'STOPPED'
         self.thread = None
         self.last_frame = None
         self.n_frame = -1
 
     def start(self):
-        assert self.status == 'STOPPED' # XXX todo
-        self.status = 'STARTING'
-        self.thread = threading.Thread(target=self.run, name='GPhotoLiveView.run')
+        assert self.state == 'STOPPED' # XXX todo
+        self.state = 'STARTING'
+        self.thread = threading.Thread(target=self.run, name='GPhotoThread.run')
         self.thread.daemon = True
         self.thread.start()
 
@@ -52,10 +53,10 @@ class GPhotoLiveView:
         self.should_stop = True
 
     def log(self, *args):
-        print('[GPhotoLiveView]', *args)
+        print('[GPhotoThread]', *args)
 
     def run(self):
-        self.status = 'STARTING'
+        assert self.state == 'STARTING'
         self.should_stop = False
         if self.FAKE_CAPTURE:
             cmd = ['python3',
@@ -85,13 +86,13 @@ class GPhotoLiveView:
             # gphoto is not streaming anything, so it must be an error
             stderr = p.stderr.read()
             p.wait()
-            self.status = 'ERROR'
+            self.state = 'ERROR'
             self.error = stderr + out0
             self.running = False
             return
         #
         # if we are here, gphoto is streaming correctly, let's read the frames
-        self.status = 'STREAMING'
+        self.state = 'STREAMING'
         try:
             # XXX: kill gphoto if nobody has asked for a frame in the last X seconds
             self.n_frame = 0
@@ -109,7 +110,7 @@ class GPhotoLiveView:
             if not self.FAKE_CAPTURE:
                 # make sure to unlock the camera at the end
                 os.system('gphoto2 --set-config output=TFT')
-            self.status = 'STOPPED'
+            self.state = 'STOPPED'
 
 
 class GPhotoCamera:
@@ -124,38 +125,38 @@ class GPhotoCamera:
         self.app = app
         self.videofile = videofile
         self.CAPTURE_DIR.mkdir(parents=True, exist_ok=True)
-        self.liveview_thread = GPhotoLiveView()
+        self.gphoto = GPhotoThread()
 
     def liveview(self, path):
-        if self.liveview_thread.status == 'STOPPED':
-            print('Starting liveview')
-            self.liveview_thread.start()
+        if self.gphoto.state == 'STOPPED':
+            print('Starting gphoto thread')
+            self.gphoto.start()
             t = time.time()
-            while self.liveview_thread.status == 'STARTING':
+            while self.gphoto.state == 'STARTING':
                 elapsed = time.time() - t
                 if elapsed > 5.0:
-                    print('liveview did not start :(')
-                    return self.error(b'liveview did not start')
-                print('    waiting...')
+                    return self.error(b'gphoto did not start')
+                #print('    waiting...')
                 time.sleep(0.1)
 
-        if self.liveview_thread.status == 'ERROR':
+        if self.gphoto.state == 'ERROR':
             self.app.start_response('400 Bad Request', [])
-            return [self.liveview_thread.error]
+            return [self.gphoto.error]
 
-        if self.liveview_thread.status == 'STREAMING':
+        if self.gphoto.state == 'STREAMING':
             # return the last frame
             headers = [
                 ('Content-Type', 'image/jpeg'),
-                ('X-Frame-Number', str(self.liveview_thread.n_frame)),
+                ('X-Frame-Number', str(self.gphoto.n_frame)),
             ]
             self.app.start_response('200 OK', headers)
-            return [self.liveview_thread.last_frame]
+            return [self.gphoto.last_frame]
 
         # if we are here, we are in an unexpected state
-        return self.error('Unknown thread state: %s' % self.liveview_thread.status)
+        return self.error('Unknown gphoto thread state: %s' % self.gphoto.state)
 
     def error(self, message):
+        print('ERROR:', message)
         self.app.start_response('500 Internal Server Error', [])
         return [message]
 
