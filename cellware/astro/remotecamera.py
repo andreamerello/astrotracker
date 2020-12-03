@@ -121,7 +121,7 @@ class RemoteCamera(EventDispatcher):
                 # it's very likely that it's camera not found
                 raise CameraNotFound(resp.text)
             resp.raise_for_status()  # treat all the other HTTP errors as exceptions
-
+            self.set_status('Connected')
             #
             ct = resp.headers['Content-Type']
             if ct == 'image/jpeg':
@@ -144,4 +144,6 @@ class RemoteCamera(EventDispatcher):
                 time.sleep(0.01)
         #
         # stop the gphoto thread on the remote side
-        requests.get(url + 'stop') # this is a bit of a hack :(
+        requests.get(url + 'stop/') # this is a bit of a hack :(
+        self.set_status('Stopped')
+
