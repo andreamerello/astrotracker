@@ -4,6 +4,7 @@ import threading
 from urlparse import urljoin
 import traceback
 import datetime
+import collections
 import requests
 from kivy.event import EventDispatcher
 from kivy.properties import (StringProperty, ObjectProperty, NumericProperty)
@@ -110,10 +111,10 @@ class RemoteCamera(EventDispatcher):
             self.set_status('Stopped')
             Logger.info('RemoteCamera: stop')
 
-    def _camera_loop(self, url, recording): # XXX kill recording
+    def _camera_loop(self, url, recording):
         # XXX use requests.session to keep-alive the connection
         self.frame_no = 0
-        last_frame_time = time.time()
+        frame_times = collections.deque([time.time()], maxlen=25)
         while self.running:
             resp = requests.get(url)
             if resp.status_code == 400:
@@ -131,12 +132,10 @@ class RemoteCamera(EventDispatcher):
             else:
                 raise ValueError('Unsupported Content-Type: %s' % ct)
 
-            t = time.time()
-            elapsed = t - last_frame_time
-            self.fps = 1.0/elapsed
-            last_frame_time = t
-            #Logger.info('RemoteCamera: %.2f fps' % self.fps)
-            if elapsed < 0.01:
+            frame_times.append(time.time())
+            self.fps = len(frame_times) / (frame_times[-1] - frame_times[0])
+            Logger.info('RemoteCamera: %.2f fps, deque size %s' % (self.fps, len(frame_times)))
+            if self.fps > 100:
                 # sleep a bit: for the polaris stream this is not an issue since
                 # it will be at a very low fps. However, if you try to display a
                 # MJPG with an unbounded framerate, if you don't put the sleep
