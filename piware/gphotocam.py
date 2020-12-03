@@ -32,7 +32,7 @@ def iter_mjpg(f, data=b''):
 
 class GPhotoThread:
 
-    TIMEOUT = 2.0 # seconds
+    TIMEOUT = 10.0 # seconds
 
     def __init__(self, fake_camera_file):
         self.fake_camera_file = fake_camera_file
