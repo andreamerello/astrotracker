@@ -123,20 +123,15 @@
             values: 'auto', '0.5"', '1"', '1.5"', '2"', '2.5"', '3"', '4"', '5"', '6"'
             disabled: not root.ids.camera_model.picam
 
-        BoxLayout:
-            orientation: 'horizontal'
-            size_hint_y: None
-            height: "33dp"
+        IconButton:
+            icon: 'fa-play'
+            font_size: "64sp"
+            on_release: root.start_camera()
 
-            IconButton:
-                icon: 'fa-play'
-                font_size: "24sp"
-                on_release: root.start_camera()
-
-            IconButton:
-                icon: 'fa-stop'
-                font_size: "24sp"
-                on_release: root.stop_camera()
+        IconButton:
+            icon: 'fa-stop'
+            font_size: "64sp"
+            on_release: root.stop_camera()
 
         BoxLayout:
             id: star_toolbar
