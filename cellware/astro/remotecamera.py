@@ -119,19 +119,23 @@ class RemoteCamera(EventDispatcher):
             if resp.status_code == 400:
                 # it's very likely that it's camera not found
                 raise CameraNotFound(resp.text)
-            # treat all the other HTTP errors as exceptions
-            resp.raise_for_status()
+            resp.raise_for_status()  # treat all the other HTTP errors as exceptions
+
             #
             ct = resp.headers['Content-Type']
-            # XXX implement support for picam YUV data?
-            assert ct == 'image/jpeg'
-            self.set_jpg(resp.content)
+            if ct == 'image/jpeg':
+                self.set_jpg(resp.content)
+            elif ct == 'image/yuv':
+                # NOTE: this is untested
+                self.set_yuv(resp.content)
+            else:
+                raise ValueError('Unsupported Content-Type: %s' % ct)
 
             t = time.time()
             elapsed = t - last_frame_time
             self.fps = 1.0/elapsed
             last_frame_time = t
-            Logger.info('RemoteCamera: %.2f fps' % self.fps)
+            #Logger.info('RemoteCamera: %.2f fps' % self.fps)
             if elapsed < 0.01:
                 # sleep a bit: for the polaris stream this is not an issue since
                 # it will be at a very low fps. However, if you try to display a
@@ -140,76 +144,3 @@ class RemoteCamera(EventDispatcher):
                 # seems to hang.
                 time.sleep(0.01)
 
-    ## def _camera_loop(self, url, recording):
-    ##     resp = requests.get(url, stream=True)
-    ##     if resp.status_code == 400:
-    ##         # it's very likely that it's camera not found
-    ##         raise CameraNotFound(resp.text)
-    ##     # treat all the other HTTP errors as exceptions
-    ##     resp.raise_for_status()
-
-    ##     ct = resp.headers['Content-Type']
-    ##     if ct == 'video/x-raw':
-    ##         fmt = 'yuv'
-    ##         width = int(resp.headers['X-Width'])
-    ##         height = int(resp.headers['X-Height'])
-    ##         frame_size = width * height
-    ##         ext = '.%dx%d.yuv' % (width, height)
-    ##     elif ct == 'video/x-motion-jpeg':
-    ##         fmt = 'jpg'
-    ##         width = 0
-    ##         height = 0
-    ##         frame_size = 0
-    ##         ext = '.mjpg'
-    ##     else:
-    ##         raise ValueError('Unsupported Content-Type: %s' % ct)
-
-    ##     if recording:
-    ##         self.set_status('Recording')
-    ##         now = datetime.datetime.now()
-    ##         fname = self.app.storage.join(now.strftime('polaris %Y-%m-%d %H.%M') + ext)
-    ##         Logger.info('RemoteCamera: recording to %s' % fname)
-    ##         outfile = fname.open('wb')
-    ##     else:
-    ##         self.set_status('Playing')
-    ##         outfile = None
-
-    ##     data = ''
-    ##     self.frame_no = 0
-    ##     tstart = time.time()
-    ##     while self.running:
-    ##         chunk = resp.raw.read(1024)
-    ##         if outfile:
-    ##             outfile.write(chunk)
-    ##         data += chunk
-    ##         if fmt == 'yuv' and len(data) > frame_size:
-    ##             # got a full frame
-    ##             yuv_data = data[:frame_size]
-    ##             data = data[frame_size:]
-    ##             self.got_frame(tstart)
-    ##             self.set_yuv(yuv_data, width, height)
-
-    ##         elif fmt == 'jpg':
-    ##             a = data.find('\xff\xd8') # jpg_start
-    ##             b = data.find('\xff\xd9') # jpg_end
-    ##             if a != -1 and b != -1:
-    ##                 # found a new frame!
-    ##                 jpg_data = data[a:b+2]
-    ##                 data = data[b+2:]
-    ##                 self.got_frame(tstart)
-    ##                 self.set_jpg(jpg_data)
-
-    ##     if outfile:
-    ##         outfile.close()
-
-    ## def got_frame(self, tstart):
-    ##     self.frame_no += 1
-    ##     t = time.time()
-    ##     self.fps = self.frame_no / (t-tstart)
-    ##     Logger.info('RemoteCamera: %.2f fps' % self.fps)
-    ##     # sleep a bit: for the polaris stream this is not an issue since
-    ##     # it will be at a very low fps. However, if you try to display a
-    ##     # MJPG with an unbounded framerate, if you don't put the sleep
-    ##     # you put too many tasks into kivy's @mainthread and things
-    ##     # seems to hang.
-    ##     time.sleep(0.01)
