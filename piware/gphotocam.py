@@ -3,35 +3,67 @@ import time
 import subprocess
 from utils import terminate
 from pathlib import Path
+import threading
 
-class GPhotoCamera:
 
-    # XXX find this programmatically:
-    #    gphoto2 --list-folders
-    CANON_CAMERA_FOLDER = '/store_00020001/DCIM/100CANON/'
-    NIKON_CAMERA_FOLDER = '/store_00010001/DCIM/100D5300/'
-    CAPTURE_DIR = Path('/tmp/pictures')
-
-    FAKE_CAPTURE = None
-    #FAKE_CAPTURE = 'gphoto-capture-20s'
-
-    def __init__(self, app, videofile):
-        self.app = app
-        self.videofile = videofile
-        self.CAPTURE_DIR.mkdir(parents=True, exist_ok=True)
-
-    def liveview(self, path):
-        fps = float(self.app.qs.get('fps', 0))
-        if self.videofile is not None:
-            # for testing
-            yield from self.serve_videofile(self.videofile)
+def iter_mjpg(f, data=b''):
+    """
+    Iterates over all the frames in a MJPG stream
+    """
+    # I measured that a single frame is ~54k (but maybe it will be
+    # smaller if you shoot the dark sky?). We want a frame size which
+    # is small enough to avoid waiting for multiple frames, but if
+    # it's too small the rpi0 CPU can't handle all the work and we get
+    # very few FPS. The following value seems to work well empirically
+    chunk_size = 1024 * 16
+    while True:
+        chunk = f.read(chunk_size)
+        if chunk == b'':
             return
+        data += chunk
+        a = data.find(b'\xff\xd8') # jpg_start
+        b = data.find(b'\xff\xd9') # jpg_end
+        if a != -1 and b != -1:
+            jpg_data = data[a:b+2]
+            data = data[b+2:]
+            yield jpg_data
 
-        if self.FAKE_CAPTURE:
-            cmd = ['python3',
-                   'fake-gphoto-capture.py',
-                   self.FAKE_CAPTURE
-                   ]
+
+
+class GPhotoThread:
+
+    TIMEOUT = 10.0 # seconds
+
+    def __init__(self, fake_camera_file):
+        self.fake_camera_file = fake_camera_file
+        self.state = 'STOPPED'
+        self.thread = None
+        self._last_frame_query = None
+        self._latest_frame = (-1, None) # (frame_no, bytes_content)
+
+    def start(self):
+        assert self.state == 'STOPPED' # XXX todo
+        self.state = 'STARTING'
+        self.thread = threading.Thread(target=self.run, name='GPhotoThread.run')
+        self.thread.daemon = True
+        self.thread.start()
+
+    def stop(self):
+        self.should_stop = True
+
+    def log(self, *args):
+        print('[GPhotoThread]', *args)
+
+    def get_latest_frame(self):
+        self._last_frame_query = time.time()
+        return self._latest_frame
+
+    def run(self):
+        assert self.state == 'STARTING'
+        self._last_frame_query = 0
+        self.should_stop = False
+        if self.fake_camera_file:
+            cmd = ['python3', 'fake-gphoto-capture.py', self.fake_camera_file]
         else:
             cmd = ['gphoto2',
                    #'--port', 'ptpip:192.168.1.180',
@@ -39,8 +71,9 @@ class GPhotoCamera:
                    '--capture-movie',
                    '--stdout'
             ]
-        print('Executing: %s' % ' '.join(cmd))
-        p = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE,
+        self.log('Executing: %s' % ' '.join(cmd))
+        p = subprocess.Popen(cmd, bufsize=0,
+                             stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         #
         # If gphoto2 can't find the camera, it prints some text on stdout. To
@@ -54,66 +87,98 @@ class GPhotoCamera:
             # gphoto is not streaming anything, so it must be an error
             stderr = p.stderr.read()
             p.wait()
-            self.app.start_response('400 Bad Request', [])
-            yield stderr
-            yield out0
+            self.state = 'ERROR'
+            self.error = stderr + out0
+            self.running = False
             return
         #
         # if we are here, gphoto is streaming correctly, let's read the frames
-        headers = [
-            ('Content-Type', 'video/x-motion-jpeg'),
-        ]
-        self.app.start_response('200 OK', headers)
+        self.state = 'STREAMING'
         try:
-            t_next_frame = 0
-            for frame in self.iter_mjpg(p.stdout, out0+out1):
-                # if we are receiving frames faster than the desired fps, just
-                # discard them
-                if fps and time.time() > t_next_frame:
-                    t_next_frame = time.time() + 1.0/fps
-                    yield frame
+            n = 0
+            for frame in iter_mjpg(p.stdout, out0+out1):
+                elapsed = time.time() - self._last_frame_query
+                if self._last_frame_query and elapsed > self.TIMEOUT:
+                    # nobody has asked for a frame since a while, kill the thread
+                    self.log('timeout')
+                    return
+                #
+                self._latest_frame = (n, frame) # atomic update
+                n += 1
+                if n % 10 == 0:
+                    self.log('got frame', n)
+                if self.should_stop:
+                    self.log('should_stop received, exiting')
+                    return
         finally:
+            self.log('terminating process')
             terminate(p)
-            if not self.FAKE_CAPTURE:
+            if not self.fake_camera_file:
                 # make sure to unlock the camera at the end
                 os.system('gphoto2 --set-config output=TFT')
-
-    def iter_mjpg(self, f, data=b''):
-        """
-        Iterates over all the frames in a MJPG stream
-        """
-        # I measured that a single frame is ~54k (but maybe it will be
-        # smaller if you shoot the dark sky?). We want a frame size which
-        # is small enough to avoid waiting for multiple frames, but if
-        # it's too small the rpi0 CPU can't handle all the work and we get
-        # very few FPS. The following value seems to work well empirically
-        chunk_size = 1024 * 16
-        while True:
-            chunk = f.read(chunk_size)
-            if chunk == b'':
-                return
-            data += chunk
-            a = data.find(b'\xff\xd8') # jpg_start
-            b = data.find(b'\xff\xd9') # jpg_end
-            if a != -1 and b != -1:
-                jpg_data = data[a:b+2]
-                data = data[b+2:]
-                yield jpg_data
+            self.state = 'STOPPED'
 
 
-    def serve_videofile(self, fname):
-        # we assume it's a mjpg for now. Serve full frames at a constant rate
-        headers = [
-            ('Content-Type', 'video/x-motion-jpeg'),
-        ]
-        self.app.start_response('200 OK', headers)
-        fps = float(self.app.qs.get('fps', 0))
-        if fps == 0:
-            fps = 5.0 # just a random default value
-        with open(fname, 'rb') as f:
-            for frame in self.iter_mjpg(f):
-                yield frame
-                time.sleep(1/fps)
+class GPhotoCamera:
+
+    # XXX find this programmatically:
+    #    gphoto2 --list-folders
+    CANON_CAMERA_FOLDER = '/store_00020001/DCIM/100CANON/'
+    NIKON_CAMERA_FOLDER = '/store_00010001/DCIM/100D5300/'
+    CAPTURE_DIR = Path('/tmp/pictures')
+
+    def __init__(self, app, fake_camera_file):
+        self.app = app
+        self.CAPTURE_DIR.mkdir(parents=True, exist_ok=True)
+        self.gphoto = GPhotoThread(fake_camera_file)
+
+    def liveview(self, path):
+        if path == '/camera/liveview/':
+            return self.liveview_frame()
+        elif path == '/camera/liveview/stop/':
+            return self.liveview_stop()
+        else:
+            self.app.start_response('404 Not Found', [])
+            return [('Path not found: %s' % path).encode('utf-8')]
+
+    def liveview_stop(self):
+        self.gphoto.stop()
+        self.app.start_response('200 OK', [])
+        return [b'OK']
+
+    def liveview_frame(self):
+        if self.gphoto.state == 'STOPPED':
+            print('Starting gphoto thread')
+            self.gphoto.start()
+            t = time.time()
+            while self.gphoto.state == 'STARTING':
+                elapsed = time.time() - t
+                if elapsed > 5.0:
+                    return self.error(b'gphoto did not start')
+                #print('    waiting...')
+                time.sleep(0.1)
+
+        if self.gphoto.state == 'ERROR':
+            self.app.start_response('400 Bad Request', [])
+            return [self.gphoto.error]
+
+        if self.gphoto.state == 'STREAMING':
+            # return the last frame
+            n, frame = self.gphoto.get_latest_frame()
+            headers = [
+                ('Content-Type', 'image/jpeg'),
+                ('X-Frame-Number', str(n)),
+            ]
+            self.app.start_response('200 OK', headers)
+            return [frame]
+
+        # if we are here, we are in an unexpected state
+        return self.error('Unknown gphoto thread state: %s' % self.gphoto.state)
+
+    def error(self, message):
+        print('ERROR:', message)
+        self.app.start_response('500 Internal Server Error', [])
+        return [message]
 
     def picture(self, path):
         """

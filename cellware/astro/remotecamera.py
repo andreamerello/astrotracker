@@ -4,6 +4,7 @@ import threading
 from urlparse import urljoin
 import traceback
 import datetime
+import collections
 import requests
 from kivy.event import EventDispatcher
 from kivy.properties import (StringProperty, ObjectProperty, NumericProperty)
@@ -36,12 +37,12 @@ class RemoteCamera(EventDispatcher):
     # ==============================
 
     def __init__(self, **kwargs):
-        self.register_event_type('on_remote_camera_size')
+        self.register_event_type('on_remote_frame_size')
         super(RemoteCamera, self).__init__(**kwargs)
-        self.img_width, self.img_height = 480, 320
+        self.frame_size = (0, 0)
         self.running = False
 
-    def on_remote_camera_size(self, *args):
+    def on_remote_frame_size(self, *args):
         pass
 
     def url(self, path):
@@ -77,10 +78,9 @@ class RemoteCamera(EventDispatcher):
         # why.
         stream = io.BytesIO(jpg)
         img = CoreImage(stream, ext="jpg")
-        if (self.img_width != img.width) or (self.img_height != img.height):
-            self.img_width = img.width
-            self.img_height = img.height
-            self.dispatch('on_remote_camera_size')
+        if self.frame_size != img.size:
+            self.frame_size = img.size
+            self.dispatch('on_remote_frame_size')
         self.frame_texture = img.texture
 
     @mainthread
@@ -111,75 +111,44 @@ class RemoteCamera(EventDispatcher):
             Logger.info('RemoteCamera: stop')
 
     def _camera_loop(self, url, recording):
-        resp = requests.get(url, stream=True)
-        if resp.status_code == 400:
-            # it's very likely that it's camera not found
-            raise CameraNotFound(resp.text)
-        # treat all the other HTTP errors as exceptions
-        resp.raise_for_status()
-
-        ct = resp.headers['Content-Type']
-        if ct == 'video/x-raw':
-            fmt = 'yuv'
-            width = int(resp.headers['X-Width'])
-            height = int(resp.headers['X-Height'])
-            frame_size = width * height
-            ext = '.%dx%d.yuv' % (width, height)
-        elif ct == 'video/x-motion-jpeg':
-            fmt = 'jpg'
-            width = 0
-            height = 0
-            frame_size = 0
-            ext = '.mjpg'
-        else:
-            raise ValueError('Unsupported Content-Type: %s' % ct)
-
-        if recording:
-            self.set_status('Recording')
-            now = datetime.datetime.now()
-            fname = self.app.storage.join(now.strftime('polaris %Y-%m-%d %H.%M') + ext)
-            Logger.info('RemoteCamera: recording to %s' % fname)
-            outfile = fname.open('wb')
-        else:
-            self.set_status('Playing')
-            outfile = None
-
-        data = ''
+        session = requests.session()
         self.frame_no = 0
-        tstart = time.time()
+        self.frame_size = (0, 0)
+        frame_times = collections.deque([time.time()], maxlen=25)
         while self.running:
-            chunk = resp.raw.read(1024)
-            if outfile:
-                outfile.write(chunk)
-            data += chunk
-            if fmt == 'yuv' and len(data) > frame_size:
-                # got a full frame
-                yuv_data = data[:frame_size]
-                data = data[frame_size:]
-                self.got_frame(tstart)
-                self.set_yuv(yuv_data, width, height)
+            resp = session.get(url)
+            if resp.status_code == 400:
+                # it's very likely that it's camera not found
+                raise CameraNotFound(resp.text)
+            resp.raise_for_status()  # treat all the other HTTP errors as exceptions
+            self.set_status('Connected')
+            #
+            ct = resp.headers['Content-Type']
+            if ct == 'image/jpeg':
+                self.set_jpg(resp.content)
+            elif ct == 'image/yuv':
+                # NOTE: this is untested
+                self.set_yuv(resp.content)
+            else:
+                raise ValueError('Unsupported Content-Type: %s' % ct)
 
-            elif fmt == 'jpg':
-                a = data.find('\xff\xd8') # jpg_start
-                b = data.find('\xff\xd9') # jpg_end
-                if a != -1 and b != -1:
-                    # found a new frame!
-                    jpg_data = data[a:b+2]
-                    data = data[b+2:]
-                    self.got_frame(tstart)
-                    self.set_jpg(jpg_data)
+            try:
+                self.frame_no = int(resp.headers['X-Frame-Number'])
+            except (KeyError, ValueError):
+                pass
 
-        if outfile:
-            outfile.close()
+            frame_times.append(time.time())
+            self.fps = len(frame_times) / (frame_times[-1] - frame_times[0])
+            #Logger.info('RemoteCamera: %.2f fps' % self.fps)
+            if self.fps > 100:
+                # sleep a bit: for the polaris stream this is not an issue since
+                # it will be at a very low fps. However, if you try to display a
+                # MJPG with an unbounded framerate, if you don't put the sleep
+                # you put too many tasks into kivy's @mainthread and things
+                # seems to hang.
+                time.sleep(0.01)
+        #
+        # stop the gphoto thread on the remote side
+        session.get(url + 'stop/') # this is a bit of a hack :(
+        self.set_status('Stopped')
 
-    def got_frame(self, tstart):
-        self.frame_no += 1
-        t = time.time()
-        self.fps = self.frame_no / (t-tstart)
-        Logger.info('RemoteCamera: %.2f fps' % self.fps)
-        # sleep a bit: for the polaris stream this is not an issue since
-        # it will be at a very low fps. However, if you try to display a
-        # MJPG with an unbounded framerate, if you don't put the sleep
-        # you put too many tasks into kivy's @mainthread and things
-        # seems to hang.
-        time.sleep(0.01)

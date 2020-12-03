@@ -27,7 +27,7 @@ class PolarScreen(MyScreen):
         super(PolarScreen, self).__init__(*args, **kwargs)
         self.ids.imgfilename.load_image = self.load_image
         self.NP = self.app.load_north_pole() # coordinates in the 0-1.0 range
-        self.camera.bind(on_remote_camera_size=self.autoscale)
+        self.camera.bind(on_remote_frame_size=self.autoscale)
 
     def load_image(self):
         imgfile = self.app.image_storage.join(self.ids.imgfilename.last_image)
@@ -46,8 +46,9 @@ class PolarScreen(MyScreen):
         return resp.content
 
     def autoscale(self, *args):
-        scale_x = self.width / float(self.camera.img_width)
-        scale_y = self.height / float(self.camera.img_height)
+        w, h = self.camera.frame_size
+        scale_x = self.width / float(w)
+        scale_y = self.height / float(h)
         self.ids.scatter.scale = min(scale_x, scale_y)
         self.ids.scatter.pos = (0, 0)
 
@@ -62,9 +63,10 @@ class PolarScreen(MyScreen):
         self.ids.imgfilename.disabled = False
         self.camera.stop()
 
-    def start_camera(self, recording=False):
+    def start_camera(self):
         self.ids.imgfilename.disabled = True
-        if self.ids.camera_model.picam:
+        if False and self.ids.camera_model.picam:
+            # picamera code commented out for now
             fmt = self.ids.format.text.lower()
             resolution = self.ids.resolution.text
             shutter = self.ids.shutter.text
@@ -74,9 +76,8 @@ class PolarScreen(MyScreen):
                 shutter = shutter[:-1]
                 params += '?shutter=%s' % shutter
         else:
-            fps = self.ids.fps.text
-            params = '/camera/liveview/?fps=%s' % fps
-        self.camera.start(params, recording)
+            params = '/camera/liveview/'
+        self.camera.start(params)
 
     def status_click(self):
         box = MessageBox(title='Error',

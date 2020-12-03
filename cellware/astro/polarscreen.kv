@@ -1,6 +1,4 @@
 <PolarScreen>:
-    #on_size: root.autoscale()
-
     MyScatterPlaneLayout:
         id: scatter
         do_rotation: False
@@ -25,7 +23,7 @@
             id: stars
             visible: True
             opacity: 1 if self.visible else 0
-            source: "polaris%s.png" % root.ids.focal_length
+            source: "polaris%s.png" % root.ids.focal_length.text
             center: self.width * root.NPx, self.height * root.NPy
             size: root.ids.sky.size
             size_hint: None, None
@@ -75,12 +73,11 @@
         size_hint_x: None
         width: '100dp'
 
-        Spinner:
-            id: camera_model
-            text: 'DSLR'
-            values: 'DSLR', 'Pi Camera'
-            picam: self.text == 'Pi Camera'
-            canon: self.text == 'DSLR'
+        # Spinner:
+        #     id: camera_model
+        #     text: 'DSLR'
+        #     values: 'DSLR', 'Pi Camera'
+        #     picam: self.text == 'Pi Camera'
 
         ImgFileName:
             id: imgfilename
@@ -101,55 +98,44 @@
             text: "%.2f fps" % root.camera.fps
             color: (1, 0, 0, 1)
 
-        Spinner:
-            id: fps
-            text: '3'
-            values: '1', '1.5', '2', '3', '5', '10', '15', '25'
-            disabled: not root.ids.camera_model.canon
+        # these are useful only for the picamera: uncomment if/when we need it again
+        # Spinner:
+        #     id: format
+        #     text: 'RAW'
+        #     values: 'RAW', 'MJPG'
+        #     disabled: not root.ids.camera_model.picam
+
+        # Spinner:
+        #     id: resolution
+        #     text: '320x240'
+        #     values: '2592x1944', '1296x972', '640x480', '320x240'
+        #     disabled: not root.ids.camera_model.picam
+
+        # Spinner:
+        #     id: shutter
+        #     text: 'auto'
+        #     values: 'auto', '0.5"', '1"', '1.5"', '2"', '2.5"', '3"', '4"', '5"', '6"'
+        #     disabled: not root.ids.camera_model.picam
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: "50dp"
+
+            IconButton:
+                icon: 'fa-play'
+                font_size: "40dp"
+                on_release: root.start_camera()
+
+            IconButton:
+                icon: 'fa-stop'
+                font_size: "40dp"
+                on_release: root.stop_camera()
 
         Spinner:
             id: focal_length
             text: '45mm'
             values: '45mm', '75mm'
-
-        Spinner:
-            id: format
-            text: 'RAW'
-            values: 'RAW', 'MJPG'
-            disabled: not root.ids.camera_model.picam
-
-        Spinner:
-            id: resolution
-            text: '320x240'
-            values: '2592x1944', '1296x972', '640x480', '320x240'
-            disabled: not root.ids.camera_model.picam
-
-        Spinner:
-            id: shutter
-            text: 'auto'
-            values: 'auto', '0.5"', '1"', '1.5"', '2"', '2.5"', '3"', '4"', '5"', '6"'
-            disabled: not root.ids.camera_model.picam
-
-        BoxLayout:
-            orientation: 'horizontal'
-            size_hint_y: None
-            height: "33dp"
-
-            IconButton:
-                icon: 'fa-play'
-                font_size: "24sp"
-                on_release: root.start_camera()
-
-            IconButton:
-                icon: 'fa-stop'
-                font_size: "24sp"
-                on_release: root.stop_camera()
-
-            IconButton:
-                icon: 'fa-circle'
-                font_size: "24sp"
-                color: (1, 0, 0, 1)
-                on_release: root.start_camera(recording=True)
 
         BoxLayout:
             id: star_toolbar
