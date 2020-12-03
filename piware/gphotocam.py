@@ -1,6 +1,7 @@
 import os
 import time
 import subprocess
+import collections
 from utils import terminate
 from pathlib import Path
 import threading
@@ -94,9 +95,11 @@ class GPhotoThread:
         #
         # if we are here, gphoto is streaming correctly, let's read the frames
         self.state = 'STREAMING'
+        frame_times = collections.deque([time.time()], maxlen=25)
         try:
             n = 0
             for frame in iter_mjpg(p.stdout, out0+out1):
+                frame_times.append(time.time())
                 elapsed = time.time() - self._last_frame_query
                 if self._last_frame_query and elapsed > self.TIMEOUT:
                     # nobody has asked for a frame since a while, kill the thread
@@ -105,8 +108,10 @@ class GPhotoThread:
                 #
                 self._latest_frame = (n, frame) # atomic update
                 n += 1
-                if n % 10 == 0:
-                    self.log('got frame', n)
+                if n % 25 == 0:
+                    fps = len(frame_times) / (frame_times[-1] - frame_times[0])
+                    self.log('fps: %.2f, frame %d' % (fps, n))
+
                 if self.should_stop:
                     self.log('should_stop received, exiting')
                     return

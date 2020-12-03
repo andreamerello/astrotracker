@@ -25,7 +25,7 @@ class PolarisApp:
         path = env['PATH_INFO']
         if path[-1] != '/':
             path += '/'
-        print('Handling', path)
+        #print('Handling', path)
         if path.startswith('/camera/liveview/'):
             return self.gphoto.liveview(path)
         elif path.startswith('/camera/picture/'):
@@ -64,9 +64,22 @@ class PolarisApp:
         self.start_response(http_status, headers)
         return lines()
 
+def patch_handler():
+    # hack to avoid logging all requests to /camera/liveview: we log only the first
+    from wsgiref.simple_server import WSGIRequestHandler
+    def log_request(self, code='-', size='-'):
+        if self.requestline == WSGIRequestHandler.last_requestline == 'GET /camera/liveview/ HTTP/1.1':
+            return
+        WSGIRequestHandler.last_requestline = self.requestline
+        super(WSGIRequestHandler, self).log_request(code, size)
+
+    WSGIRequestHandler.last_requestline = None
+    WSGIRequestHandler.log_request = log_request
+
 
 def main(fname):
     from wsgiref.simple_server import make_server
+    patch_handler()
     app = PolarisApp(fname)
     httpd = make_server('', 8000, app)
     print("Serving HTTP on port 8000...")
