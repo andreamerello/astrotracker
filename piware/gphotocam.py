@@ -32,10 +32,13 @@ def iter_mjpg(f, data=b''):
 
 class GPhotoThread:
 
+    TIMEOUT = 2.0 # seconds
+
     def __init__(self, fake_camera_file):
         self.fake_camera_file = fake_camera_file
         self.state = 'STOPPED'
         self.thread = None
+        self._last_frame_query = None
         self._latest_frame = (-1, None) # (frame_no, bytes_content)
 
     def start(self):
@@ -52,10 +55,12 @@ class GPhotoThread:
         print('[GPhotoThread]', *args)
 
     def get_latest_frame(self):
+        self._last_frame_query = time.time()
         return self._latest_frame
 
     def run(self):
         assert self.state == 'STARTING'
+        self._last_frame_query = 0
         self.should_stop = False
         if self.fake_camera_file:
             cmd = ['python3', 'fake-gphoto-capture.py', self.fake_camera_file]
@@ -90,9 +95,14 @@ class GPhotoThread:
         # if we are here, gphoto is streaming correctly, let's read the frames
         self.state = 'STREAMING'
         try:
-            # XXX: kill gphoto if nobody has asked for a frame in the last X seconds
             n = 0
             for frame in iter_mjpg(p.stdout, out0+out1):
+                elapsed = time.time() - self._last_frame_query
+                if self._last_frame_query and elapsed > self.TIMEOUT:
+                    # nobody has asked for a frame since a while, kill the thread
+                    self.log('timeout')
+                    return
+                #
                 self._latest_frame = (n, frame) # atomic update
                 n += 1
                 if n % 10 == 0:
@@ -103,7 +113,7 @@ class GPhotoThread:
         finally:
             self.log('terminating process')
             terminate(p)
-            if not self.FAKE_CAPTURE:
+            if not self.fake_camera_file:
                 # make sure to unlock the camera at the end
                 os.system('gphoto2 --set-config output=TFT')
             self.state = 'STOPPED'
