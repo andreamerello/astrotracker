@@ -140,7 +140,8 @@ class NewGPhotoThread:
         self.state = 'STREAMING'
         self._last_frame_query = time.time()
         self._frame_no = -1
-        self.camera = gp.Camera()
+        if self.camera is None:
+            self.camera = gp.Camera()
         self.camera.init()
         self.thread = threading.Thread(target=self.run, name='NewGPhotoThread.run')
         self.thread.daemon = True
