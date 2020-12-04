@@ -112,24 +112,34 @@ class NewGPhotoThread:
 
     def start(self):
         import gphoto2 as gp
-        assert self.state == 'STOPPED' # XXX todo
-        self.state = 'STREAMING'
-        self._last_frame_query = time.time()
-        self._frame_no = -1
         if self.camera is None:
             self.camera = gp.Camera()
+        #
+        assert self.state == 'STOPPED'
         self.camera.init()
+        self.set_config('output', 'TFT + PC')
+        self._last_frame_query = time.time()
+        self._frame_no = -1
+        self.state = 'STREAMING'
+        #
         self.thread = threading.Thread(target=self.run, name='NewGPhotoThread.run')
         self.thread.daemon = True
         self.thread.start()
 
     def stop(self):
         if self.camera:
+            self.set_config('output', 'TFT')
             self.camera.exit()
         self.state = 'STOPPED'
 
     def log(self, *args):
         print('[NewGPhotoThread]', *args)
+
+    def set_config(self, name, value):
+        config = self.camera.get_config()
+        widget = config.get_child_by_name(name)
+        widget.set_value(value)
+        self.camera.set_config(config)
 
     def get_latest_frame(self):
         self._last_frame_query = time.time()
