@@ -6,7 +6,6 @@ from utils import terminate
 from pathlib import Path
 import threading
 
-
 def iter_mjpg(f, data=b''):
     """
     Iterates over all the frames in a MJPG stream
@@ -124,6 +123,54 @@ class GPhotoThread:
             self.state = 'STOPPED'
 
 
+class NewGPhotoThread:
+
+    TIMEOUT = 10.0 # seconds
+
+    def __init__(self):
+        self.state = 'STOPPED'
+        self.camera = None
+        self.thread = None
+        self._last_frame_query = None
+        self._frame_no = None
+
+    def start(self):
+        import gphoto2 as gp
+        assert self.state == 'STOPPED' # XXX todo
+        self.state = 'STREAMING'
+        self._last_frame_query = time.time()
+        self._frame_no = -1
+        self.camera = gp.Camera()
+        self.camera.init()
+        self.thread = threading.Thread(target=self.run, name='NewGPhotoThread.run')
+        self.thread.daemon = True
+        self.thread.start()
+
+    def stop(self):
+        if self.camera:
+            self.camera.exit()
+        self.state = 'STOPPED'
+
+    def log(self, *args):
+        print('[NewGPhotoThread]', *args)
+
+    def get_latest_frame(self):
+        self._last_frame_query = time.time()
+        capture = self.camera.capture_preview()
+        filedata = capture.get_data_and_size()
+        self._frame_no += 1
+        return (self._frame_no, memoryview(filedata).tobytes())
+
+    def run(self):
+        while self.state != 'STOPPED':
+            elapsed = time.time() - self._last_frame_query
+            if elapsed > self.TIMEOUT:
+                self.log('timeout')
+                self.stop()
+                break
+            time.sleep(1)
+
+
 class GPhotoCamera:
 
     # XXX find this programmatically:
@@ -135,7 +182,8 @@ class GPhotoCamera:
     def __init__(self, app, fake_camera_file):
         self.app = app
         self.CAPTURE_DIR.mkdir(parents=True, exist_ok=True)
-        self.gphoto = GPhotoThread(fake_camera_file)
+        #self.gphoto = GPhotoThread(fake_camera_file)
+        self.gphoto = NewGPhotoThread()
 
     def liveview(self, path):
         if path == '/camera/liveview/':
