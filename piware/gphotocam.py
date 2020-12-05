@@ -5,7 +5,14 @@ import collections
 from pathlib import Path
 import threading
 from utils import terminate, iter_mjpg
-import gphoto2 as gp
+
+try:
+    import gphoto2 as gp
+except ImportError:
+    print('WARNING: cannot import gphoto2, using a fake module')
+    class gp:
+        class GPhoto2Error(Exception):
+            pass
 
 class LiveView:
     """
