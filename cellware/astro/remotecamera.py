@@ -13,7 +13,7 @@ from kivy.clock import Clock, mainthread
 from kivy.core.image import Image as CoreImage
 from kivy.graphics.texture import Texture
 
-class CameraNotFound(Exception):
+class CameraError(Exception):
     pass
 
 def yuv_to_texture(data, width, height):
@@ -98,10 +98,10 @@ class RemoteCamera(EventDispatcher):
         self.set_status('Connecting...')
         try:
             self._camera_loop(url, recording)
-        except CameraNotFound as e:
+        except CameraError as e:
             self.stop()
-            self.set_status('No camera', str(e))
-            Logger.exception('RemoteCamera: CameraNotFound')
+            self.set_status('Camera Error', str(e))
+            Logger.exception('RemoteCamera: CameraError')
         except Exception as e:
             self.stop()
             self.set_status('Error', traceback.format_exc())
@@ -118,8 +118,8 @@ class RemoteCamera(EventDispatcher):
         while self.running:
             resp = session.get(url)
             if resp.status_code == 400:
-                # it's very likely that it's camera not found
-                raise CameraNotFound(resp.text)
+                # this happens in case of gphoto-related errors
+                raise CameraError(resp.text)
             resp.raise_for_status()  # treat all the other HTTP errors as exceptions
             self.set_status('Connected')
             #
