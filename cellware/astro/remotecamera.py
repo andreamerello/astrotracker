@@ -1,4 +1,5 @@
 import io
+import os
 import time
 import threading
 from urlparse import urljoin
@@ -50,19 +51,22 @@ class RemoteCamera(EventDispatcher):
         base = 'http://%s:%s' % (host, port)
         return urljoin(base, path)
 
-    def start(self, params, recording=False):
+    def start(self, path):
         if self.running:
             Logger.info('RemoteCamera: WARNING: called start(), but camera already running')
             return
         self.running = True
-        self.thread = threading.Thread(target=self.run, args=(params, recording),
+        self.thread = threading.Thread(target=self.run, args=(path,),
                                        name='RemoteCamera')
         self.thread.daemon = True
         self.thread.start()
 
-    def stop(self):
+    def stop(self, path=None):
         if not self.running:
             Logger.info('RemoteCamera: WARNING: called stop() but camera is not running')
+            if path:
+                url = self.url(os.path.join(path, 'stop'))
+                requests.get(url)
             return
         self.running = False
 
@@ -91,13 +95,16 @@ class RemoteCamera(EventDispatcher):
     # RemoteCamera thread
     # ==============================
 
-    def run(self, params, recording):
+    def run(self, path):
+        """
+        path is relative to the remote server. E.g., '/camera/liveview/'
+        """
         Logger.info('RemoteCamera: thread started')
-        url = self.url(params)
-        Logger.info('RemoteCamera: connecting to %s' % url)
+        url = self.url(path)
+        Logger.info('RemoteCamera: connecting to %s' % self.url)
         self.set_status('Connecting...')
         try:
-            self._camera_loop(url, recording)
+            self._camera_loop(url)
         except CameraError as e:
             self.stop()
             self.set_status('Camera Error', str(e))
@@ -110,7 +117,7 @@ class RemoteCamera(EventDispatcher):
             self.set_status('Stopped')
             Logger.info('RemoteCamera: stop')
 
-    def _camera_loop(self, url, recording):
+    def _camera_loop(self, url):
         session = requests.session()
         self.frame_no = 0
         self.frame_size = (0, 0)
@@ -149,6 +156,5 @@ class RemoteCamera(EventDispatcher):
                 time.sleep(0.01)
         #
         # stop the gphoto thread on the remote side
-        session.get(url + 'stop/') # this is a bit of a hack :(
+        session.get(os.path.join(url, 'stop'))
         self.set_status('Stopped')
-

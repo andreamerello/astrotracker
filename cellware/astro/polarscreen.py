@@ -61,7 +61,7 @@ class PolarScreen(MyScreen):
 
     def stop_camera(self):
         self.ids.imgfilename.disabled = False
-        self.camera.stop()
+        self.camera.stop('/camera/liveview/')
 
     def start_camera(self):
         self.ids.imgfilename.disabled = True
@@ -70,14 +70,14 @@ class PolarScreen(MyScreen):
             fmt = self.ids.format.text.lower()
             resolution = self.ids.resolution.text
             shutter = self.ids.shutter.text
-            params = '/picamera/liveview/%s/%s/' % (fmt, resolution)
+            path = '/picamera/liveview/%s/%s/' % (fmt, resolution)
             if shutter != 'auto':
                 assert shutter[-1] == '"'
                 shutter = shutter[:-1]
-                params += '?shutter=%s' % shutter
+                path += '?shutter=%s' % shutter
         else:
-            params = '/camera/liveview/'
-        self.camera.start(params)
+            path = '/camera/liveview/'
+        self.camera.start(path)
 
     def status_click(self):
         box = MessageBox(title='Error',
