@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 from skyfield.api import Star, load
 from skyfield.data import hipparcos
@@ -48,7 +49,7 @@ class SkyPoint:
 print()
 print('STARS = [')
 
-ALL_STARS = [5372]
+#ALL_STARS = [5372]
 for n in ALL_STARS:
     if df.loc[n].magnitude >= 5:
         # ignore faint stars
