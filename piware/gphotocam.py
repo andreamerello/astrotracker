@@ -20,7 +20,7 @@ class LiveView:
     def stop(self):
         raise NotImplementedError
 
-    def get_frame(self):
+    def get_latest_frame(self):
         """
         Return: (frame_no, bytes_data)
         """
@@ -113,6 +113,43 @@ class LibGphotoLiveview(LiveView):
         self._kill_timeout_thread.set() # send the kill event
         self._timeout_thread = None # state == 'STOPPED'
 
+
+class FakeLiveView:
+
+    def __init__(self, videofile):
+        self.videofile = videofile
+        self.i = -1
+        self.f = None
+        self.my_iter = None
+
+    @property
+    def state(self):
+        if self.my_iter:
+            return 'STARTED'
+        else:
+            return 'STOPPED'
+
+    def start(self):
+        self.f = open(self.videofile, 'rb')
+        self.my_iter = iter_mjpg(self.f)
+
+    def stop(self):
+        self.my_iter.close()
+        self.f.close()
+        self.my_iter = None
+        self.f = None
+        self.i = -1
+
+    def get_latest_frame(self):
+        """
+        Return: (frame_no, bytes_data)
+        """
+        frame_bytes = next(self.my_iter)
+        self.i += 1
+        return (self.i, frame_bytes)
+
+
+
 class GPhotoCamera:
 
     # XXX find this programmatically:
@@ -124,8 +161,10 @@ class GPhotoCamera:
     def __init__(self, app, fake_camera_file):
         self.app = app
         self.CAPTURE_DIR.mkdir(parents=True, exist_ok=True)
-        #self.gphoto = GPhotoThread(fake_camera_file)
-        self._liveview = LibGphotoLiveview()
+        if fake_camera_file:
+            self._liveview = FakeLiveView(fake_camera_file)
+        else:
+            self._liveview = LibGphotoLiveview()
 
     def liveview(self, path):
         if path == '/camera/liveview/':
