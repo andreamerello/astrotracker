@@ -1,4 +1,11 @@
 <PolarScreen>:
+    canvas.before:
+        Color:
+            rgba: 0, 0, 0, .8
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
     MyScatterPlaneLayout:
         id: scatter
         do_rotation: False
@@ -68,6 +75,13 @@
 
     BoxLayout:
         # right toolbar
+        canvas.before:
+            Color:
+                rgba: 1, 1, 1, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
         right: root.right
         orientation: 'vertical'
         size_hint_x: None
