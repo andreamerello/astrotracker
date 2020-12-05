@@ -112,6 +112,7 @@ class NewGPhotoThread:
 
     def start(self):
         import gphoto2 as gp
+        self.log('Starting')
         if self.camera is None:
             self.camera = gp.Camera()
         #
@@ -131,11 +132,13 @@ class NewGPhotoThread:
             self.set_config('output', 'TFT')
             self.camera.exit()
         self.state = 'STOPPED'
+        self.log('Stop')
 
     def log(self, *args):
         print('[NewGPhotoThread]', *args)
 
     def set_config(self, name, value):
+        self.log('set_config: %s = %s' % (name, value))
         config = self.camera.get_config()
         widget = config.get_child_by_name(name)
         widget.set_value(value)
@@ -152,7 +155,7 @@ class NewGPhotoThread:
         while self.state != 'STOPPED':
             elapsed = time.time() - self._last_frame_query
             if elapsed > self.TIMEOUT:
-                self.log('timeout')
+                self.log('Timeout! Stopping camera')
                 self.stop()
                 break
             time.sleep(1)
