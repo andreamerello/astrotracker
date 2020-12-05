@@ -156,6 +156,7 @@ class GPhotoCamera:
             return [frame_bytes]
 
         except gp.GPhoto2Error as e:
+            self._liveview.stop()
             self.app.start_response('400 Bad Request', [])
             return [str(e).encode('utf-8')]
 
