@@ -14,6 +14,7 @@ class PolarisApp:
             print('FAKE CAMERA from %s' % fake_camera_file)
         self.gphoto = GPhotoCamera(self, fake_camera_file)
         self.picam = PiCamera(self)
+        self.last_requested_path = None
 
     def __call__(self, env, start_response):
         """
@@ -21,11 +22,11 @@ class PolarisApp:
         """
         self.env = env
         self.start_response = start_response
-        self.parse_query_string()
         path = env['PATH_INFO']
         if path[-1] != '/':
             path += '/'
-        #print('Handling', path)
+        self.log_request(env, path)
+        self.parse_query_string()
         if path.startswith('/camera/liveview/'):
             return self.gphoto.liveview(path)
         elif path.startswith('/camera/picture/'):
@@ -38,6 +39,18 @@ class PolarisApp:
             return self.counter()
         else:
             return self.hello(path)
+
+    def log_request(self, env, path):
+        if path == '/camera/liveview/' and path == self.last_requested_path:
+            # log just the first
+            return
+        t = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        remote = env.get('REMOTE_ADDR', '<?>')
+        method = env.get('REQUEST_METHOD', '<?>')
+        path = env.get('PATH_INFO', '<?>')
+        protocol = env.get('SERVER_PROTOCOL', '<?>')
+        print('[%s] %s - %s %s %s' % (t, remote, method, path, protocol))
+        self.last_requested_path = path
 
     def parse_query_string(self):
         # parse_qs returns a LIST for every value; here, we extract values out
@@ -65,17 +78,11 @@ class PolarisApp:
         return lines()
 
 def patch_handler():
-    # hack to avoid logging all requests to /camera/liveview: we log only the first
+    # disable the builtin logging of wsgiref, we do the logging by ourselves
     from wsgiref.simple_server import WSGIRequestHandler
     def log_request(self, code='-', size='-'):
-        if self.requestline == WSGIRequestHandler.last_requestline == 'GET /camera/liveview/ HTTP/1.1':
-            return
-        WSGIRequestHandler.last_requestline = self.requestline
-        super(WSGIRequestHandler, self).log_request(code, size)
-
-    WSGIRequestHandler.last_requestline = None
+        pass
     WSGIRequestHandler.log_request = log_request
-
 
 def main(fname):
     from wsgiref.simple_server import make_server
