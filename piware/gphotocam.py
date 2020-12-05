@@ -5,175 +5,113 @@ import collections
 from pathlib import Path
 import threading
 from utils import terminate, iter_mjpg
+import gphoto2 as gp
 
-class GPhotoThread:
+class LiveView:
+    """
+    Abstract class
+    """
 
-    TIMEOUT = 10.0 # seconds
-
-    def __init__(self, fake_camera_file):
-        self.fake_camera_file = fake_camera_file
-        self.state = 'STOPPED'
-        self.error = b''
-        self.thread = None
-        self._last_frame_query = None
-        self._latest_frame = (-1, None) # (frame_no, bytes_content)
+    state = None # 'STARTED', 'STOPPED', ...
 
     def start(self):
-        assert self.state == 'STOPPED' # XXX todo
-        self.state = 'STARTING'
-        self.thread = threading.Thread(target=self.run, name='GPhotoThread.run')
-        self.thread.daemon = True
-        self.thread.start()
+        raise NotImplementedError
 
     def stop(self):
-        self.should_stop = True
+        raise NotImplementedError
 
-    def log(self, *args):
-        print('[GPhotoThread]', *args)
-
-    def get_latest_frame(self):
-        self._last_frame_query = time.time()
-        return self._latest_frame
-
-    def run(self):
-        assert self.state == 'STARTING'
-        self._last_frame_query = 0
-        self.should_stop = False
-        if self.fake_camera_file:
-            cmd = ['python3', 'fake-gphoto-capture.py', self.fake_camera_file]
-        else:
-            cmd = ['gphoto2',
-                   #'--port', 'ptpip:192.168.1.180',
-                   '--set-config', 'output=TFT + PC',
-                   '--capture-movie',
-                   '--stdout'
-            ]
-        self.log('Executing: %s' % ' '.join(cmd))
-        p = subprocess.Popen(cmd, bufsize=0,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-        #
-        # If gphoto2 can't find the camera, it prints some text on stdout. To
-        # catch the case, we try to read some bytes: if out1 is empty, it
-        # means that gphoto is not streaming and out0 contains the error
-        # message. Else, out0 and out1 contains "real" MJPG frames, which we
-        # need to yield to the client.
-        out0 = p.stdout.read(1024)
-        out1 = p.stdout.read(1024)
-        if out1 == b'':
-            # gphoto is not streaming anything, so it must be an error
-            stderr = p.stderr.read()
-            p.wait()
-            self.state = 'ERROR'
-            self.error = stderr + out0
-            self.running = False
-            return
-        #
-        # if we are here, gphoto is streaming correctly, let's read the frames
-        self.state = 'STREAMING'
-        frame_times = collections.deque([time.time()], maxlen=25)
-        try:
-            n = 0
-            for frame in iter_mjpg(p.stdout, out0+out1):
-                frame_times.append(time.time())
-                elapsed = time.time() - self._last_frame_query
-                if self._last_frame_query and elapsed > self.TIMEOUT:
-                    # nobody has asked for a frame since a while, kill the thread
-                    self.log('timeout')
-                    return
-                #
-                self._latest_frame = (n, frame) # atomic update
-                n += 1
-                if n % 25 == 0:
-                    fps = len(frame_times) / (frame_times[-1] - frame_times[0])
-                    self.log('fps: %.2f, frame %d' % (fps, n))
-
-                if self.should_stop:
-                    self.log('should_stop received, exiting')
-                    return
-        finally:
-            self.log('terminating process')
-            terminate(p)
-            if not self.fake_camera_file:
-                # make sure to unlock the camera at the end
-                os.system('gphoto2 --set-config output=TFT')
-            self.state = 'STOPPED'
+    def get_frame(self):
+        """
+        Return: (frame_no, bytes_data)
+        """
+        raise NotImplementedError
 
 
-class NewGPhotoThread:
+class LibGphotoLiveview(LiveView):
+    """
+    An implementation of LiveView which grabs the preview frames using libgphoto
+    """
 
     TIMEOUT = 10.0 # seconds
 
     def __init__(self):
-        self.state = 'STOPPED'
-        self.error = b''
-        self.camera = None
-        self.thread = None
+        self._camera = None
         self._last_frame_query = None
         self._frame_no = None
+        self._timeout_thread = None
+        self._kill_timeout_thread = threading.Event()
+
+    @property
+    def state(self):
+        if self._timeout_thread:
+            return 'STARTED'
+        else:
+            return 'STOPPED'
+
+    def log(self, *args):
+        print('[LiveView]', *args)
 
     def start(self):
         self.log('Starting')
         assert self.state == 'STOPPED'
-        if not self.init_camera():
-            return
+        self.init_camera()
         self.set_config('output', 'TFT + PC')
         self._last_frame_query = time.time()
         self._frame_no = -1
-        self.state = 'STREAMING'
-        #
-        self.thread = threading.Thread(target=self.run, name='NewGPhotoThread.run')
-        self.thread.daemon = True
-        self.thread.start()
-
-    def init_camera(self):
-        # we import gphoto2 lazily, so that the whole process can work even if
-        # gphoto2 is not installed
-        import gphoto2 as gp
-        if self.camera is None:
-            self.camera = gp.Camera()
-        #
-        try:
-            self.camera.init()
-        except gp.GPhoto2Error as e:
-            self.state = 'ERROR'
-            self.error = str(e).encode('utf-8')
-            return False
-        return True
+        self._start_timeout_thread()
 
     def stop(self):
-        if self.camera:
-            self.set_config('output', 'TFT')
-            self.camera.exit()
-        self.state = 'STOPPED'
-        self.log('Stop')
+        if self.state == 'STOPPED':
+            return
+        self.log('Stopping...')
+        if self._camera:
+            try:
+                self.set_config('output', 'TFT')
+                self._camera.exit()
+            except gp.GPhoto2Error as e:
+                self.log('Error when shutting down the camera', e)
+            self._camera = None
+        self._stop_timeout_thread()
 
-    def log(self, *args):
-        print('[NewGPhotoThread]', *args)
+    def init_camera(self):
+        self._camera = gp.Camera()
+        self._camera.init()
 
     def set_config(self, name, value):
         self.log('set_config: %s = %s' % (name, value))
-        config = self.camera.get_config()
+        config = self._camera.get_config()
         widget = config.get_child_by_name(name)
         widget.set_value(value)
-        self.camera.set_config(config)
+        self._camera.set_config(config)
 
     def get_latest_frame(self):
         self._last_frame_query = time.time()
-        capture = self.camera.capture_preview()
+        capture = self._camera.capture_preview()
         filedata = capture.get_data_and_size()
         self._frame_no += 1
         return (self._frame_no, memoryview(filedata).tobytes())
 
-    def run(self):
-        while self.state != 'STOPPED':
-            elapsed = time.time() - self._last_frame_query
-            if elapsed > self.TIMEOUT:
-                self.log('Timeout! Stopping camera')
-                self.stop()
-                break
-            time.sleep(1)
+    def _start_timeout_thread(self):
+        def run():
+            self.log('Timeout thread started')
+            while True:
+                #self.log('The timeout thread is alive')
+                elapsed = time.time() - self._last_frame_query
+                if elapsed > self.TIMEOUT:
+                    self.log('Timeout! Stopping camera')
+                    self.stop()
+                should_be_killed = self._kill_timeout_thread.wait(timeout=1.0)
+                if should_be_killed:
+                    break
+            self.log('Exiting timeout thread')
+        #
+        self._timeout_thread = threading.Thread(target=run, name='timeout thread')
+        self._timeout_thread.daemon = True
+        self._timeout_thread.start()
 
+    def _stop_timeout_thread(self):
+        self._kill_timeout_thread.set() # send the kill event
+        self._timeout_thread = None # state == 'STOPPED'
 
 class GPhotoCamera:
 
@@ -187,7 +125,7 @@ class GPhotoCamera:
         self.app = app
         self.CAPTURE_DIR.mkdir(parents=True, exist_ok=True)
         #self.gphoto = GPhotoThread(fake_camera_file)
-        self.gphoto = NewGPhotoThread()
+        self._liveview = LibGphotoLiveview()
 
     def liveview(self, path):
         if path == '/camera/liveview/':
@@ -199,38 +137,27 @@ class GPhotoCamera:
             return [('Path not found: %s' % path).encode('utf-8')]
 
     def liveview_stop(self):
-        self.gphoto.stop()
+        self._liveview.stop()
         self.app.start_response('200 OK', [])
         return [b'OK']
 
     def liveview_frame(self):
-        if self.gphoto.state == 'STOPPED':
-            print('Starting gphoto thread')
-            self.gphoto.start()
-            t = time.time()
-            while self.gphoto.state == 'STARTING':
-                elapsed = time.time() - t
-                if elapsed > 5.0:
-                    return self.error(b'gphoto did not start')
-                #print('    waiting...')
-                time.sleep(0.1)
-
-        if self.gphoto.state == 'ERROR':
-            self.app.start_response('400 Bad Request', [])
-            return [self.gphoto.error]
-
-        if self.gphoto.state == 'STREAMING':
-            # return the last frame
-            n, frame = self.gphoto.get_latest_frame()
+        try:
+            if self._liveview.state == 'STOPPED':
+                self._liveview.start()
+            assert self._liveview.state == 'STARTED'
+            #
+            n, frame_bytes = self._liveview.get_latest_frame()
             headers = [
                 ('Content-Type', 'image/jpeg'),
                 ('X-Frame-Number', str(n)),
             ]
             self.app.start_response('200 OK', headers)
-            return [frame]
+            return [frame_bytes]
 
-        # if we are here, we are in an unexpected state
-        return self.error('Unknown gphoto thread state: %s' % self.gphoto.state)
+        except gp.GPhoto2Error as e:
+            self.app.start_response('400 Bad Request', [])
+            return [str(e).encode('utf-8')]
 
     def error(self, message):
         print('ERROR:', message)
