@@ -13,6 +13,7 @@ class GPhotoThread:
     def __init__(self, fake_camera_file):
         self.fake_camera_file = fake_camera_file
         self.state = 'STOPPED'
+        self.error = b''
         self.thread = None
         self._last_frame_query = None
         self._latest_frame = (-1, None) # (frame_no, bytes_content)
@@ -105,19 +106,17 @@ class NewGPhotoThread:
 
     def __init__(self):
         self.state = 'STOPPED'
+        self.error = b''
         self.camera = None
         self.thread = None
         self._last_frame_query = None
         self._frame_no = None
 
     def start(self):
-        import gphoto2 as gp
         self.log('Starting')
-        if self.camera is None:
-            self.camera = gp.Camera()
-        #
         assert self.state == 'STOPPED'
-        self.camera.init()
+        if not self.init_camera():
+            return
         self.set_config('output', 'TFT + PC')
         self._last_frame_query = time.time()
         self._frame_no = -1
@@ -126,6 +125,21 @@ class NewGPhotoThread:
         self.thread = threading.Thread(target=self.run, name='NewGPhotoThread.run')
         self.thread.daemon = True
         self.thread.start()
+
+    def init_camera(self):
+        # we import gphoto2 lazily, so that the whole process can work even if
+        # gphoto2 is not installed
+        import gphoto2 as gp
+        if self.camera is None:
+            self.camera = gp.Camera()
+        #
+        try:
+            self.camera.init()
+        except gp.GPhoto2Error as e:
+            self.state = 'ERROR'
+            self.error = str(e).encode('utf-8')
+            return False
+        return True
 
     def stop(self):
         if self.camera:
