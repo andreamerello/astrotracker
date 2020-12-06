@@ -28,22 +28,11 @@ URSA_MAJOR = [53910, 54061, 59774, 58001, 62956, 65378, 67301]
 ALL_STARS = URSA_MINOR + URSA_MAJOR # + ORION
 
 def star(s, n):
-    return 'SkyPoint(ra=%f, dec=%f, hipparcos=%d, magnitude=%f)' % (
+    return 'Star(ra=%f, dec=%f, hipparcos=%d, magnitude=%f)' % (
         s.ra.radians, s.dec.radians, n, s.magnitude)
 
 print("""
-from dataclasses import dataclass
-
-@dataclass
-class Star:
-    ra: float
-    dec: float
-    hipparcos: int
-
-@dataclass
-class SkyPoint:
-    ra: float
-    dec: float
+from .make_polarscope import Star
 """)
 print()
 print('STARS = [')
