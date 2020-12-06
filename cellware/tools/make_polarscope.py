@@ -83,7 +83,7 @@ class Sky:
         # transform x, y into plane coordinate
         x *= self.width/2
         y *= self.width/2
-        return x, y
+        return x, -y
 
     def test_plane(self):
         W, H = self.width/2, self.height/2
@@ -148,7 +148,7 @@ class Sky:
         dec_start = self.CENTER.dec - PI/2
         dec_stop = self.CENTER.dec + PI/2
         for dec in arange(dec_start, dec_stop, dec_steps):
-            self.point(SkyPoint(ra=ra, dec=dec), fill='blue')
+            self.point(SkyPoint(ra=ra, dec=dec), fill='green')
 
 
 def arange(start, stop, step):
@@ -166,7 +166,7 @@ def main():
     sky = Sky(W, H)
 
     #sky.test_plane()
-    #sky.test_sky()
+    sky.test_sky()
     sky.test_stars()
 
     scale = 1
