@@ -35,6 +35,9 @@ NORTH_POLE = SkyPoint(0, PI/2, name='North Pole')
 
 class Sky:
     """
+    width, height: the size of the final image in pixels
+    AoV: the horizontal Angle of View, in radians
+
     Different kind of coordinates used:
 
       - sky coordinates: RA/DEC, see SkyPoint
@@ -44,10 +47,10 @@ class Sky:
 
     CENTER = NORTH_POLE
 
-    def __init__(self, width, height):
+    def __init__(self, width, height, AoV):
         self.width = width
         self.height = height
-        self.pixel_width = 1.0 / width
+        self.AoV = AoV
         self.im = PIL.Image.new('RGB', (width, height))
         self._draw = PIL.ImageDraw.Draw(self.im)
 
@@ -61,29 +64,32 @@ class Sky:
         x, y = self._sky2plane(p)
         return self._plane2img((x, y))
 
-    def _sky2plane(self, p):
+    # WIP: we need to explain better what happens and what is the diff between
+    # sky2xy and sky2plane
+    def _sky2xy(self, p):
         """
         Orthographic azimuthal projection, as described here:
         http://www.projectpluto.com/project.htm
 
         Argument: a SkyPoint point with ra and dec expressed in radians
-        Return value: a (x, y) tuple whose values range from -1.0 to 1.0
-                      -1.0 is -PI/2
-                       1.0 is  PI/2
+        Return value: a point in the "plane" reference system
         """
         from math import sin, cos
         CENTER = self.CENTER
         delta_ra = p.ra - CENTER.ra
-        # x, y are in the range (-1.0, 1.0)
-        #                        -1.0 is -PI/2
-        #                         1.0 is  PI/2
+        # x, y are in the range (-1.0, 1.0) ==> (-PI/2, PI/2) (centered on CENTER)
         x = cos(p.dec) * sin(delta_ra)
         y = sin(p.dec) * cos(CENTER.dec) - cos(p.dec) * cos(delta_ra) * sin(CENTER.dec)
-        #
+        return x, y
+
+    def _sky2plane(self, p):
+        xmax, ymax = self._sky2xy(SkyPoint(ra=PI/2, dec=self.CENTER.dec + self.AoV/2))
+        xmax = abs(xmax)
+        x, y = self._sky2xy(p)
         # transform x, y into plane coordinate
-        x *= self.width/2
-        y *= self.width/2
-        return x, -y
+        x = x * self.width/2 / xmax
+        y = -y * self.width/2 / xmax
+        return x, y
 
     def test_plane(self):
         W, H = self.width/2, self.height/2
@@ -100,7 +106,7 @@ class Sky:
         self.celestial_parallel(dec=math.radians(80))
         self.celestial_parallel(dec=math.radians(70))
         self.celestial_parallel(dec=math.radians(60))
-        for hr in range(0, 23):
+        for hr in range(0, 3):
             self.celestial_meridian(ra=math.radians(hr*15))
 
     def test_stars(self):
@@ -163,11 +169,13 @@ def arange(start, stop, step):
 def main():
     W = 1280
     H = 960
-    sky = Sky(W, H)
+    #AoV = math.radians(40)
+    AoV = PI
+    sky = Sky(W, H, AoV)
 
     #sky.test_plane()
     sky.test_sky()
-    sky.test_stars()
+    #sky.test_stars()
 
     scale = 1
     im = sky.im.resize((W*scale, H*scale), resample=PIL.Image.BILINEAR)
