@@ -1,7 +1,10 @@
 from __future__ import print_function
+import pandas
 import numpy as np
 from skyfield.api import Star, load
 from skyfield.data import hipparcos
+
+pandas.options.display.width = 0
 
 with load.open(hipparcos.URL) as f:
     df = hipparcos.load_dataframe(f)
@@ -25,7 +28,18 @@ URSA_MAJOR = [53910, 54061, 59774, 58001, 62956, 65378, 67301]
 ##          [22449, 22549, 22797, 23123] +
 ##          [25336, 25930, 24674, 24436] + [26311])
 
-ALL_STARS = URSA_MINOR + URSA_MAJOR # + ORION
+def get_selected_stars():
+    return URSA_MINOR + URSA_MAJOR # + ORION
+
+
+def get_selected_stars():
+    """
+    all stars close to the north pole
+    """
+    for n, star in df.iterrows():
+        if star.magnitude < 5 and 70 < star.dec_degrees < 90:
+            yield n
+
 
 def star(s, n):
     return 'Star(ra=%f, dec=%f, hipparcos=%d, magnitude=%f)' % (
@@ -38,7 +52,7 @@ print()
 print('STARS = [')
 
 #ALL_STARS = [5372]
-for n in ALL_STARS:
+for n in get_selected_stars():
     if df.loc[n].magnitude >= 5:
         # ignore faint stars
         continue

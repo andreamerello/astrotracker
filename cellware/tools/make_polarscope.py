@@ -51,7 +51,7 @@ class Sky:
         self.width = width
         self.height = height
         self.AoV = AoV
-        self.im = PIL.Image.new('RGB', (width, height))
+        self.im = PIL.Image.new('RGBA', (width, height))
         self._draw = PIL.ImageDraw.Draw(self.im)
 
     def _plane2img(self, p):
@@ -111,8 +111,10 @@ class Sky:
 
     def test_stars(self):
         self.cross(NORTH_POLE, fill='red')
+        to_draw = [5372, 113116, 11767, 85822, 82080, 36547]
         for star in stars.STARS:
-            self.star(star)
+            if star.hipparcos in to_draw:
+                self.star(star)
 
     def point(self, p, **kwargs):
         p1 = self._sky2img(p)
@@ -133,11 +135,12 @@ class Sky:
         self._draw.line([(x, y-W), (x, y+W)], **kwargs)
 
     def star(self, s):
-        if s.magnitude > 4:
-            self.point(s, fill='yellow')
-        else:
-            radius = int(6-s.magnitude)
-            self.circle(s, radius, outline='yellow')
+        self.circle(s, 5, outline='purple')
+        ## if s.magnitude > 4:
+        ##     self.point(s, fill='purple')
+        ## else:
+        ##     radius = int(6-s.magnitude)
+        ##     self.circle(s, radius, outline='purple')
 
     def line(self, p0, p1, **kwargs):
         p0 = self._sky2img(p0)
@@ -179,11 +182,28 @@ def get_angle_of_view(focal_length, crop_factor=FULL_FRAME):
     alpha = 2 * math.atan(d/(2*focal_length))
     return alpha
 
+def hr2rad(hr, min, sec):
+    hr = hr + min/60 + sec/3600
+    deg = hr*15
+    return math.radians(deg)
+
+def deg2rad(deg, min, sec):
+    deg = deg + min/60 + sec/3600
+    return math.radians(deg)
+    
+
+## print('my ra/dec:  ', 0.662285, 1.557953)
+## print('stellarium: ', hr2rad(2, 58, 49.57), deg2rad(89, 21, 13.0))
+## print()
+
+#Star(ra=0.662285, dec=1.557953, hipparcos=11767, magnitude=1.970000),
+
+
 
 def main():
-    W = 1280
-    H = 960
-    AoV = get_angle_of_view(focal_length=15, crop_factor=CANON_APSC)
+    W = 960
+    H = 640
+    AoV = get_angle_of_view(focal_length=75, crop_factor=CANON_APSC)
     print(f'AoV = {math.degrees(AoV):.2f}°')
     sky = Sky(W, H, AoV)
 
@@ -194,7 +214,7 @@ def main():
     scale = 1
     im = sky.im.resize((W*scale, H*scale), resample=PIL.Image.BILINEAR)
     im.show()
-    #sky.im.save('foo.png')
+    sky.im.save('foo.png')
 
 
 if __name__ == '__main__':
