@@ -166,16 +166,30 @@ def arange(start, stop, step):
         i += step
 
 
+FULL_FRAME = 1.0
+#CANON_APSC = 1.62 # crop_factor
+CANON_APSC = 1.6143497757847534
+
+def get_angle_of_view(focal_length, crop_factor=FULL_FRAME):
+    """
+    Return the HORIZONTAL angle of view for a given camera and lens
+    """
+    d = 36 # mm, full-frame
+    d /= crop_factor
+    alpha = 2 * math.atan(d/(2*focal_length))
+    return alpha
+
+
 def main():
     W = 1280
     H = 960
-    #AoV = math.radians(40)
-    AoV = PI
+    AoV = get_angle_of_view(focal_length=15, crop_factor=CANON_APSC)
+    print(f'AoV = {math.degrees(AoV):.2f}°')
     sky = Sky(W, H, AoV)
 
     #sky.test_plane()
-    sky.test_sky()
-    #sky.test_stars()
+    #sky.test_sky()
+    sky.test_stars()
 
     scale = 1
     im = sky.im.resize((W*scale, H*scale), resample=PIL.Image.BILINEAR)
