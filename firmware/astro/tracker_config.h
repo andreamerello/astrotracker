@@ -6,6 +6,12 @@
 #include <libopencm3/stm32/gpio.h>
 #include "bluepill.h"
 
+
+//#define DEBUG
+#undef DEBUG
+
+
+
 // we support two kind of trackers: BARN_DOOR (also know as "v1") and MINITRACK
 // (also know as "v2")
 
@@ -49,6 +55,16 @@ static const bool ENABLE_BUTTONS = true;
 #define MOTOR_PINS {PIN_A1, PIN_A3, PIN_A0, PIN_A2}
 #define MOTOR_BIPOLAR
 
+/* FF speed: number of ticks to wait between a step and the next
+
+   by experimenting we found out that 130 is the magic number for the maximum
+   speed the motor can handle. However in at least one occasion, it didn't
+   work when battery powered (maybe because there was not enough voltage?) So
+   we consevatively run a bit slower
+*/
+static const int FF_TICKS_PER_STEP = 200;
+
+
 #elif defined(MINITRACK)
 /***** GEOMETRY *****/
 // 512 are the steps for a full rotation of the motor
@@ -67,12 +83,11 @@ static const bool ENABLE_BUTTONS = true; // XXX
 #define MOTOR_PINS {PIN_A0, PIN_A3, PIN_A5, PIN_A6}
 #define MOTOR_UNIPOLAR
 
+static const int FF_TICKS_PER_STEP = 30; // found experimentally
+
 #endif /* BARN_DOOR or MINITRACK */
 
 
-
-//#define DEBUG
-#undef DEBUG
 
 #define ENABLE_KEYBOARD_COMMANDS
 #define ENABLE_DEBUG_MOTOR_COMMANDS

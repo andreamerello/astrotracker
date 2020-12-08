@@ -366,13 +366,7 @@ static void motor_task(void *arg __attribute((unused)))
 			if (state == PLAY)
 				tick_for_next_step = time_for_step(step_count + 1);
 			else
-				// by experimenting we found out that 130 is the
-				// magic number for the maximum speed the motor
-				// can handle. However in at least one occasion,
-				// it didn't work when battery powered (maybe
-				// because there was not enough voltage?) So we
-				// consevatively run a bit slower
-				tick_for_next_step = step_count * 200;
+				tick_for_next_step = step_count * FF_TICKS_PER_STEP;
 
 			if (ticks >= tick_for_next_step) {
 				motor_step(direction);
