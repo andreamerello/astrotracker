@@ -135,6 +135,7 @@ class AstroApp(App):
         polar_screen = PolarScreen(name='polarsceen', app=self)
         polar_screen.camera.app = self
         self.manager.open(polar_screen)
+        #polar_screen.open_settings()
 
     def unlock_camera(self):
         name, host, port = self.get_active_server()

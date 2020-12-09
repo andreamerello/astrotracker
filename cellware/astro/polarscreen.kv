@@ -154,30 +154,52 @@
                 on_release: root.settings.extra_stars_angle += 10
 
 
+<WithCaption@BoxLayout>:
+    orientation: 'horizontal'
+    caption: ''
+    Label:
+        text: root.caption
+
 
 <PolarSettingsScreen>:
+    canvas.before:
+        Color:
+            rgba: 0, 0, 0, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
 
-    BoxLayout:
-        # right toolbar
-        canvas.before:
-            Color:
-                rgba: 1, 1, 1, 1
-            Rectangle:
-                pos: self.pos
-                size: self.size
+    GridLayout:
+        cols: 1
+        row_force_default: True
+        row_default_height: "30sp"
 
-        right: root.right
-        orientation: 'vertical'
-        size_hint_x: None
-        width: '100dp'
+        WithCaption:
+            caption: 'Location'
+            Spinner:
+                id: location
+                text: root.settings.location
+                on_text: root.settings.location = self.text
+                values: root.settings.all_locations
 
-        Spinner:
-            text: root.settings.lens
-            on_text: root.settings.lens = self.text
-            values: 'Canon-75mm', 'Generic-45mm'
+        WithCaption:
+            caption: 'Latitude'
+            Label:
+                id: latitude
+                text: '%.5f' % root.settings.latitude
 
-        Label:
-            text: ''
+        WithCaption:
+            caption: 'Longitude'
+            Label:
+                id: longitude
+                text: '%.5f' % root.settings.longitude
+
+        WithCaption:
+            caption: 'Lens'
+            Spinner:
+                text: root.settings.lens
+                on_text: root.settings.lens = self.text
+                values: 'Canon-75mm', 'Generic-45mm'
 
         ## these settings used to be inside PolarScreen. They have been moved
         ## to PolarSettingsScreen after they were commented out, which means

@@ -1,4 +1,6 @@
 import io
+import math
+from collections import OrderedDict
 from kivy.uix.screenmanager import Screen
 from kivy.resources import resource_find
 from kivy.lang import Builder
@@ -15,11 +17,32 @@ from astro.imgfilename import ImgFileName
 Builder.load_file(resource_find('astro/polarscreen.kv'))
 
 class PolarSettings(EventDispatcher):
-    location = StringProperty()
-    latitude = NumericProperty()
-    longitude = NumericProperty()
+    location = StringProperty('')
+    latitude = NumericProperty(0)  # degrees
+    longitude = NumericProperty(0) # degrees
     lens = StringProperty('Canon-75mm')
     extra_stars_angle = NumericProperty(0)
+
+    # XXX: would be nice to avoid hardcoding locations here
+    _locations = OrderedDict([
+        ('Mele',          (44.44488007399028,  8.747941571537185)),
+        ('Genova',        (44.415511121949734, 8.886021164909707)),
+        ('Valtournenche', (45.885880860274405, 7.624707693459453)),
+        ('Argentera',     (44.39671224702886,  6.937148403030893)),
+        ])
+
+    def get_all_locations(self):
+        return tuple(self._locations.keys())
+    all_locations = AliasProperty(get_all_locations, None)
+
+    def __init__(self, *args, **kwargs):
+        super(PolarSettings, self).__init__(*args, **kwargs)
+        self.location = 'Mele' # force update
+
+    def on_location(self, _, value):
+        lat, lon = self._locations.get(value, (0, 0))
+        self.latitude = lat
+        self.longitude = lon
 
     def get_stars_angle(self):
         return self.extra_stars_angle
@@ -32,7 +55,6 @@ class PolarSettings(EventDispatcher):
 
 class PolarSettingsScreen(MyScreen):
     settings = ObjectProperty(PolarSettings())
-
 
 
 class PolarScreen(MyScreen):
@@ -54,7 +76,6 @@ class PolarScreen(MyScreen):
     def open_settings(self):
         screen = PolarSettingsScreen(name='polarsettings', settings=self.settings)
         self.app.manager.open(screen)
-
 
     def load_image(self):
         imgfile = self.app.image_storage.join(self.ids.imgfilename.last_image)
