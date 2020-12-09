@@ -15,6 +15,7 @@ FILES=(android.txt
        astro
        libs
        data
+       lens
        *.png
        *.jpg
       )
