@@ -18,12 +18,20 @@ class PolarSettings(EventDispatcher):
     location = StringProperty()
     latitude = NumericProperty()
     longitude = NumericProperty()
-    lens = StringProperty('polaris75mm.png')
+    lens = StringProperty('Canon-75mm')
     extra_stars_angle = NumericProperty(0)
 
     def get_stars_angle(self):
         return self.extra_stars_angle
-    stars_angle = AliasProperty(get_stars_angle, None, bind=['extra_stars_angle'])
+    stars_angle = AliasProperty(get_stars_angle, None,
+                                bind=['extra_stars_angle', 'longitude']) # XXX time?
+
+    def get_lens_filename(self):
+        return 'lens/%s.png' % self.lens
+    lens_filename = AliasProperty(get_lens_filename, None, bind=['lens'])
+
+class PolarSettingsScreen(MyScreen):
+    settings = ObjectProperty(PolarSettings())
 
 
 
@@ -42,6 +50,11 @@ class PolarScreen(MyScreen):
         self.ids.imgfilename.load_image = self.load_image
         self.NP = self.app.load_north_pole() # coordinates in the 0-1.0 range
         self.camera.bind(on_remote_frame_size=self.autoscale)
+
+    def open_settings(self):
+        screen = PolarSettingsScreen(name='polarsettings', settings=self.settings)
+        self.app.manager.open(screen)
+
 
     def load_image(self):
         imgfile = self.app.image_storage.join(self.ids.imgfilename.last_image)
