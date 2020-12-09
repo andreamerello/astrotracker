@@ -3,8 +3,9 @@ from kivy.uix.screenmanager import Screen
 from kivy.resources import resource_find
 from kivy.lang import Builder
 from kivy.properties import (ObjectProperty, NumericProperty, BoundedNumericProperty,
-                             ReferenceListProperty)
+                             ReferenceListProperty, StringProperty, AliasProperty)
 from kivy.uix.effectwidget import EffectWidget, AdvancedEffectBase
+from kivy.event import EventDispatcher
 from kivy.graphics.texture import Texture
 from astro.remotecamera import RemoteCamera
 from astro.uix import MyScreen
@@ -13,9 +14,22 @@ from astro.imgfilename import ImgFileName
 
 Builder.load_file(resource_find('astro/polarscreen.kv'))
 
+class PolarSettings(EventDispatcher):
+    location = StringProperty()
+    latitude = NumericProperty()
+    longitude = NumericProperty()
+    lens = StringProperty('polaris75mm.png')
+    extra_stars_angle = NumericProperty(0)
+
+    def get_stars_angle(self):
+        return self.extra_stars_angle
+    stars_angle = AliasProperty(get_stars_angle, None, bind=['extra_stars_angle'])
+
+
+
 class PolarScreen(MyScreen):
     app = ObjectProperty()
-    stars_angle = NumericProperty(0)
+    settings = PolarSettings()
     camera = ObjectProperty(RemoteCamera())
 
     # North Pole
