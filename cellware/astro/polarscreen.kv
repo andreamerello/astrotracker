@@ -106,6 +106,10 @@
             text: "%.2f fps" % root.camera.fps
             color: (1, 0, 0, 1)
 
+        Label:
+            text: root.settings.lens
+            color: (0, 0, 0, 1)
+
         FlatButton:
             text: 'Settings %s' % icon('fa-gear')
             markup: True
