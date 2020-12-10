@@ -1,6 +1,7 @@
 import io
 import math
 from collections import OrderedDict
+from datetime import datetime
 from kivy.uix.screenmanager import Screen
 from kivy.resources import resource_find
 from kivy.lang import Builder
@@ -15,6 +16,24 @@ from astro.error import MessageBox
 from astro.imgfilename import ImgFileName
 
 Builder.load_file(resource_find('astro/polarscreen.kv'))
+
+def LST(longitude, dt):
+    """
+    Compute the Local Siderial Time.
+
+    longitude: the longitude of the observer, in degrees
+    dt: datetime, the universal time of the observer
+
+    Return: the LST in degrees
+    """
+    # http://www.stargazing.net/kepler/altaz.html
+    # compute the number of days since J2000.0
+    delta = dt - datetime(2000, 1, 1, 12, 0, 0)
+    days = delta.total_seconds() / 86400.0
+    ut = dt.hour + (dt.minute/60.0) + (dt.second/3600.0)
+    return (100.46 + 0.985647 * days + longitude + 15*ut) % 360
+
+
 
 class PolarSettings(EventDispatcher):
     location = StringProperty('')
@@ -45,7 +64,10 @@ class PolarSettings(EventDispatcher):
         self.longitude = lon
 
     def get_stars_angle(self):
-        return self.extra_stars_angle
+        # XXX: ideally, this should be automatically updated after a while,
+        # keeping sync with utcnow
+        lst = LST(self.longitude, datetime.utcnow())
+        return lst + self.extra_stars_angle
     stars_angle = AliasProperty(get_stars_angle, None,
                                 bind=['extra_stars_angle', 'longitude']) # XXX time?
 
