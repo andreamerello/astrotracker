@@ -69,8 +69,9 @@ static const int FF_TICKS_PER_STEP = 200;
 /***** GEOMETRY *****/
 // 512 are the steps for a full rotation of the motor
 //  27 is the reduction of the gearbox
-//  41 the number of teeth of the big gear after the worm gear
-static const long STEPS_FOR_360_DEGREES = 512 * 27 * 41 * 8;
+//  36 is the number of teeth of the big gear after the worm gear
+//   8 is the number of rows in motor.c:magic_table (it's hardcoded, I know :( )
+static const long STEPS_FOR_360_DEGREES = 512 * 27 * 36 * 8;
 static const int DEFAULT_DIRECTION = -1;
 
 /***** ELECTRONIC *****/
