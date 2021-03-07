@@ -54,6 +54,9 @@ class RotationScreen(MyScreen):
         if self.ids.sky.texture is None:
             return
         sx, sy = self.app.load_north_pole() # coordinates in the 0-1.0 range
+        self._set_np(sx, sy)
+
+    def _set_np(self, sx, sy):
         # transform into "pixel" coordinates
         x = self.ids.sky.width * sx
         y = self.ids.sky.height * sy

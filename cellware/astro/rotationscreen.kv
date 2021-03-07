@@ -113,5 +113,13 @@
         Separator:
 
         FlatButton:
+            text: 'Reset'
+            color: (0, 0, 0, 1)
+            background_color: (1, 0.5, 0.5, 1)
+            on_release: root._set_np(0.5, 0.5)
+
+        Separator:
+
+        FlatButton:
             text: 'Exit'
             on_release: app.root.go_back()
