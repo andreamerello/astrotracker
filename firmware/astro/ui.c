@@ -28,6 +28,7 @@ typedef struct {
 typedef struct {
 	int duration_ms;
 	int tone;
+	beep_scale_t scale;
 } beep_t;
 
 /* these GPIO have internal pull-downs */
@@ -171,23 +172,74 @@ static void led_init(void)
 
 static void buzzer_task(void *arg __attribute((unused)))
 {
+	void one_beep(int duration_ms, int tone) {
+		timer_set_period(TIM1, tone);
+		timer_set_oc_value(TIM1, TIM_OC2, tone / 2);
+		timer_set_oc_mode(TIM1, TIM_OC2, TIM_OCM_PWM1);
+		vTaskDelay(duration_ms / portTICK_PERIOD_MS);
+		timer_set_oc_mode(TIM1, TIM_OC2, TIM_OCM_FORCE_LOW);
+	}
+
 	beep_t beep;
 	while(1) {
 		xQueueReceive(buzzer_queue, &beep, portMAX_DELAY);
-		timer_set_period(TIM1, beep.tone);
-		timer_set_oc_value(TIM1, TIM_OC2, beep.tone / 2);
-		timer_set_oc_mode(TIM1, TIM_OC2, TIM_OCM_PWM1);
-		vTaskDelay(beep.duration_ms / portTICK_PERIOD_MS);
-		timer_set_oc_mode(TIM1, TIM_OC2, TIM_OCM_FORCE_LOW);
+		switch(beep.scale) {
+		case SCALE_NO:
+			one_beep(beep.duration_ms, beep.tone);
+			break;
+		case SCALE_UP:
+			one_beep(beep.duration_ms, beep.tone);
+			vTaskDelay(100 / portTICK_PERIOD_MS);
+			one_beep(beep.duration_ms, beep.tone * 1.2);
+			vTaskDelay(100 / portTICK_PERIOD_MS);
+			one_beep(beep.duration_ms, beep.tone * 1.4);
+			break;
+		case SCALE_DOWN:
+			one_beep(beep.duration_ms, beep.tone * 1.4);
+			vTaskDelay(100 / portTICK_PERIOD_MS);
+			one_beep(beep.duration_ms, beep.tone * 1.2);
+			vTaskDelay(100 / portTICK_PERIOD_MS);
+			one_beep(beep.duration_ms, beep.tone);
+			break;
+		}
 	}
 }
 
 static void button_task(void *arg __attribute((unused)))
 {
+	const int LONG_CLICK_DELAY = 10;
 	char state = 't'; // sTop, Play, FF
+	char event = '0'; // 0, 'L'ong click, 'S'hort click
+	int pressed_counter = 0;
 	while(1) {
+		vTaskDelay(100 / portTICK_PERIOD_MS);
+		if (ui_antibump())
+			continue;
+
+		/****** determine which kind of event we need to handle, if any ******/
+		event = '0';
 		int value = gpio_get(BUTTON_PLAY.port, BUTTON_PLAY.pin);
-		if (value && !ui_antibump()) {
+		if (value)
+			// the button is down
+			pressed_counter++;
+
+		if (pressed_counter == LONG_CLICK_DELAY) {
+			// the button has been down for a while, immediatlely fire a long
+			// click event
+			event = 'L';
+		}
+
+		if (!value && pressed_counter > 0 && pressed_counter < LONG_CLICK_DELAY) {
+			// the button is going up and it was a short press. Fire a short
+			// click event
+			event = 'S';
+		}
+
+		if (!value)
+			pressed_counter = 0;
+
+		/****** handle the events ******/
+		if (event == 'S') {
 			switch (state) {
 			case 't':
 				// stop ==> play
@@ -213,7 +265,9 @@ static void button_task(void *arg __attribute((unused)))
 				break;
 			}
 		}
-		vTaskDelay(100 / portTICK_PERIOD_MS);
+		else if (event == 'L') {
+			ui_beep_scale(100, 500, SCALE_UP);
+		}
 	}
 }
 
@@ -256,8 +310,15 @@ void ui_beep(int duration_ms, int tone)
 {
 	if (tone == -1)
 		tone = 65;
-	beep_t beep = {duration_ms, tone};
+	beep_t beep = {duration_ms, tone, SCALE_NO};
+	xQueueOverwrite(buzzer_queue, &beep);
+}
 
+void ui_beep_scale(int duration_ms, int tone, beep_scale_t scale)
+{
+	if (tone == -1)
+		tone = 65;
+	beep_t beep = {duration_ms, tone, scale};
 	xQueueOverwrite(buzzer_queue, &beep);
 }
 
