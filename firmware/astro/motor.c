@@ -16,6 +16,7 @@
 #define SIDERAL_DAY (86164UL * TICKS_PER_SECOND)
 
 static int motor_absolute_position;
+static int motor_default_direction = DEFAULT_DIRECTION;
 
 static uint32_t time_for_step(int step)
 {
@@ -71,6 +72,12 @@ static int homing_switch_pressed(void)
 }
 #endif
 
+int motor_toggle_default_direction(void)
+{
+	motor_default_direction *= -1;
+	return motor_default_direction;
+}
+
 static void motor_toggle_pin(int i)
 {
 	uint32_t port = MOTOR_GPIO_TABLE[i].port;
@@ -116,7 +123,7 @@ void motor_init(void)
 static int motor_current_index = 0;
 static void motor_step(int direction)
 {
-	direction *= DEFAULT_DIRECTION;
+	direction *= motor_default_direction;
 	motor_current_index += direction;
 	if (motor_current_index == -1)
 		motor_current_index = ARRAY_SIZE(magic_table) - 1;

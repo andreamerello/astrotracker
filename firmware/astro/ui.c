@@ -266,7 +266,12 @@ static void button_task(void *arg __attribute((unused)))
 			}
 		}
 		else if (event == 'L') {
-			ui_beep_scale(100, 500, SCALE_UP);
+			// toggle the direction of the motor
+			int d = motor_toggle_default_direction();
+			if (d > 0)
+				ui_beep_scale(100, 500, SCALE_UP);
+			else
+				ui_beep_scale(100, 500, SCALE_DOWN);
 		}
 	}
 }
