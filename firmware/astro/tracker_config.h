@@ -67,11 +67,12 @@ static const int FF_TICKS_PER_STEP = 200;
 
 #elif defined(MINITRACK)
 /***** GEOMETRY *****/
+//   8.89 is the radius of the circular M4 threaded rod (in cm)
+//   0.05 is the pitch of the M4 threaded rod (in cm)
+//   2*pi*radius / pitch is the number of teeth for 360 degrees
 // 512 are the steps for a full rotation of the motor
-//  27 is the reduction of the gearbox
-//  36 is the number of teeth of the big gear after the worm gear
 //   8 is the number of rows in motor.c:magic_table (it's hardcoded, I know :( )
-static const long STEPS_FOR_360_DEGREES = 512 * 27 * 36 * 8;
+static const long STEPS_FOR_360_DEGREES = (8.89*2*3.14)/0.5 * 512 * 8;
 static const int DEFAULT_DIRECTION = -1;
 
 /***** ELECTRONIC *****/
