@@ -72,7 +72,7 @@ static const int FF_TICKS_PER_STEP = 200;
 //   2*pi*radius / pitch is the number of teeth for 360 degrees
 // 512 are the steps for a full rotation of the motor
 //   8 is the number of rows in motor.c:magic_table (it's hardcoded, I know :( )
-static const long STEPS_FOR_360_DEGREES = (8.89*2*3.14)/0.5 * 512 * 8;
+static const long STEPS_FOR_360_DEGREES = (8.89*2*3.14)/0.05 * 512 * 8;
 static const int DEFAULT_DIRECTION = -1;
 
 /***** ELECTRONIC *****/
