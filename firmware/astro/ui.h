@@ -1,26 +1,18 @@
 #ifndef __UI__H__
 #define __UI__H__
 
-#ifndef __maybe_unused
-# define __maybe_unused		__attribute__((unused))
-#endif
+#include "tracker_config.h"
 
-//#define DEBUG
-#undef DEBUG
-
-#define ENABLE_KEYBOARD_COMMANDS
-
-
-#ifdef DEBUG
-#define my_printf std_printf
-#else
-#define my_printf(...) ;
-#undef ENABLE_KEYBOARD_COMMANDS
-#endif
+typedef enum {
+	SCALE_NO = 0,
+	SCALE_UP = 1,
+	SCALE_DOWN = 2,
+} beep_scale_t;
 
 void ui_init(void);
 void set_led_blink(int on_ms, int off_ms, int beep_rate);
 void set_led_on(void);
 void set_led_off(void);
 void ui_beep(int duration_ms, int tone);
+void ui_beep_scale(int duration_ms, int tone, beep_scale_t scale);
 #endif
