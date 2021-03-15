@@ -190,7 +190,7 @@ static void motor_debug_do_steps(int direction, int n)
 			if (should_print)
 				my_printf(".");
 			motor_step(direction);
-			vTaskDelay(1 / portTICK_PERIOD_MS); // 3?
+			vTaskDelay(4 / portTICK_PERIOD_MS); // 3?
 		}
 		if (should_print)
 			my_printf("\n");
@@ -314,7 +314,7 @@ static void motor_task(void *arg __attribute((unused)))
 			case 'v': motor_debug_do_steps( 1,    1000); break;
 			case 'b': motor_debug_do_steps( 1,   10000); break;
 			case 'n': motor_debug_do_steps( 1,   30000); break;
-			case 'm': motor_debug_do_steps( 1, STEPS_FOR_360_DEGREES/64); break; // 45deg
+			case 'm': motor_debug_do_steps( 1, STEPS_FOR_360_DEGREES/(8*36)); break; // 10deg
 			// backward
 			case 'Z': motor_debug_do_steps(-1,       1); break;
 			case 'X': motor_debug_do_steps(-1,      10); break;
@@ -322,7 +322,7 @@ static void motor_task(void *arg __attribute((unused)))
 			case 'V': motor_debug_do_steps(-1,    1000); break;
 			case 'B': motor_debug_do_steps(-1,   10000); break;
 			case 'N': motor_debug_do_steps(-1,   30000); break;
-			case 'M': motor_debug_do_steps(-1, STEPS_FOR_360_DEGREES/64); break;
+			case 'M': motor_debug_do_steps(-1, STEPS_FOR_360_DEGREES/(8*36)); break;
 #endif
 			default:
 				my_printf("Invalid command: %c\n", cmd);
