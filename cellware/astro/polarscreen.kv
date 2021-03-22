@@ -21,7 +21,7 @@
             Image:
                 id: sky
                 texture: root.camera.frame_texture
-                #source: 'black.png'
+                source: 'black.png'
                 pos: 0, 0
                 size: self.texture_size
                 size_hint: None, None
@@ -135,27 +135,15 @@
             id: star_toolbar
             orientation: 'horizontal'
             size_hint_y: None
-            height: "20dp"
+            height: "50dp"
             IconButton:
                 icon: 'fa-minus'
-                font_size: "24sp"
-                on_release: root.settings.extra_stars_angle -= 10
-            IconButton:
-                icon: "fa-minus"
-                font_size: "12sp"
-                on_release: root.settings.extra_stars_angle -= 1
-            IconButton:
-                icon: "fa-star" if stars.visible else "fa-star-o"
-                on_release: stars.visible = not stars.visible
-
+                font_size: "40sp"
+                on_release: root.settings.extra_stars_angle -= 5
             IconButton:
                 icon: "fa-plus"
-                font_size: "12sp"
-                on_release: root.settings.extra_stars_angle += 1
-            IconButton:
-                icon: "fa-plus"
-                font_size: "24sp"
-                on_release: root.settings.extra_stars_angle += 10
+                font_size: "40sp"
+                on_release: root.settings.extra_stars_angle += 5
 
 
 <WithCaption@BoxLayout>:
