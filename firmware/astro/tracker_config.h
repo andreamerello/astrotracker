@@ -67,25 +67,27 @@ static const int FF_TICKS_PER_STEP = 200;
 
 #elif defined(MINITRACK)
 /***** GEOMETRY *****/
-//   8.05 is the radius of the circular M5 threaded rod (in cm)
-//   0.05 is the pitch of the M5 threaded rod (in cm)
-//   2*pi*radius / pitch is the number of teeth for 360 degrees
+//  70 is the total ratio of the gear system
 // 512 are the steps for a full rotation of the motor
 //   8 is the number of rows in motor.c:magic_table (it's hardcoded, I know :( )
-static const long STEPS_FOR_360_DEGREES = (8.05*2*3.14)/0.05 * 512 * 8;
+static const long STEPS_FOR_360_DEGREES = 70 * 512 * 8;
 static const int DEFAULT_DIRECTION = -1;
 
 /***** ELECTRONIC *****/
 static const bool LED_IS_INVERTED = true;
 static const pin_t LED = PIN_C13;
-static const pin_t BUZZER = PIN_A9;
+static const pin_t BUZZER = PIN_A9; // NOTE: it MUST be A9 because we are
+									// using TIM1 to drive it
 static const bool ENABLE_BUTTONS = true; // XXX
 
 // motor wires:         A1      A2      B1      B2
-#define MOTOR_PINS {PIN_A0, PIN_A3, PIN_A5, PIN_A6}
+//#define MOTOR_PINS {PIN_A0, PIN_A3, PIN_A5, PIN_A6}  // breadboard
+#define MOTOR_PINS {PIN_A6, PIN_A5, PIN_A3, PIN_A0}  // millefori
+
+
 #define MOTOR_UNIPOLAR
 
-static const int FF_TICKS_PER_STEP = 30; // found experimentally
+static const int FF_TICKS_PER_STEP = 10; // found experimentally
 
 #endif /* BARN_DOOR or MINITRACK */
 
